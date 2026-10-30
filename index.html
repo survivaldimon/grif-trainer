@@ -1642,8 +1642,15 @@ function coLayout(S,head,setAt,rest,nPref){
   }
   return best.items.map((x,j)=>{const o=Object.assign({},x,{sec:best.d[j]});delete o.lo;delete o.hi;delete o.p;delete o.flex;return o;});
 }
+// Фрагмент этюда в x/8: пульс — восьмая, поэтому деление считается от первого деления фрагмента (/2 — восьмые, без /n — sub упражнения).
+function stageMeter(x,meter,sys){
+  x.meter=meter;
+  const den=+String(meter).split('/')[1]||4;if(den===4)return;
+  const m=String(sys||'').trim().match(/^\/(\d+)/),sub=Math.round((m?+m[1]:x.sub)*4/den);
+  x.sub=[1,2,3,4,6].includes(sub)?sub:1;
+}
 const fixed=(type,sec,extra)=>Object.assign({type,lo:sec,hi:sec,p:sec},extra||{});
-function coachPlan(s,d){
+function coachPlan(s,d,lv){
   const S=s.min*60;
   if(s.kind==='test'){
     const mins=splitInt(s.min,TESTS.map(()=>1));const out=[];
@@ -1657,7 +1664,7 @@ function coachPlan(s,d){
   }
   const lead=s.kind==='warm'?s.id!=='W1':['base','focus','maint','combo'].includes(s.kind);
   if(!lead)return null;
-  const r=resolveEx(s,d);const c=COACH[s.id]||{};
+  const r=resolveEx(s,d,lv);const c=COACH[s.id]||{};
   const vi=(EX[s.id].v&&EX[s.id].v.length)?mod(s.variant!=null?s.variant:d.pool,EX[s.id].v.length):-1;
   const cv=(c.v&&c.v[vi])||{};const cyc=cv.cyc||c.cyc;const stages=cv.stages||c.stages||(s.kind==='combo'?COMBO_STAGES:null);
   const head=[];if(c.free)head.push(fixed('free',c.free));head.push(fixed('prep',CO_PREP));
@@ -1677,7 +1684,7 @@ function coachPlan(s,d){
       else{const b=[1,2,4][(k-Math.floor((k+1)/4))%3];x.burst=b;x.tag.push(['Рывки '+b+'/'+b,'Bursts '+b+'/'+b]);x.tempo=[k%4===0?'burst':'same'];}
     }
     else{x.tempo=['deload'];if(n>=2&&k===Math.floor(n/2))x.tag.push(['Чистым звуком, без перегруза','Clean tone, no gain']);}
-    if(stages){const g=n===1?stages.length-1:Math.round(k*(stages.length-1)/(n-1));x.tag.unshift(stages[g]);if(cv.stageMeter&&cv.stageMeter[g])x.meter=cv.stageMeter[g];}
+    if(stages){const g=n===1?stages.length-1:Math.round(k*(stages.length-1)/(n-1));x.tag.unshift(stages[g]);if(cv.stageMeter&&cv.stageMeter[g])stageMeter(x,cv.stageMeter[g],r.v.t[g]);}
     if(cyc){const o=cyc[k%cyc.length];if(o.sub)x.sub=o.sub;if(o.tag)x.tag.push(o.tag);if(o.half){x.burst=0;x.tempo=['half'];}
       if(k>0&&cyc[(k-1)%cyc.length].half)x.tempo.unshift('back');}
     return x;
