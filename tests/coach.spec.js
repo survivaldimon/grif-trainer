@@ -82,13 +82,16 @@ test('тренер: указания упражнений и неделя ско
       b1: sets(0, { kind: 'base', id: 'B1', min: 8 }).map(x => x.sub + (x.tempo.includes('half') ? 'h' : '')),
       speed: sets(14, { kind: 'focus', id: 'R8', min: 8 }).map(x => x.burst),
       maint: sets(14, { kind: 'maint', id: 'R8', min: 4 }).map(x => x.burst),
-      l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub)
+      l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub),
+      // этюд 3: первый фрагмент в 7/8, пульс — восьмая; на уровне 2 фрагмент восьмыми (/2) → без деления, на уровне 3 шестнадцатыми → деление 2
+      c36: [2, 3].map(lv => [...new Set(G.coachPlan({ kind: 'combo', id: 'C36', variant: 2, min: 20 }, G.dayInfo(0), lv).filter(x => x.type === 'set' && x.meter === '7/8').map(x => x.sub))])
     };
   });
   expect(r.b1.slice(0, 4)).toEqual(['4', '4', '6', '4h']);
   expect(r.speed.slice(0, 5)).toEqual([1, 2, 4, 0, 1]);
   expect(r.maint.every(b => b === 0)).toBe(true);
   expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
+  expect(r.c36).toEqual([[1], [2]]);
 });
 
 test('тренер: метроном включается на подходе и выключается на отдыхе, bpm не меняется', async ({ page }) => {
@@ -114,6 +117,45 @@ test('тренер: метроном включается на подходе и
   await expect(page.locator('#coSkip')).toHaveCount(0);
   await expect(page.locator('#coToggle')).toHaveAttribute('aria-pressed', 'false');
   expect(await page.inputValue('#bpm')).toBe(bpm);
+  expect(errors).toEqual([]);
+});
+
+test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
+  const errors = await openApp(page, 'en');
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  const ID = 'B4'; // база с генератором: уровни меняют рисунок
+  const k = await page.evaluate(id => window.__grif.st.plan.segs.findIndex(s => s.id === id), ID);
+  await page.locator('#planList li').nth(k).click();
+  await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText('2'); // по умолчанию 2
+  await page.click('#playBtn');
+  await page.click('#coSkip'); // подготовка → подход 1
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
+  const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
+  for (const lv of ['1', '4', '3']) {
+    await page.click(`.lvlb button[data-lvl="${lv}"]`);
+    await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText(lv);
+  }
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(id => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur, running: G.st.running, lvl: G.getLvl(id), ls: localStorage.getItem('grif.lvl') }; }, ID);
+  expect(after.cur).toBe(before.cur);
+  expect(after.idx).toBe(before.idx);
+  expect(after.secs).toEqual(before.secs);
+  expect(after.running).toBe(true);
+  expect(after.remain).toBeLessThan(before.remain);
+  expect(before.remain - after.remain).toBeLessThan(10);
+  expect(after.lvl).toBe(3);
+  expect(JSON.parse(after.ls)).toEqual({ [ID]: 3 });
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  expect(await page.locator('#nowBody .tabbox').innerHTML()).not.toBe(tab0);
+  // выбор запоминается для упражнения: после перезагрузки уровень 3, у других упражнений — по умолчанию
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.__grif);
+  expect(await page.evaluate(id => window.__grif.getLvl(id), ID)).toBe(3);
+  expect(await page.evaluate(() => window.__grif.getLvl('A21'))).toBe(2);
   expect(errors).toEqual([]);
 });
 
