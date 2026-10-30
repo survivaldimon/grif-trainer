@@ -5,6 +5,8 @@ const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const FIXED_NOW = new Date('2026-10-28T12:00:00'); // dayIndex = −5
+const INSTS = ['guitar', 'bass'];
+const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
 
 async function openApp(page, lang) {
   const errors = [];
@@ -16,9 +18,10 @@ async function openApp(page, lang) {
   return errors;
 }
 
-test('тренер: подходы и отдых ровно укладываются в минуты сегмента', async ({ page }) => {
+for (const inst of INSTS) {
+test(`${inst}: тренер: подходы и отдых ровно укладываются в минуты сегмента`, async ({ page }) => {
   test.setTimeout(120000);
-  await openApp(page, 'ru');
+  await openApp(page, H(inst, 'ru'));
   const res = await page.evaluate(() => {
     const G = window.__grif, errs = [], seen = new Set();
     const LED = ['base', 'focus', 'maint', 'combo', 'test'];
@@ -73,8 +76,8 @@ test('тренер: подходы и отдых ровно укладывают
   expect(res.plans).toBeGreaterThan(100);
 });
 
-test('тренер: указания упражнений и неделя скорости', async ({ page }) => {
-  await openApp(page, 'ru');
+test(`${inst}: тренер: указания упражнений и неделя скорости`, async ({ page }) => {
+  await openApp(page, H(inst, 'ru'));
   const r = await page.evaluate(() => {
     const G = window.__grif;
     const sets = (i, s) => G.coachPlan(s, G.dayInfo(i)).filter(x => x.type === 'set');
@@ -93,6 +96,8 @@ test('тренер: указания упражнений и неделя ско
   expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
   expect(r.c36).toEqual([[1], [2]]);
 });
+
+}
 
 test('тренер: метроном включается на подходе и выключается на отдыхе, bpm не меняется', async ({ page }) => {
   const errors = await openApp(page, 'en');
@@ -159,9 +164,22 @@ test('уровень: переключение на подходе не сбив
   expect(errors).toEqual([]);
 });
 
-test('EN: ведение прокликано по всем интервалам без кириллицы', async ({ page }) => {
+test('бас: уровень хранится с префиксом bass. и не смешивается с гитарой', async ({ page }) => {
+  const errors = await openApp(page, 'bass-en');
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4'));
+  await page.locator('#planList li').nth(k).click();
+  await page.click('.lvlb button[data-lvl="3"]');
+  const r = await page.evaluate(() => { const G = window.__grif; const bass = G.getLvl('B4'); G.setInst('guitar'); return { bass, guitar: G.getLvl('B4'), ls: JSON.parse(localStorage.getItem('grif.lvl')) }; });
+  expect(r).toEqual({ bass: 3, guitar: 2, ls: { 'bass.B4': 3 } });
+  expect(errors).toEqual([]);
+});
+
+for (const inst of INSTS)
+test(`${inst}: EN: ведение прокликано по всем интервалам без кириллицы`, async ({ page }) => {
   test.setTimeout(300000);
-  const errors = await openApp(page, 'en');
+  const errors = await openApp(page, H(inst, 'en'));
   const CYR = /[Ѐ-ӿ]+/g;
   const bad = new Map();
   const scan = async where => {
@@ -169,7 +187,8 @@ test('EN: ведение прокликано по всем интервалам
     (text.match(CYR) || []).forEach(w => { if (!bad.has(w)) bad.set(w, where); });
   };
   // −5 разгрузка (вводная), 0 объём, 8 наращивание, 16 скорость, 27 разгрузка с тестами; W0 — на 15 минутах
-  const days = [[-5, 15], [0, 60], [8, 60], [16, 120], [27, 60]];
+  // у баса тот же код ведения: хватает объёма и дня тестов
+  const days = inst === 'bass' ? [[-5, 15], [0, 60], [27, 60]] : [[-5, 15], [0, 60], [8, 60], [16, 120], [27, 60]];
   let cur = -5;
   for (const [day, T] of days) {
     while (cur < day) { await page.click('#nextDay'); cur++; }

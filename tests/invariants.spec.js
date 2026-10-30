@@ -7,6 +7,9 @@ const { pathToFileURL } = require('url');
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
 const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand'];
+// бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
+const INSTS = ['guitar', 'bass'];
+const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
 // Среда, 28 октября 2026: dayIndex = −5, вводная неделя. Дата зафиксирована, чтобы тесты не зависели от сегодняшнего дня.
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 
@@ -30,8 +33,10 @@ test('localStorage только через lsGet/lsSet и только разр�
   keys.forEach(k => expect(LS_KEYS).toContain(k));
 });
 
-test('расписание: суммы, паузы, покрытие упражнений', async ({ page }) => {
-  await openApp(page, 'ru');
+for (const inst of INSTS) {
+
+test(`${inst}: расписание: суммы, паузы, покрытие упражнений`, async ({ page }) => {
+  await openApp(page, H(inst, 'ru'));
   const res = await page.evaluate(() => {
     const G = window.__grif, errs = [], used = new Set();
     for (let i = -7; i <= 168; i++) {
@@ -57,8 +62,8 @@ test('расписание: суммы, паузы, покрытие упраж�
   expect(res.missing, 'упражнения, ни разу не попавшие в план за 6 циклов').toEqual([]);
 });
 
-test('ротация: упражнения групп R, A, L попадают в план примерно поровну', async ({ page }) => {
-  await openApp(page, 'ru');
+test(`${inst}: ротация: упражнения групп R, A, L попадают в план примерно поровну`, async ({ page }) => {
+  await openApp(page, H(inst, 'ru'));
   const errs = await page.evaluate(() => {
     const G = window.__grif, errs = [];
     for (const T of G.TIMES) {
@@ -74,8 +79,8 @@ test('ротация: упражнения групп R, A, L попадают �
   expect(errs).toEqual([]);
 });
 
-test('EXEN покрывает EX', async ({ page }) => {
-  await openApp(page, 'ru');
+test(`${inst}: EXEN покрывает EX`, async ({ page }) => {
+  await openApp(page, H(inst, 'ru'));
   const errs = await page.evaluate(() => {
     const { EX, EXEN } = window.__grif, errs = [];
     for (const id of Object.keys(EX)) {
@@ -111,15 +116,16 @@ test('EXEN покрывает EX', async ({ page }) => {
   expect(errs).toEqual([]);
 });
 
-test('табы: стандартный строй, 6 струн, корректные токены и ритм', async ({ page }) => {
-  await openApp(page, 'ru');
+test(`${inst}: табы: стандартный строй, корректные токены и ритм`, async ({ page }) => {
+  await openApp(page, H(inst, 'ru'));
   const errs = await page.evaluate(() => {
-    const G = window.__grif, errs = [];
+    const G = window.__grif, errs = [], bass = G.INST === 'bass';
     // формат токена — см. CLAUDE.md; дублируем регэкспы здесь, чтобы тест ловил и изменения парсера
     const TOK = /^(\.|[^:]+?)(m?)(?::([1-9]\d*))?$/;
-    const PART = /^([eBGDAE])[hpt]?(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?\*?~?$/;
+    const PART = /^([A-Za-z])(?:[hpt]?(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?\*?~?|x)$/;
     const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
-    const checkSystems = (where, systems, sub, meter) => {
+    const checkSystems = (where, systems, sub, meter, tu = bass ? 'bass4' : 'guitar') => {
+      const ROWS = G.TUNINGS[tu].strs;
       systems.forEach(sys => sys.trim().split(/\s+/).forEach(tok => {
         if (tok === '|' || /^\/[1-8]$/.test(tok)) return;
         const t = tok.match(TOK);
@@ -130,6 +136,7 @@ test('табы: стандартный строй, 6 струн, коррект�
           const m = p.match(PART);
           if (!m) { errs.push(`${where}: токен ${tok}`); return; }
           if (strs.has(m[1])) errs.push(`${where}: струна дважды в ${tok}`);
+          if (!ROWS.includes(m[1])) errs.push(`${where}: струна ${m[1]} не из строя ${tu}`);
           strs.add(m[1]);
           [m[2], m[3], m[4]].forEach(f => { if (f != null && +f > 24) errs.push(`${where}: лад ${f}`); });
           if (m[3] != null && !(+m[3] > +m[2])) errs.push(`${where}: бенд вниз в ${tok}`);
@@ -138,7 +145,7 @@ test('табы: стандартный строй, 6 струн, коррект�
       }));
       // ритм: система — целое число долей; в нечётном размере каждый такт = числителю
       const pulses = +String(meter || '4/4').split('/')[0];
-      G.parseTab(systems, sub).forEach((s, si) => {
+      G.parseTab(systems, sub, tu).forEach((s, si) => {
         s.errs.forEach(e => errs.push(`${where} s${si}: ${e}`));
         if (!whole(s.len)) errs.push(`${where} s${si}: длина ${s.len.toFixed(3)} долей`);
         if (meter && meter !== '4/4') {
@@ -150,18 +157,25 @@ test('табы: стандартный строй, 6 струн, коррект�
         }
       });
       const box = document.createElement('div');
-      box.innerHTML = G.renderTab(systems, sub, meter);
+      box.innerHTML = G.renderTab(systems, sub, meter, tu);
       const svgs = box.querySelectorAll('svg');
       if (svgs.length !== systems.length) errs.push(`${where}: систем ${svgs.length}`);
       svgs.forEach(svg => {
         const rows = [...svg.querySelectorAll('text.sl')].map(x => x.textContent).join('');
-        if (rows !== 'eBGDAE') errs.push(`${where}: строки ${rows}`);
+        if (rows !== ROWS.join('')) errs.push(`${where}: строки ${rows}`);
         if (/NaN|undefined|Infinity/.test(svg.outerHTML)) errs.push(`${where}: NaN в SVG`);
       });
     };
     for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => {
       if (v.t) checkSystems(`${id}.v${k}`, v.t, v.sub || ex.sub, v.meter);
-      (v.lv || []).forEach((x, j) => checkSystems(`${id}.v${k}.lv${j + 1}`, x.t, x.sub || v.sub || ex.sub, x.meter || v.meter));
+      (v.lv || []).forEach((x, j) => {
+        const where = `${id}.v${k}.lv${j + 1}`, sub = x.sub || v.sub || ex.sub, meter = x.meter || v.meter;
+        checkSystems(where, x.t, sub, meter);
+        // бас: t5 — с низкой B, t6 — с высокой C; иначе версия не нужна
+        if (!bass && (x.t5 || x.t6)) errs.push(`${where}: t5/t6 у гитары`);
+        if (x.t5) { checkSystems(where + ' t5', x.t5, sub, meter, 'bass5'); if (!/(^|[\s+])B/.test(x.t5.join(' '))) errs.push(`${where}: t5 без струны B`); }
+        if (x.t6) { checkSystems(where + ' t6', x.t6, sub, meter, 'bass6'); if (!/(^|[\s+])C/.test(x.t6.join(' '))) errs.push(`${where}: t6 без струны C`); }
+      });
     });
     G.TESTS.forEach(t => checkSystems(t.id, t.t, t.sub));
     // gen-упражнения зависят от дня и лада: проходим все 6 ладов и все перестановки
@@ -177,6 +191,8 @@ test('табы: стандартный строй, 6 струн, коррект�
   });
   expect(errs).toEqual([]);
 });
+
+}
 
 test('ритм: разбор длительностей и деления', async ({ page }) => {
   await openApp(page, 'ru');
@@ -213,8 +229,9 @@ test('плеер: кнопка запускает и останавливает,
   expect(errors).toEqual([]);
 });
 
-test('EN: данные без кириллицы', async ({ page }) => {
-  await openApp(page, 'en');
+for (const inst of INSTS) {
+test(`${inst}: EN: данные без кириллицы`, async ({ page }) => {
+  await openApp(page, H(inst, 'en'));
   const errs = await page.evaluate(() => {
     const G = window.__grif, errs = [], CYR = /[Ѐ-ӿ]/;
     const chk = (where, s) => { if (s != null && CYR.test(String(s))) errs.push(`${where}: ${s}`); };
@@ -224,7 +241,7 @@ test('EN: данные без кириллицы', async ({ page }) => {
         const { segs, d } = G.buildSession(i, T);
         segs.forEach(s => {
           if (!s.id || s.id === 'TESTS') return;
-          for (const f of ['name', 'goal', 'how', 'tip']) chk(`${s.id}.${f}`, G.X(s.id, f));
+          for (const f of ['name', 'goal', 'how', 'tip', 'hf', 'hp']) chk(`${s.id}.${f}`, G.X(s.id, f));
           (G.X(s.id, 'lvl') || []).forEach((x, j) => chk(`${s.id}.lvl${j + 1}`, x));
           const r = G.resolveEx(s, d);
           if (r && r.v) { chk(`${s.id} day ${i} label`, r.v.l); chk(`${s.id} day ${i} note`, r.v.note); }
@@ -236,6 +253,8 @@ test('EN: данные без кириллицы', async ({ page }) => {
   });
   expect(errs).toEqual([]);
 });
+
+}
 
 test('EN: план 5 часов прокликан по дням цикла без кириллицы', async ({ page }) => {
   test.setTimeout(300000);
