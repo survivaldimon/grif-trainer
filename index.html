@@ -889,26 +889,161 @@ R37:{n:37,name:'Тремоло-мелодия',goal:'Мелодия поверх
   {l:'Фригийский, 9 лад',lv:[{t:[J(R('D9',4),R('D10',4),R('D12',4),R('D10',4),'|',R('D9',4),R('D7',4),R('D9',8))]},{t:[J(R('D9',4),R('D10',4),R('G9',4),R('G10',4),'|',R('G12',4),R('G10',4),R('G9',4),R('D10',4))]},{t:[J(R('D9',2),R('D10',2),R('G9',2),R('G10',2),R('G9',2),R('D10',2),R('D9',2),R('D7',2),'|',R('D9',2),R('G9',2),R('G10',2),R('G12',2),R('G10',4),R('G9',4))]},{t:[J(R('D9',4),R('D10',2),R('D12',2),R('D12+G12',4),R('D14+G14',4),'|',R('G17',2),R('G16',2),R('G14',2),R('G12',2),R('D10+G10',4),R('D9+G9',4))]}]}]},
 
 /* ---- арпеджио ---- */
-A16:{n:16,name:'Свип на 3 струнах',goal:'Чистое разделение нот в свипе.',how:'Секстоли: одна нота на щелчок деления. Вверх — одно движение вниз через струны, вниз — одно движение вверх. Верхние ноты — хаммер и пулл-офф.',tip:'Палец снимается с лада сразу после ноты. Если звучит аккорд, это ещё не свип.',sub:6,v:[
-  {l:'Am',t:[J('G14 B13 e12 eh17 ep12 B13','|','G14 B13 e12 eh17 ep12 B13')]},
-  {l:'Am – F – G – Em',t:[J('G14 B13 e12 eh17 ep12 B13','|','G10 B10 e8 eh13 ep8 B10'),J('G12 B12 e10 eh15 ep10 B12','|','G9 B8 e7 eh12 ep7 B8')]},
-  {l:'Am – E',t:[J('G14 B13 e12 eh17 ep12 B13','|','G13 B12 e12 eh16 ep12 B12')]}]},
-A17:{n:17,name:'Свип на 5–6 струнах',goal:'Длинный свип одним движением.',how:'12 нот = две секстоли. Играй по кругу без остановки.',tip:'Ребро правой ладони идёт за медиатором и глушит пройденные басовые струны.',sub:6,v:[
-  {l:'Am, 5 струн',t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15')],note:'В начале следующего круга сними 15 лад пулл-оффом на 12.'},
-  {l:'Dm, 5 струн',t:[J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 Ah8')],note:'В начале следующего круга сними 8 лад пулл-оффом на 5.'},
-  {l:'Am, 6 струн',t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7')],note:'На 5 ладу три струны подряд — перекат одним пальцем.'}]},
-A18:{n:18,name:'Уменьшённые и m7b5',goal:'Неоклассические арпеджио жанра.',how:'Уменьшённый септаккорд симметричен: та же форма повторяется каждые 3 лада.',tip:'Сначала сыграй форму аккордом и послушай. Потом свип, медленно, по одной ноте.',sub:4,v:[
-  {l:'dim7 вверх по малым терциям',t:[J('G7 B6 e4 eh7','|','G10 B9 e7 eh10','|','G13 B12 e10 eh13')]},
-  {l:'Bm7b5 – E – Am',sub:6,t:[J('G16 B15 e13 eh17 ep13 B15','|','G13 B12 e12 eh16 ep12 B12','|','G14 B13 e12 eh17 ep12 B13')]},
-  {l:'dim7 на 4 струнах',t:[J('D12 G10 B9 e7 eh10 ep7 B9 G10','|','D15 G13 B12 e10 eh13 ep10 B12 G13')]}]},
-A19:{n:19,name:'Свип с теппингом и легато',goal:'Расширить арпеджио за пределы позиции.',how:'t — тэп пальцем правой руки, h — хаммер, p — пулл-офф. Медиатор зажат, тэп средним пальцем.',tip:'Стык свипа и тэпа — слабое место. Гоняй его отдельно: последняя нота свипа, тэп, пулл-офф.',sub:6,v:[
-  {l:'Am, 5 струн',t:[J('A12 Ah15 D14 G14 B13 e12 et17 ep12 B13 G14 D14 A15')]},
-  {l:'Am7, 3 струны',sub:4,t:[J('G14 B13 e12 eh15 et20 ep15 ep12 B13')]},
-  {l:'Dm, 5 струн',t:[J('A5 Ah8 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A8')]}]},
-A20:{n:20,name:'Перекат пальца',goal:'Ноты одного лада на соседних струнах без звона.',how:'Один палец на двух-трёх струнах: перекатывай подушечку так, чтобы звучала только играемая нота.',tip:'Проверь на чистом звуке: аккорд не должен звенеть.',sub:4,v:[
-  {l:'Две струны',t:[R('B12 e12',8)]},
-  {l:'Три струны',t:[R('G12 B12 e12 B12',4)]},
-  {l:'Перекат в свипе',sub:6,t:[J('G12 B12 e10 eh15 ep10 B12','|','G12 B12 e10 eh15 ep10 B12')]}]},
+A16:{n:16,name:'Свип на 3 струнах',goal:'Чистое разделение нот в свипе.',how:'Вверх — одно движение вниз через струны, вниз — одно движение вверх. На первом уровне шестнадцатые без легато, дальше секстоли: одна нота на щелчок деления, верхние ноты — хаммер и пулл-офф.',tip:'Палец снимается с лада сразу после ноты. Если звучит аккорд, это ещё не свип.',sub:6,lvl:['Шестнадцатые без легато','Секстоли, легато наверху','Новая форма на каждой доле','Обращения по всему грифу'],v:[
+  {l:'Am',lv:[
+    {sub:4,t:[R('G14 B13 e12 B13',4)]},
+    {t:[J('G14 B13 e12 eh17 ep12 B13','|','G14 B13 e12 eh17 ep12 B13')]},
+    {t:[R('G9 B10 e8 eh12 ep8 B10 G14 B13 e12 eh17 ep12 B13',2)]},
+    {t:[J('G5 B5 e5 eh8 ep5 B5','G9 B10 e8 eh12 ep8 B10','G14 B13 e12 eh17 ep12 B13','G17 B17 e17 eh20 ep17 B17'),J('G14 B13 e12 eh17 ep12 B13','G9 B10 e8 eh12 ep8 B10','G5 B5 e5 eh8 ep5 B5','G9 B10 e8 eh12 ep8 B10')]}]},
+  {l:'Am – F – G – Em',lv:[
+    {sub:4,t:[J(R('G14 B13 e12 B13',2),R('G10 B10 e8 B10',2)),J(R('G12 B12 e10 B12',2),R('G9 B8 e7 B8',2))]},
+    {t:[J('G14 B13 e12 eh17 ep12 B13','|','G10 B10 e8 eh13 ep8 B10'),J('G12 B12 e10 eh15 ep10 B12','|','G9 B8 e7 eh12 ep7 B8')]},
+    {t:[J('G14 B13 e12 eh17 ep12 B13','G10 B10 e8 eh13 ep8 B10','G12 B12 e10 eh15 ep10 B12','G9 B8 e7 eh12 ep7 B8'),J('G9 B10 e8 eh12 ep8 B10','G5 B6 e5 eh8 ep5 B6','G7 B8 e7 eh10 ep7 B8','G4 B5 e3 eh7 ep3 B5')]},
+    {t:[J('G9 B10 e8 eh12 ep8 B10','G14 B13 e12 eh17 ep12 B13','G5 B6 e5 eh8 ep5 B6','G10 B10 e8 eh13 ep8 B10'),J('G7 B8 e7 eh10 ep7 B8','G12 B12 e10 eh15 ep10 B12','G4 B5 e3 eh7 ep3 B5','G9 B8 e7 eh12 ep7 B8')]}]},
+  {l:'Am – E',lv:[
+    {sub:4,t:[J(R('G14 B13 e12 B13',2),R('G13 B12 e12 B12',2))]},
+    {t:[J('G14 B13 e12 eh17 ep12 B13','|','G13 B12 e12 eh16 ep12 B12')]},
+    {t:[R('G14 B13 e12 eh17 ep12 B13 G13 B12 e12 eh16 ep12 B12',2)]},
+    {t:[J('G5 B5 e5 eh8 ep5 B5','G4 B5 e4 eh7 ep4 B5','G9 B10 e8 eh12 ep8 B10','G9 B9 e7 eh12 ep7 B9'),J('G14 B13 e12 eh17 ep12 B13','G13 B12 e12 eh16 ep12 B12','G17 B17 e17 eh20 ep17 B17','G16 B17 e16 eh19 ep16 B17')]}]},
+  {l:'Em – F, фригийский',lv:[
+    {sub:4,t:[J(R('G9 B8 e7 B8',2),R('G10 B10 e8 B10',2))]},
+    {t:[J(R('G9 B8 e7 eh12 ep7 B8',2),R('G10 B10 e8 eh13 ep8 B10',2))]},
+    {t:[R('G9 B8 e7 eh12 ep7 B8 G10 B10 e8 eh13 ep8 B10',2)]},
+    {t:[J('G4 B5 e3 eh7 ep3 B5','G5 B6 e5 eh8 ep5 B6','G9 B8 e7 eh12 ep7 B8','G10 B10 e8 eh13 ep8 B10'),J('G12 B12 e12 eh15 ep12 B12','G14 B13 e13 eh17 ep13 B13','G9 B8 e7 eh12 ep7 B8','G10 B10 e8 eh13 ep8 B10')]}]},
+  {l:'Dm – Bb – A',lv:[
+    {sub:4,t:[J(R('G7 B6 e5 B6',2),'G10 B11 e10 B11','G6 B5 e5 B5')]},
+    {t:[J(R('G7 B6 e5 eh10 ep5 B6',2),'G10 B11 e10 eh13 ep10 B11','G6 B5 e5 eh9 ep5 B5')]},
+    {t:[J('G7 B6 e5 eh10 ep5 B6','G10 B11 e10 eh13 ep10 B11','G6 B5 e5 eh9 ep5 B5','G7 B6 e5 eh10 ep5 B6')]},
+    {t:[J('G7 B6 e5 eh10 ep5 B6','G10 B11 e10 eh13 ep10 B11','G6 B5 e5 eh9 ep5 B5','G10 B10 e10 eh13 ep10 B10'),J('G14 B15 e13 eh17 ep13 B15','G15 B15 e13 eh18 ep13 B15','G14 B14 e12 eh17 ep12 B14','G7 B6 e5 eh10 ep5 B6')]}]},
+  {l:'Em – C – D – B',lv:[
+    {sub:4,t:[J(R('G9 B8 e7 B8',2),R('G12 B13 e12 B13',2)),J(R('G7 B7 e5 B7',2),R('G8 B7 e7 B7',2))]},
+    {t:[J(R('G9 B8 e7 eh12 ep7 B8',2),R('G12 B13 e12 eh15 ep12 B13',2)),J(R('G7 B7 e5 eh10 ep5 B7',2),R('G8 B7 e7 eh11 ep7 B7',2))]},
+    {t:[J('G9 B8 e7 eh12 ep7 B8','G12 B13 e12 eh15 ep12 B13','G7 B7 e5 eh10 ep5 B7','G8 B7 e7 eh11 ep7 B7')]},
+    {t:[J('G9 B8 e7 eh12 ep7 B8','G12 B13 e12 eh15 ep12 B13','G7 B7 e5 eh10 ep5 B7','G8 B7 e7 eh11 ep7 B7'),J('G12 B12 e12 eh15 ep12 B12','G17 B17 e15 eh20 ep15 B17','G14 B15 e14 eh17 ep14 B15','G16 B16 e14 eh19 ep14 B16')]}]}]},
+A17:{n:17,name:'Свип на 5–6 струнах',goal:'Длинный свип одним движением.',how:'12 нот = две секстоли, на первом уровне — четыре струны шестнадцатыми. Играй по кругу без остановки. Если круг кончается хаммером на басовой струне, следующий начинается пулл-оффом с этой ноты.',tip:'Ребро правой ладони идёт за медиатором и глушит пройденные басовые струны.',sub:6,lvl:['Четыре струны, шестнадцатые','Пять–шесть струн, одна форма','Смена аккорда','Шесть струн и прыжки по позициям'],v:[
+  {l:'Am, 5 струн',lv:[
+    {sub:4,t:[R('D14 G14 B13 e12 eh17 ep12 B13 G14',2)]},
+    {t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15')]},
+    {t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 .','A8 D10 G10 B10 e8 eh13 ep8 B10 G10 D10 A8 .'),J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 .','A7 D9 G9 B9 e7 eh12 ep7 B9 G9 D9 A7 .')]},
+    {t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7','A8 D10 G10 B10 e8 eh13 ep8 B10 G10 D10 A8 Ah12'),J('E10 A12 D12 G10 B10 e10 eh13 ep10 B10 G10 D12 A12','E12 A14 D14 G13 B12 e12 eh16 ep12 B12 G13 D14 A14')]}]},
+  {l:'Dm, 5 струн',lv:[
+    {sub:4,t:[R('D7 G7 B6 e5 eh10 ep5 B6 G7',2)]},
+    {t:[J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 Ah8')]},
+    {t:[J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 .','A13 D15 G15 B15 e13 eh18 ep13 B15 G15 D15 A13 .'),J('A10 D12 G12 B11 e10 eh15 ep10 B11 G12 D12 A10 .','A12 D14 G14 B14 e12 eh17 ep12 B14 G14 D14 A12 .')]},
+    {t:[J('E10 A12 D12 G10 B10 e10 eh13 ep10 B10 G10 D12 A12','E6 A8 D8 G7 B6 e6 eh10 ep6 B6 G7 D8 A8'),J('E3 A5 D5 G3 B3 e3 eh6 ep3 B3 G3 D5 A5','A12 D14 G14 B14 e12 eh17 ep12 B14 G14 D14 A12 Ah16')]}]},
+  {l:'Am, 6 струн',note:'Где три струны на одном ладу — перекат одним пальцем.',lv:[
+    {sub:4,t:[R('D7 G5 B5 e5 eh8 ep5 B5 G5',2)]},
+    {t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7')]},
+    {t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7','E3 A5 D5 G4 B3 e3 eh7 ep3 B3 G4 D5 A5'),J('E1 A3 D3 G2 B1 e1 eh5 ep1 B1 G2 D3 A3','A7 D9 G9 B9 e7 eh12 ep7 B9 G9 D9 A7 .')]},
+    {t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7','A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15'),J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 Ah8','E12 A14 D14 G13 B12 e12 eh16 ep12 B12 G13 D14 A14')]}]},
+  {l:'Ми минор',lv:[
+    {sub:4,t:[R('D14 G12 B12 e12 eh15 ep12 B12 G12',2)]},
+    {t:[R('E12 A14 D14 G12 B12 e12 eh15 ep12 B12 G12 D14 A14',2)]},
+    {t:[J('E12 A14 D14 G12 B12 e12 eh15 ep12 B12 G12 D14 A14','E8 A10 D10 G9 B8 e8 eh12 ep8 B8 G9 D10 A10'),J('E10 A12 D12 G11 B10 e10 eh14 ep10 B10 G11 D12 A12','E7 A9 D9 G8 B7 e7 eh11 ep7 B7 G8 D9 A9')]},
+    {t:[J('E12 A14 D14 G12 B12 e12 eh15 ep12 B12 G12 D14 A14','A15 D17 G17 B17 e15 eh20 ep15 B17 G17 D17 A15 Ah19'),J('E10 A12 D12 G11 B10 e10 eh14 ep10 B10 G11 D12 A12','A14 D16 G16 B16 e14 eh19 ep14 B16 G16 D16 A14 Ah18')]}]},
+  {l:'Соль гармонический минор',lv:[
+    {sub:4,t:[R('D12 G12 B11 e10 eh15 ep10 B11 G12',2)]},
+    {t:[R('A10 D12 G12 B11 e10 eh15 ep10 B11 G12 D12 A10 Ah13',2)]},
+    {t:[J('A10 D12 G12 B11 e10 eh15 ep10 B11 G12 D12 A10 .','A6 D8 G8 B8 e6 eh11 ep6 B8 G8 D8 A6 .'),J('A3 D5 G5 B4 e3 eh8 ep3 B4 G5 D5 A3 .','A5 D7 G7 B7 e5 eh10 ep5 B7 G7 D7 A5 .')]},
+    {t:[J('E3 A5 D5 G3 B3 e3 eh6 ep3 B3 G3 D5 A5','E11 A13 D13 G12 B11 e11 eh15 ep11 B11 G12 D13 A13'),J('E8 A10 D10 G8 B8 e8 eh11 ep8 B8 G8 D10 A10','E10 A12 D12 G11 B10 e10 eh14 ep10 B10 G11 D12 A12')]}]},
+  {l:'Ми фригийский',lv:[
+    {sub:4,t:[R('D9 G9 B8 e7 eh12 ep7 B8 G9',2)]},
+    {t:[R('A7 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A7 Ah10',2)]},
+    {t:[J('A7 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A7 .','A8 D10 G10 B10 e8 eh13 ep8 B10 G10 D10 A8 .'),J('A7 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A7 .','A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 .')]},
+    {t:[J('E12 A14 D14 G12 B12 e12 eh15 ep12 B12 G12 D14 A14','E13 A15 D15 G14 B13 e13 eh17 ep13 B13 G14 D15 A15'),J('A7 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A7 Ah10','A8 D10 G10 B10 e8 eh13 ep8 B10 G10 D10 A8 Ah12')]}]}]},
+A18:{n:18,name:'Уменьшённые и m7b5',goal:'Неоклассические арпеджио жанра.',how:'Уменьшённый септаккорд симметричен: та же форма повторяется каждые 3 лада.',tip:'Сначала сыграй форму аккордом и послушай. Потом свип, медленно, по одной ноте.',sub:4,lvl:['Три–четыре струны без легато','Легато наверху','Длиннее фигура','Новая форма на каждой доле'],v:[
+  {l:'dim7 вверх по малым терциям',lv:[
+    {t:[J('G7 B6 e4 B6','G10 B9 e7 B9','G13 B12 e10 B12','G10 B9 e7 B9')]},
+    {t:[J('G7 B6 e4 eh7','|','G10 B9 e7 eh10','|','G13 B12 e10 eh13')]},
+    {t:[J('D6 G7 B6 e4 eh7 ep4 B6 G7','D9 G10 B9 e7 eh10 ep7 B9 G10'),J('D12 G13 B12 e10 eh13 ep10 B12 G13','D15 G16 B15 e13 eh16 ep13 B15 G16')]},
+    {sub:6,t:[J('D6 G7 B6 e4 B6 G7','D9 G10 B9 e7 B9 G10','D12 G13 B12 e10 B12 G13','D15 G16 B15 e13 B15 G16'),J('D15 G16 B15 e13 B15 G16','D12 G13 B12 e10 B12 G13','D9 G10 B9 e7 B9 G10','D6 G7 B6 e4 B6 G7')]}]},
+  {l:'Bm7b5 – E – Am',sub:6,lv:[
+    {sub:4,t:[J('G16 B15 e13 B15','G13 B12 e12 B12','G14 B13 e12 B13','G13 B12 e12 B12')]},
+    {t:[J('G16 B15 e13 eh17 ep13 B15','|','G13 B12 e12 eh16 ep12 B12','|','G14 B13 e12 eh17 ep12 B13')]},
+    {sub:4,t:[J('D9 G10 B10 e10 eh13 ep10 B10 G10','D9 G9 B9 e7 eh12 ep7 B9 G9'),J('D10 G9 B10 e8 eh12 ep8 B10 G9','D9 G9 B9 e7 eh12 ep7 B9 G9')]},
+    {t:[J('D9 G10 B10 e10 B10 G10','D9 G9 B9 e7 B9 G9','D10 G9 B10 e8 B10 G9','D9 G9 B9 e7 B9 G9'),J('D15 G16 B15 e13 B15 G16','D14 G13 B12 e12 B12 G13','D14 G14 B13 e12 B13 G14','D14 G13 B12 e12 B12 G13')]}]},
+  {l:'dim7 на 4 струнах',lv:[
+    {t:[J('D12 G10 B9 e7 B9 G10 D12 .','D15 G13 B12 e10 B12 G13 D15 .')]},
+    {t:[J('D12 G10 B9 e7 eh10 ep7 B9 G10','|','D15 G13 B12 e10 eh13 ep10 B12 G13')]},
+    {sub:6,t:[J('D9 G7 B6 e4 eh7 eh10 ep7 ep4 B6 G7 D9 Dh12','D12 G10 B9 e7 eh10 eh13 ep10 ep7 B9 G10 D12 Dh15'),J('D15 G13 B12 e10 eh13 eh16 ep13 ep10 B12 G13 D15 Dh18','D12 G10 B9 e7 eh10 eh13 ep10 ep7 B9 G10 D12 Dh15')]},
+    {sub:6,t:[J('D9 G7 B6 e4 B6 G7','D12 G10 B9 e7 B9 G10','D15 G13 B12 e10 B12 G13','D18 G16 B15 e13 B15 G16'),J('D18 G16 B15 e13 B15 G16','D15 G13 B12 e10 B12 G13','D12 G10 B9 e7 B9 G10','D9 G7 B6 e4 B6 G7')]}]},
+  {l:'F#m7b5 – B – Em',sub:6,lv:[
+    {sub:4,t:[J('G11 B10 e8 B10','G8 B7 e7 B7','G9 B8 e7 B8','G9 B8 e7 B8')]},
+    {t:[J('G11 B10 e8 eh12 ep8 B10','G8 B7 e7 eh11 ep7 B7','G9 B8 e7 eh12 ep7 B8','G9 B8 e7 eh12 ep7 B8')]},
+    {sub:4,t:[J('D10 G11 B10 e8 eh12 ep8 B10 G11','D9 G8 B7 e7 eh11 ep7 B7 G8'),J('D9 G9 B8 e7 eh12 ep7 B8 G9','D9 G8 B7 e7 eh11 ep7 B7 G8')]},
+    {t:[J('D10 G11 B10 e8 B10 G11','D9 G8 B7 e7 B7 G8','D9 G9 B8 e7 B8 G9','D9 G8 B7 e7 B7 G8'),J('D16 G14 B13 e12 B13 G14','D13 G11 B12 e11 B12 G11','D14 G12 B12 e12 B12 G12','D13 G11 B12 e11 B12 G11')]}]},
+  {l:'Bdim7 – Cm',sub:6,lv:[
+    {sub:4,t:[J(R('G13 B12 e10 B12',2),R('G12 B13 e11 B13',2))]},
+    {t:[J(R('G13 B12 e10 eh13 ep10 B12',2),R('G12 B13 e11 eh15 ep11 B13',2))]},
+    {sub:4,t:[J('D12 G13 B12 e10 eh13 ep10 B12 G13','D13 G12 B13 e11 eh15 ep11 B13 G12'),J('D9 G10 B9 e7 eh10 ep7 B9 G10','D10 G8 B8 e8 eh11 ep8 B8 G8')]},
+    {t:[J('D9 G10 B9 e7 B9 G10','D12 G13 B12 e10 B12 G13','D15 G16 B15 e13 B15 G16','D13 G12 B13 e11 B13 G12'),J('D15 G16 B15 e13 B15 G16','D12 G13 B12 e10 B12 G13','D9 G10 B9 e7 B9 G10','D10 G8 B8 e8 B8 G8')]}]},
+  {l:'C#dim7 – Dm',sub:6,lv:[
+    {sub:4,t:[J(R('G9 B8 e6 B8',2),R('G7 B6 e5 B6',2))]},
+    {t:[J(R('G9 B8 e6 eh9 ep6 B8',2),R('G7 B6 e5 eh10 ep5 B6',2))]},
+    {sub:4,t:[J('D8 G9 B8 e6 eh9 ep6 B8 G9','D7 G7 B6 e5 eh10 ep5 B6 G7'),J('D11 G12 B11 e9 eh12 ep9 B11 G12','D12 G10 B10 e10 eh13 ep10 B10 G10')]},
+    {t:[J('D5 G6 B5 e3 B5 G6','D8 G9 B8 e6 B8 G9','D11 G12 B11 e9 B11 G12','D12 G10 B10 e10 B10 G10'),J('D14 G15 B14 e12 B14 G15','D11 G12 B11 e9 B11 G12','D8 G9 B8 e6 B8 G9','D7 G7 B6 e5 B6 G7')]}]}]},
+A19:{n:19,name:'Свип с теппингом и легато',goal:'Расширить арпеджио за пределы позиции.',how:'t — тэп пальцем правой руки, h — хаммер, p — пулл-офф. Медиатор зажат, тэп средним пальцем.',tip:'Стык свипа и тэпа — слабое место. Гоняй его отдельно: последняя нота свипа, тэп, пулл-офф.',sub:6,lvl:['Один тэп без легато','Тэп и легато в форме','Смена аккорда','Два тэпа и смена позиций'],v:[
+  {l:'Am, 5 струн',lv:[
+    {t:[R('A12 D14 G14 B13 e12 et17 ep12 B13 G14 D14 A12 .',2)]},
+    {t:[J('A12 Ah15 D14 G14 B13 e12 et17 ep12 B13 G14 D14 A15')]},
+    {t:[J('A12 Ah15 D14 G14 B13 e12 et17 ep12 B13 G14 D14 A15','A8 Ah12 D10 G10 B10 e8 et13 ep8 B10 G10 D10 A12'),J('A5 Ah8 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A8','A7 Ah11 D9 G9 B9 e7 et12 ep7 B9 G9 D9 A11')]},
+    {t:[J('A12 D14 G14 B13 e12 et17 ep12 et20 ep12 B13 G14 D14','A8 D10 G10 B10 e8 et13 ep8 et17 ep8 B10 G10 D10'),J('A5 D7 G7 B6 e5 et10 ep5 et13 ep5 B6 G7 D7','A7 D9 G9 B9 e7 et12 ep7 et16 ep7 B9 G9 D9')]}]},
+  {l:'Am7, 3 струны',sub:4,lv:[
+    {t:[R('G14 B13 e12 et20 ep12 B13 .:2',2)]},
+    {t:[J('G14 B13 e12 eh15 et20 ep15 ep12 B13')]},
+    {t:[J('G14 B13 e12 eh15 et20 ep15 ep12 B13','G10 B10 e8 eh12 et17 ep12 ep8 B10'),J('G7 B6 e5 eh8 et13 ep8 ep5 B6','G13 B12 e10 eh12 et16 ep12 ep10 B12')]},
+    {t:[J('G14 B13 e12 et15 ep12 et20 ep12 B13','G10 B10 e8 et12 ep8 et17 ep8 B10'),J('G7 B6 e5 et8 ep5 et13 ep5 B6','G13 B12 e12 et16 ep12 et22 ep12 B12')]}]},
+  {l:'Dm, 5 струн',lv:[
+    {t:[R('A5 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A5 .',2)]},
+    {t:[J('A5 Ah8 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A8')]},
+    {t:[J('A5 Ah8 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A8','A13 Ah17 D15 G15 B15 e13 et18 ep13 B15 G15 D15 A17'),J('A10 Ah13 D12 G12 B11 e10 et15 ep10 B11 G12 D12 A13','A12 Ah16 D14 G14 B14 e12 et17 ep12 B14 G14 D14 A16')]},
+    {t:[J('A5 D7 G7 B6 e5 et10 ep5 et13 ep5 B6 G7 D7','A13 D15 G15 B15 e13 et18 ep13 et22 ep13 B15 G15 D15'),J('A10 D12 G12 B11 e10 et15 ep10 et18 ep10 B11 G12 D12','A12 D14 G14 B14 e12 et17 ep12 et21 ep12 B14 G14 D14')]}]},
+  {l:'Ми минор, 5 струн',lv:[
+    {t:[R('A7 D9 G9 B8 e7 et12 ep7 B8 G9 D9 A7 .',2)]},
+    {t:[R('A7 Ah10 D9 G9 B8 e7 et12 ep7 B8 G9 D9 A10',2)]},
+    {t:[J('A7 Ah10 D9 G9 B8 e7 et12 ep7 B8 G9 D9 A10','A3 Ah7 D5 G5 B5 e3 et8 ep3 B5 G5 D5 A7'),J('A5 Ah9 D7 G7 B7 e5 et10 ep5 B7 G7 D7 A9','A2 Ah6 D4 G4 B4 e2 et7 ep2 B4 G4 D4 A6')]},
+    {t:[J('A7 D9 G9 B8 e7 et12 ep7 et15 ep7 B8 G9 D9','A3 D5 G5 B5 e3 et8 ep3 et12 ep3 B5 G5 D5'),J('A5 D7 G7 B7 e5 et10 ep5 et14 ep5 B7 G7 D7','A2 D4 G4 B4 e2 et7 ep2 et11 ep2 B4 G4 D4')]}]},
+  {l:'Соль минор, 5 струн',lv:[
+    {t:[R('A10 D12 G12 B11 e10 et15 ep10 B11 G12 D12 A10 .',2)]},
+    {t:[R('A10 Ah13 D12 G12 B11 e10 et15 ep10 B11 G12 D12 A13',2)]},
+    {t:[J('A10 Ah13 D12 G12 B11 e10 et15 ep10 B11 G12 D12 A13','A6 Ah10 D8 G8 B8 e6 et11 ep6 B8 G8 D8 A10'),J('A3 Ah6 D5 G5 B4 e3 et8 ep3 B4 G5 D5 A6','A5 Ah9 D7 G7 B7 e5 et10 ep5 B7 G7 D7 A9')]},
+    {t:[J('A10 D12 G12 B11 e10 et15 ep10 et18 ep10 B11 G12 D12','A6 D8 G8 B8 e6 et11 ep6 et15 ep6 B8 G8 D8'),J('A3 D5 G5 B4 e3 et8 ep3 et11 ep3 B4 G5 D5','A5 D7 G7 B7 e5 et10 ep5 et14 ep5 B7 G7 D7')]}]},
+  {l:'Em7 – Fmaj7, 3 струны',sub:4,lv:[
+    {t:[J('G9 B8 e7 et12 ep7 B8 .:2','G10 B10 e8 et13 ep8 B10 .:2')]},
+    {t:[J('G9 B8 e7 eh10 et15 ep10 ep7 B8','G10 B10 e8 eh12 et17 ep12 ep8 B10')]},
+    {t:[J('G9 B8 e7 eh10 et15 ep10 ep7 B8','G10 B10 e8 eh12 et17 ep12 ep8 B10'),J('G7 B6 e5 eh8 et13 ep8 ep5 B6','G12 B12 e12 eh15 et22 ep15 ep12 B12')]},
+    {t:[J('G9 B8 e7 et12 ep7 et15 ep7 B8','G10 B10 e8 et13 ep8 et17 ep8 B10'),J('G7 B6 e5 et10 ep5 et13 ep5 B6','G12 B12 e12 et15 ep12 et19 ep12 B12')]}]}]},
+A20:{n:20,name:'Перекат пальца',goal:'Ноты одного лада на соседних струнах без звона.',how:'Один палец на двух-трёх струнах: перекатывай подушечку так, чтобы звучала только играемая нота.',tip:'Проверь на чистом звуке: аккорд не должен звенеть.',sub:4,lvl:['С паузой на перекат','Перекат без пауз','Смена лада на каждой доле','Секстоли, легато и смена позиций'],v:[
+  {l:'Две струны',lv:[
+    {t:[R('B12 . e12 .',4)]},
+    {t:[R('B12 e12',8)]},
+    {t:[J(R('B12 e12',2),R('B10 e10',2),R('B8 e8',2),R('B7 e7',2))]},
+    {sub:6,t:[J('B12 e12 eh15 ep12 B12 e12','B10 e10 eh13 ep10 B10 e10','B7 e7 eh10 ep7 B7 e7','B5 e5 eh8 ep5 B5 e5'),J('B5 e5 eh8 ep5 B5 e5','B7 e7 eh10 ep7 B7 e7','B10 e10 eh13 ep10 B10 e10','B12 e12 eh15 ep12 B12 e12')]}]},
+  {l:'Три струны',lv:[
+    {t:[R('G12 B12 e12 B12 G12 .:3',2)]},
+    {t:[R('G12 B12 e12 B12',4)]},
+    {t:[J('G12 B12 e12 B12','G7 B7 e7 B7','G5 B5 e5 B5','G7 B7 e7 B7')]},
+    {sub:6,t:[J('G12 B12 e12 eh15 ep12 B12','G7 B7 e7 eh10 ep7 B7','G5 B5 e5 eh8 ep5 B5','G7 B7 e7 eh10 ep7 B7'),J('G17 B17 e17 eh20 ep17 B17','G12 B12 e12 eh15 ep12 B12','G7 B7 e7 eh10 ep7 B7','G12 B12 e12 eh15 ep12 B12')]}]},
+  {l:'Перекат в свипе',sub:6,lv:[
+    {t:[R('G12 B12 e10 .:3',4)]},
+    {t:[J('G12 B12 e10 eh15 ep10 B12','|','G12 B12 e10 eh15 ep10 B12')]},
+    {t:[J('G12 B12 e10 eh15 ep10 B12','G7 B7 e5 eh10 ep5 B7','G12 B12 e12 eh15 ep12 B12','G17 B17 e15 eh20 ep15 B17')]},
+    {t:[J('A10 D12 G12 B12 e10 eh15 ep10 B12 G12 D12 A10 Ah14','A5 D7 G7 B7 e5 eh10 ep5 B7 G7 D7 A5 Ah9'),J('A7 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A7 Ah10','A3 D5 G5 B5 e3 eh8 ep3 B5 G5 D5 A3 Ah7')]}]},
+  {l:'D и G, фригийский',lv:[
+    {t:[R('D14 . G14 .',4)]},
+    {t:[R('D14 G14 G12 G14',4)]},
+    {t:[J('D14 G14 G12 G14','D12 G12 G10 G12','D10 G10 G9 G10','D12 G12 G10 G12')]},
+    {sub:6,t:[J('D14 G14 Gp12 Gh14 Gp12 D14','D12 G12 Gp10 Gh12 Gp10 D12','D10 G10 Gp9 Gh10 Gp9 D10','D12 G12 Gp10 Gh12 Gp10 D12')]}]},
+  {l:'Три струны, мажор на одном ладу',lv:[
+    {t:[J(R('D10 G10 B10 .',2),R('D9 G9 B9 .',2))]},
+    {t:[J(R('D10 G10 B10 G10',2),R('D9 G9 B9 G9',2))]},
+    {t:[J('D10 G10 B10 G10','D12 G12 B12 G12','D10 G10 B10 G10','D9 G9 B9 G9')]},
+    {sub:6,t:[J('D10 G10 B10 Bh13 Bp10 G10','D12 G12 B12 Bh15 Bp12 G12','D10 G10 B10 Bh13 Bp10 G10','D9 G9 B9 Bh12 Bp9 G9'),J('D14 G14 B14 Bh17 Bp14 G14','D12 G12 B12 Bh15 Bp12 G12','D10 G10 B10 Bh13 Bp10 G10','D9 G9 B9 Bh12 Bp9 G9')]}]},
+  {l:'A и D с открытой E',lv:[
+    {t:[R('E0 A7 D7 .',4)]},
+    {t:[R('E0 A7 D7 A7',4)]},
+    {t:[J('E0 A7 D7 A7','E0 A5 D5 A5','E0 A3 D3 A3','E0 A5 D5 A5')]},
+    {sub:6,t:[J('E0 A7 D7 Dh9 Dp7 A7','E0 A10 D10 Dh12 Dp10 A10','E0 A5 D5 Dh7 Dp5 A5','E0 A3 D3 Dh5 Dp3 A3')]}]}]},
 A21:{n:21,name:'Экономный пикинг',goal:'Гамма по 3 ноты на струну экономно.',how:'На новой струне медиатор продолжает движение в ту же сторону. Вверх по гамме: вниз-вверх-вниз, переход на новую струну — снова вниз.',tip:'Это не свип: каждая нота звучит отдельно и ровно.',sub:6,gen:true,lvl:['Три нижние струны','Шесть струн','Пары струн туда и обратно','Секвенция четвёрками']},
 A22:{n:22,name:'Арпеджио альтернейтом',goal:'Широкие интервалы строгим пикингом.',how:'Две ноты на струну с перескоком через струну, строгий альтернейт. Звучит как арпеджио, играется пикингом.',tip:'Перескок — минимальная дуга, медиатор едва поднимается над пропущенной струной.',sub:6,v:[
   {l:'Am',t:[J('A12 A15 G14 G17 e12 e17','|','e17 e12 G17 G14 A15 A12')]},
@@ -1164,11 +1299,11 @@ R13:{name:'Polyrhythm',goal:'Hold a figure over a foreign grid.',how:'Sixteenths
 R14:{name:'Syncopation',goal:'Hits between the beats without shifting the grid.',how:'Sixteenths; in the triplet variant, eighth-note triplets. E chugs palm-muted, chords and notes open with an accent. A dot is a rest: mute the strings exactly there.',tip:'The metronome holds the strong beats and the hits land between them. Do not let them drift onto the beat.',lvl:['Two syncopations per bar','Syncopated riff','Hits held across the beat','Two bars, dense pattern'],v:['Accent on the “a”','Accent on the “and”','Starting from a rest','Accent on the second sixteenth','Triplets: hit on the third','Single notes instead of chords']},
 R15:{name:'Pinch harmonics',goal:'A squeal on the first try.',how:'* is a pinch harmonic: the side of the thumb touches the string right after the pick. Find the spot over the pickup where it rings loudest.',tip:'Add wide vibrato to every harmonic.',lvl:['Long harmonics','Harmonics in quarters and eighths','Vibrato and bends','Harmonics in sixteenths'],v:['One position','Different strings','Inside a riff','E and A strings','High on the neck','Harmonic at the end of a phrase']},
 R37:{name:'Tremolo melody',goal:'A melody over continuous tremolo.',how:'Alternate sixteenths without stopping. A melody note lasts one or two beats and changes exactly on the beat; on level 3 it changes every half beat. On level 4 the hand moves to another position, and the pick catches both notes of each double stop.',tip:'The fretting hand changes notes right between two pick strokes. The picking hand does not notice the change.',lvl:['One string','Two strings','A new note every half beat','Position shifts and double stops'],v:['Phrygian, 7th position',{l:'Phrygian, wide steps',note:'Change notes and strings without a gap in the tremolo.'},'Harmonic minor','Chromatic, low on the neck','Phrygian dominant','Phrygian, 9th position']},
-A16:{name:'Three-string sweep',goal:'Clear note separation in a sweep.',how:'Sextuplets: one note per subdivision click. Going up is one downward motion across the strings, going down is one upward motion. Top notes are hammer-on and pull-off.',tip:'Lift each finger right after its note. If it rings like a chord, it is not a sweep yet.',v:['Am','Am – F – G – Em','Am – E']},
-A17:{name:'5–6 string sweep',goal:'A long sweep in one motion.',how:'12 notes = two sextuplets. Loop it without stopping.',tip:'The edge of the picking hand follows the pick and mutes the bass strings behind it.',v:[{l:'Am, 5 strings',note:'At the start of the next loop, pull off from fret 15 to 12.'},{l:'Dm, 5 strings',note:'At the start of the next loop, pull off from fret 8 to 5.'},{l:'Am, 6 strings',note:'Three adjacent strings at fret 5: roll one finger.'}]},
-A18:{name:'Diminished and m7b5',goal:'The neoclassical arpeggios of the genre.',how:'The diminished seventh is symmetrical: the same shape repeats every 3 frets.',tip:'Play the shape as a chord first and listen. Then sweep it slowly, one note at a time.',v:['dim7 up in minor thirds','Bm7b5 – E – Am','dim7 on 4 strings']},
-A19:{name:'Sweep with tapping and legato',goal:'Extend the arpeggio beyond one position.',how:'t is a picking-hand tap, h a hammer-on, p a pull-off. Keep the pick in your hand and tap with the middle finger.',tip:'The joint between sweep and tap is the weak spot. Drill it on its own: last sweep note, tap, pull-off.',v:['Am, 5 strings','Am7, 3 strings','Dm, 5 strings']},
-A20:{name:'Finger roll',goal:'Same-fret notes on adjacent strings without ringing.',how:'One finger covers two or three strings: roll the fingertip so only the played note sounds.',tip:'Check on a clean tone: it must not ring like a chord.',v:['Two strings','Three strings','Roll inside a sweep']},
+A16:{name:'Three-string sweep',goal:'Clear note separation in a sweep.',how:'Going up is one downward motion across the strings, going down is one upward motion. Level 1 is sixteenths without legato; from then on sextuplets: one note per subdivision click, the top notes are a hammer-on and a pull-off.',tip:'Lift each finger right after its note. If it rings like a chord, it is not a sweep yet.',lvl:['Sixteenths without legato','Sextuplets, legato on top','A new shape on every beat','Inversions across the neck'],v:['Am','Am – F – G – Em','Am – E','Em – F, Phrygian','Dm – Bb – A','Em – C – D – B']},
+A17:{name:'5–6 string sweep',goal:'A long sweep in one motion.',how:'12 notes = two sextuplets; on level 1, four strings in sixteenths. Loop it without stopping. If a loop ends with a hammer-on on a bass string, the next one starts with a pull-off from that note.',tip:'The edge of the picking hand follows the pick and mutes the bass strings behind it.',lvl:['Four strings, sixteenths','Five or six strings, one shape','Chord changes','Six strings and position jumps'],v:['Am, 5 strings','Dm, 5 strings',{l:'Am, 6 strings',note:'Where three strings share a fret, roll one finger.'},'E minor','G harmonic minor','E Phrygian']},
+A18:{name:'Diminished and m7b5',goal:'The neoclassical arpeggios of the genre.',how:'The diminished seventh is symmetrical: the same shape repeats every 3 frets.',tip:'Play the shape as a chord first and listen. Then sweep it slowly, one note at a time.',lvl:['Three or four strings, no legato','Legato on top','A longer figure','A new shape on every beat'],v:['dim7 up in minor thirds','Bm7b5 – E – Am','dim7 on 4 strings','F#m7b5 – B – Em','Bdim7 – Cm','C#dim7 – Dm']},
+A19:{name:'Sweep with tapping and legato',goal:'Extend the arpeggio beyond one position.',how:'t is a picking-hand tap, h a hammer-on, p a pull-off. Keep the pick in your hand and tap with the middle finger.',tip:'The joint between sweep and tap is the weak spot. Drill it on its own: last sweep note, tap, pull-off.',lvl:['One tap, no legato','Tap and legato in the shape','Chord changes','Two taps and position shifts'],v:['Am, 5 strings','Am7, 3 strings','Dm, 5 strings','E minor, 5 strings','G minor, 5 strings','Em7 – Fmaj7, 3 strings']},
+A20:{name:'Finger roll',goal:'Same-fret notes on adjacent strings without ringing.',how:'One finger covers two or three strings: roll the fingertip so only the played note sounds.',tip:'Check on a clean tone: it must not ring like a chord.',lvl:['A rest for the roll','Rolling without rests','A new fret on every beat','Sextuplets, legato and position shifts'],v:['Two strings','Three strings','Roll inside a sweep','D and G, Phrygian','Three strings, a major chord on one fret','A and D over the open E']},
 A21:{name:'Economy picking',goal:'A three-note-per-string scale, economy style.',how:'On a new string the pick keeps moving in the same direction. Going up the scale: down-up-down, and the move to the next string is another down.',tip:'This is not a sweep: every note sounds separately and evenly.',lvl:['Three low strings','Six strings','String pairs up and back','Sequence in fours']},
 A22:{name:'Arpeggios with alternate picking',goal:'Wide intervals with strict picking.',how:'Two notes per string, skipping a string, strict alternate picking. It sounds like an arpeggio but is played as a picking line.',tip:'Skip with the smallest arc: the pick barely clears the skipped string.',v:['Am','Em','Dm']},
 A23:{name:'Hybrid picking',goal:'Pick and fingers together.',how:'Lowest note with the pick, upper notes with the middle and ring fingers. The hand position does not change.',tip:'Pluck with the fingertip pad. Fingers and pick equally loud.',v:['Am','Am across strings','Em with open string']},
