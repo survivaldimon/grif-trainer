@@ -232,6 +232,14 @@ test('EN: данные без кириллицы', async ({ page }) => {
       }
     }
     G.TESTS.forEach(t => t.en.forEach(x => chk(t.id, x)));
+    // любой вариант на любом уровне можно выбрать вручную: подписи и note всех сочетаний
+    const d0 = G.dayInfo(0);
+    for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => {
+      for (let lv = 1; lv <= Math.max(1, (ex.lvl || []).length); lv++) {
+        const r = G.resolveEx({ id, pick: k }, d0, lv);
+        chk(`${id}.v${k}.lv${lv} label`, r.v.l); chk(`${id}.v${k}.lv${lv} note`, r.v.note);
+      }
+    });
     return [...new Set(errs)].slice(0, 30);
   });
   expect(errs).toEqual([]);

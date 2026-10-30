@@ -83,6 +83,9 @@ test('тренер: указания упражнений и неделя ско
       speed: sets(14, { kind: 'focus', id: 'R8', min: 8 }).map(x => x.burst),
       maint: sets(14, { kind: 'maint', id: 'R8', min: 4 }).map(x => x.burst),
       l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub),
+      // вариант, выбранный вручную, тянет свои указания COACH: B2 вариант 1 в день с вариантом дня 0
+      b2pick: sets(0, { kind: 'base', id: 'B2', pick: 1, min: 6 }).map(x => x.tag.length),
+      b2day: sets(0, { kind: 'base', id: 'B2', min: 6 }).map(x => x.tag.length),
       // этюд 3: первый фрагмент в 7/8, пульс — восьмая; на уровне 2 фрагмент восьмыми (/2) → без деления, на уровне 3 шестнадцатыми → деление 2
       c36: [2, 3].map(lv => [...new Set(G.coachPlan({ kind: 'combo', id: 'C36', variant: 2, min: 20 }, G.dayInfo(0), lv).filter(x => x.type === 'set' && x.meter === '7/8').map(x => x.sub))])
     };
@@ -91,6 +94,8 @@ test('тренер: указания упражнений и неделя ско
   expect(r.speed.slice(0, 5)).toEqual([1, 2, 4, 0, 1]);
   expect(r.maint.every(b => b === 0)).toBe(true);
   expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
+  expect(r.b2pick.every(n => n > 0)).toBe(true);
+  expect(r.b2day.every(n => n === 0)).toBe(true);
   expect(r.c36).toEqual([[1], [2]]);
 });
 
@@ -156,6 +161,49 @@ test('уровень: переключение на подходе не сбив
   await page.waitForFunction(() => !!window.__grif);
   expect(await page.evaluate(id => window.__grif.getLvl(id), ID)).toBe(3);
   expect(await page.evaluate(() => window.__grif.getLvl('A21'))).toBe(2);
+  expect(errors).toEqual([]);
+});
+
+test('вариант: ручной выбор на подходе не сбивает таймер и тренера, план и вариант дня не меняются', async ({ page }) => {
+  const errors = await openApp(page, 'en');
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.kind === 'focus'));
+  await page.locator('#planList li').nth(k).click();
+  const plan0 = await page.locator('#planList').innerText();
+  const day = await page.evaluate(() => { const G = window.__grif, s = G.st.plan.segs[G.st.cur]; return G.EX[s.id].v.length && (G.st.plan.d.pool % G.EX[s.id].v.length); });
+  await expect(page.locator('.lvlb button[data-var][aria-pressed="true"]')).toHaveText(String(day + 1)); // по умолчанию вариант дня
+  await expect(page.locator('.lvlb button[data-var].day')).toHaveText(String(day + 1));
+  await page.click('#playBtn');
+  await page.click('#coSkip'); // подготовка → подход 1
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
+  const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
+  const pick = (day + 3) % 6;
+  await page.click(`.lvlb button[data-var="${pick}"]`);
+  await expect(page.locator('.lvlb button[data-var][aria-pressed="true"]')).toHaveText(String(pick + 1));
+  await expect(page.locator('.lvlb button[data-var].day')).toHaveText(String(day + 1));
+  expect(await page.locator('#nowBody .tabbox').innerHTML()).not.toBe(tab0);
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur, running: G.st.running, ls: Object.keys(localStorage).filter(k => k.startsWith('grif.')) }; });
+  expect(after.cur).toBe(before.cur);
+  expect(after.idx).toBe(before.idx);
+  expect(after.secs).toEqual(before.secs);
+  expect(after.running).toBe(true);
+  expect(before.remain - after.remain).toBeGreaterThan(0);
+  expect(before.remain - after.remain).toBeLessThan(10);
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  expect(await page.locator('#planList').innerText()).toBe(plan0); // план дня не меняется
+  expect(after.ls.some(k => /var|pick/.test(k))).toBe(false); // выбор не запоминается
+  // вернуть вариант дня — снова как было
+  await page.click(`.lvlb button[data-var="${day}"]`);
+  expect(await page.locator('#nowBody .tabbox').innerHTML()).toBe(tab0);
+  // смена дня сбрасывает выбор
+  await page.click(`.lvlb button[data-var="${pick}"]`);
+  await page.click('#nextDay'); await page.click('#prevDay');
+  await page.locator('#planList li').nth(k).click();
+  await expect(page.locator('.lvlb button[data-var][aria-pressed="true"]')).toHaveText(String(day + 1));
   expect(errors).toEqual([]);
 });
 
