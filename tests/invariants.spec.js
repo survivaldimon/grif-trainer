@@ -79,42 +79,103 @@ test('EXEN покрывает EX', async ({ page }) => {
   expect(errs).toEqual([]);
 });
 
-test('табы: стандартный строй, 6 струн, корректные токены', async ({ page }) => {
+test('табы: стандартный строй, 6 струн, корректные токены и ритм', async ({ page }) => {
   await openApp(page, 'ru');
   const errs = await page.evaluate(() => {
     const G = window.__grif, errs = [];
-    const PART = /^([eBGDAE])[hpt]?(\d{1,2})(b\d{1,2}(r\d{1,2})?)?[~*]?$/;
-    const checkSystems = (where, systems) => {
+    // формат токена — см. CLAUDE.md; дублируем регэкспы здесь, чтобы тест ловил и изменения парсера
+    const TOK = /^(\.|[^:]+?)(m?)(?::([1-9]\d*))?$/;
+    const PART = /^([eBGDAE])[hpt]?(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?\*?~?$/;
+    const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
+    const checkSystems = (where, systems, sub, meter) => {
       systems.forEach(sys => sys.trim().split(/\s+/).forEach(tok => {
-        if (tok === '.' || tok === '|') return;
+        if (tok === '|' || /^\/[1-8]$/.test(tok)) return;
+        const t = tok.match(TOK);
+        if (!t || (t[1] === '.' && t[2])) { errs.push(`${where}: токен ${tok}`); return; }
+        if (t[1] === '.') return;
         const strs = new Set();
-        tok.split('+').forEach(p => {
+        t[1].split('+').forEach(p => {
           const m = p.match(PART);
           if (!m) { errs.push(`${where}: токен ${tok}`); return; }
           if (strs.has(m[1])) errs.push(`${where}: струна дважды в ${tok}`);
           strs.add(m[1]);
-          if (+m[2] > 24) errs.push(`${where}: лад ${m[2]}`);
+          [m[2], m[3], m[4]].forEach(f => { if (f != null && +f > 24) errs.push(`${where}: лад ${f}`); });
+          if (m[3] != null && !(+m[3] > +m[2])) errs.push(`${where}: бенд вниз в ${tok}`);
+          if (m[4] != null && !(+m[4] < +m[3])) errs.push(`${where}: возврат вверх в ${tok}`);
         });
       }));
-      G.renderTab(systems).split('\n\n').forEach(block => {
-        const rows = block.split('\n').map(r => r[0]).join('');
+      // ритм: система — целое число долей; в нечётном размере каждый такт = числителю
+      const pulses = +String(meter || '4/4').split('/')[0];
+      G.parseTab(systems, sub).forEach((s, si) => {
+        s.errs.forEach(e => errs.push(`${where} s${si}: ${e}`));
+        if (!whole(s.len)) errs.push(`${where} s${si}: длина ${s.len.toFixed(3)} долей`);
+        if (meter && meter !== '4/4') {
+          let from = 0;
+          s.items.filter(it => it.bar).map(it => it.pos).concat(s.len).forEach(pos => {
+            if (Math.abs(pos - from - pulses) > 1e-6) errs.push(`${where} s${si}: такт ${(pos - from).toFixed(2)} в ${meter}`);
+            from = pos;
+          });
+        }
+      });
+      const box = document.createElement('div');
+      box.innerHTML = G.renderTab(systems, sub, meter);
+      const svgs = box.querySelectorAll('svg');
+      if (svgs.length !== systems.length) errs.push(`${where}: систем ${svgs.length}`);
+      svgs.forEach(svg => {
+        const rows = [...svg.querySelectorAll('text.sl')].map(x => x.textContent).join('');
         if (rows !== 'eBGDAE') errs.push(`${where}: строки ${rows}`);
+        if (/NaN|undefined|Infinity/.test(svg.outerHTML)) errs.push(`${where}: NaN в SVG`);
       });
     };
-    for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => checkSystems(`${id}.v${k}`, v.t));
-    G.TESTS.forEach(t => checkSystems(t.id, t.t));
+    for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => checkSystems(`${id}.v${k}`, v.t, v.sub || ex.sub, v.meter));
+    G.TESTS.forEach(t => checkSystems(t.id, t.t, t.sub));
     // gen-упражнения зависят от дня и лада: проходим все 6 ладов и все перестановки
     for (let i = -7; i <= 168; i++) {
       const d = G.dayInfo(i);
       for (const id of ['B4', 'A21', 'L24', 'L28']) {
         const r = G.resolveEx({ id }, d);
         if (!r || !r.v) { errs.push(`${id} day ${i}: нет варианта`); continue; }
-        checkSystems(`${id} day ${i}`, r.v.t);
+        checkSystems(`${id} day ${i}`, r.v.t, r.sub, r.meter);
       }
     }
     return errs.slice(0, 30);
   });
   expect(errs).toEqual([]);
+});
+
+test('ритм: разбор длительностей и деления', async ({ page }) => {
+  await openApp(page, 'ru');
+  const res = await page.evaluate(() => {
+    const P = (s, sub) => window.__grif.parseTab([s], sub)[0];
+    const durs = s => s.items.filter(it => !it.bar).map(it => +it.dur.toFixed(4));
+    return {
+      plain: durs(P('E0 E0 . E0', 4)),
+      galop: durs(P('E0:2 E0 E0', 4)),
+      grid: P('/3 E0 E0 E0 | /5 E0 E0 E0 E0 E0', 1).len,
+      pm: P('A2+E0m:2', 4).items[0],
+      offGrid: P('/3 E0 /4 E0', 1).errs.length,
+      badRest: P('.m', 4).errs.length
+    };
+  });
+  expect(res.plain).toEqual([0.25, 0.25, 0.25, 0.25]);
+  expect(res.galop).toEqual([0.5, 0.25, 0.25]);
+  expect(res.grid).toBeCloseTo(2, 6);
+  expect(res.pm.pm).toBe(true);
+  expect(res.pm.notes.map(n => n.s + n.f)).toEqual(['A2', 'E0']);
+  expect(res.offGrid).toBeGreaterThan(0);
+  expect(res.badRest).toBeGreaterThan(0);
+});
+
+test('плеер: кнопка запускает и останавливает, подсветка идёт', async ({ page }) => {
+  const errors = await openApp(page, 'ru');
+  await page.click('#planList li:nth-child(2)');
+  const btn = page.locator('#nowBody button[data-play]').first();
+  await btn.click();
+  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForFunction(() => !!document.querySelector('#nowBody .tb .on'), null, { timeout: 5000 });
+  await btn.click();
+  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+  expect(errors).toEqual([]);
 });
 
 test('EN: данные без кириллицы', async ({ page }) => {

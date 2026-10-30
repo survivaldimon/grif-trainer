@@ -112,7 +112,31 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tip{color:var(--muted)}
 .tabbox{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .tabhd{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
-.tabbox pre{margin:0;padding:10px 12px;overflow-x:auto;font-family:var(--f-mono);font-size:13px;line-height:1.35}
+.tabsc{overflow-x:auto;padding:4px 4px 0;display:flex;flex-direction:column;gap:2px;-webkit-overflow-scrolling:touch}
+.tabsc svg{display:block;flex:none}
+.tabft{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:6px 10px;border-top:1px solid var(--line)}
+.tplay{padding:4px 12px;font-size:13px}
+.tplay[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.tloop{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.tb text{font-family:var(--f-mono)}
+.tb .ln{stroke:var(--muted);stroke-opacity:.45}
+.tb .br{stroke:var(--muted);stroke-width:1.2}
+.tb .sl{fill:var(--muted);font-size:10px}
+.tb .nb{fill:var(--surface-2)}
+.tb .nt{fill:var(--fg);font-size:12px;font-weight:600}
+.tb .lt{fill:var(--muted);font-size:9px}
+.tb .an{fill:var(--muted);font-size:9px;font-family:var(--f-body);font-weight:600;letter-spacing:.03em}
+.tb .tq{fill:none;stroke:var(--muted);stroke-width:1.1}
+.tb .dsh{fill:none;stroke:var(--muted);stroke-dasharray:3 2}
+.tb .ah{fill:var(--muted)}
+.tb .stm,.tb .rsl{stroke:var(--fg);stroke-width:1.2;fill:none}
+.tb .bm,.tb .rs{fill:var(--fg)}
+.tb .tu{fill:var(--muted);font-size:10px}
+.tb .hl{fill:var(--accent);opacity:0}
+.tb .hl.on{opacity:.14}
+.tb .ev.on .nb{fill:var(--accent)}
+.tb .ev.on .nt{fill:var(--accent-ink)}
+.tb .ev.on .rs{fill:var(--accent)}
 .legend{font-size:12px;color:var(--muted)}
 
 .tests{display:flex;flex-direction:column;gap:12px}
@@ -291,6 +315,8 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rot=(a,k)=>{const n=a.length;if(!n)return[];k=mod(k,n);return a.slice(k).concat(a.slice(0,k));};
 const R=(t,n)=>Array(n).fill(t).join(' ');
 const J=(...a)=>a.join(' ');
+// полиритмия: фигура шестнадцатыми по кругу до совпадения с тактом 4/4, одна система на такт
+const poly=fig=>{const f=fig.split(' '),out=[];for(let k=0;k<f.length*16;k++)out.push(f[k%f.length]);const sys=[];for(let k=0;k<out.length;k+=16)sys.push(out.slice(k,k+16).join(' '));return sys;};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const pickIdx=(r,n)=>Math.floor(r()*n);
@@ -327,19 +353,122 @@ const MONTHS={ru:['января','февраля','марта','апреля','�
 function dateText(d){const w=DOWN[LANG][mod(d.getDay()-1,7)];return LANG==='en'?w+', '+MONTHS.en[d.getMonth()]+' '+d.getDate():w+', '+d.getDate()+' '+MONTHS.ru[d.getMonth()];}
 
 /* ================= таб ================= */
+/* Токен: части через «+» (струна, h|p|t, лад, bЛАД, rЛАД, *, ~), затем m (палм-мьют) и :k (длина в шагах).
+   Шаг = доля / деление; деление = sub варианта, токен «/n» меняет его до конца системы. «.» — пауза, «|» — тактовая черта. */
 const STR=['e','B','G','D','A','E'];
-function renderSystem(src){
-  const lines={};STR.forEach(s=>lines[s]=s+'|-');
+const TAB_PART=/^([eBGDAE])([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)$/;
+const TAB_TOK=/^(.+?)(m?)(?::(\d+))?$/;
+const EPS=1e-6;
+const isInt=x=>Math.abs(x-Math.round(x))<EPS;
+function parseSystem(src,sub){
+  const items=[],errs=[];let n=sub||1,pos=0;
   src.trim().split(/\s+/).forEach(tok=>{
-    if(tok==='|'){STR.forEach(s=>lines[s]+='|-');return;}
-    const cell={};
-    if(tok!=='.'){tok.split('+').forEach(p=>{cell[p[0]]=p.slice(1);});}
-    const w=Math.max(1,...Object.values(cell).map(v=>v.length));
-    STR.forEach(s=>{lines[s]+=(cell[s]||'').padEnd(w,'-')+'-';});
+    if(tok==='|'){items.push({bar:true,pos});return;}
+    let m=tok.match(/^\/(\d+)$/);
+    if(m){n=+m[1];if(n<1||n>8)errs.push('деление '+tok);if(!isInt(pos*n))errs.push(tok+' не на сетке');return;}
+    m=tok.match(TAB_TOK);
+    const k=m&&m[3]?+m[3]:1,rest=!!m&&m[1]==='.';
+    if(!m||k<1||(rest&&m[2])){errs.push('токен '+tok);return;}
+    const notes=rest?[]:m[1].split('+').map(p=>{
+      const q=p.match(TAB_PART);if(!q){errs.push('токен '+tok);return null;}
+      return {s:q[1],tech:q[2],f:+q[3],b:q[4]!=null?+q[4]:null,r:q[5]!=null?+q[5]:null,ph:!!q[6],vib:!!q[7]};
+    }).filter(Boolean);
+    items.push({pos,dur:k/n,k,n,rest,pm:!!m[2],notes});pos+=k/n;
   });
-  return STR.map(s=>lines[s]+'|').join('\n');
+  return {items,len:pos,errs};
 }
-const renderTab=systems=>systems.map(renderSystem).join('\n\n');
+const parseTab=(systems,sub)=>systems.map(s=>parseSystem(s,sub));
+const tabDen=meter=>+String(meter||'4/4').split('/')[1]||4;
+const isP2=x=>x>0&&isInt(Math.log2(x));
+// длительность → вид в нотах: lb (0 целая, 1 половинная, 2 четверть, 3 восьмая…), вязки, точка
+function noteVal(k,n,den){
+  const w=k/(den*Math.pow(2,Math.floor(Math.log2(n))));
+  let base=w,dot=false;
+  if(!isP2(w)){if(isP2(w*2/3)){base=w*2/3;dot=true;}else base=Math.pow(2,Math.floor(Math.log2(w)));}
+  const lb=Math.round(-Math.log2(base));
+  return {lb,beams:Math.max(0,lb-2),dot};
+}
+// группа вязки: доля в x/4, группа размера (2+2+3…) в x/8
+function beamKey(pos,meter){
+  const g=METERS[meter];
+  if(tabDen(meter)===8&&g){const bar=g.reduce((a,b)=>a+b,0);const b=Math.floor(pos/bar+EPS);let p=pos-b*bar,k=0;while(k<g.length-1&&p>=g[k]-EPS){p-=g[k];k++;}return b*100+k;}
+  return Math.floor(pos+EPS);
+}
+const BEND_TXT={1:'½',2:'full',3:'1½',4:'2'};
+function renderSystem(sys,meter,si){
+  const LG=13,TOP=32,X0=24,SB=TOP+5*LG,S2=SB+26,H=S2+14,den=tabDen(meter);
+  const yS=s=>TOP+STR.indexOf(s)*LG,f1=v=>Math.round(v*10)/10;
+  let x=X0+6;const cols=[];
+  sys.items.forEach(it=>{
+    if(it.bar){cols.push({bar:true,x:x+3});x+=8;return;}
+    const cw=Math.max(1,...it.notes.map(nt=>String(nt.f).length))*7.4+4;
+    const ex=(it.notes.some(nt=>nt.b!=null)?(it.notes.some(nt=>nt.r!=null)?22:13):0)+(it.notes.some(nt=>nt.vib)?14:0);
+    const w=Math.max(cw+ex+6,34*Math.pow(it.dur*4/den,0.75));
+    cols.push({it,x,w,cw,cx:x+3+cw/2});x+=w;
+  });
+  const W=Math.ceil(x+10);
+  let back='',lines='',body='',ann='',rh='';
+  STR.forEach((s,i)=>{const y=TOP+i*LG;lines+='<line class="ln" x1="'+X0+'" x2="'+(W-4)+'" y1="'+y+'" y2="'+y+'"/><text class="sl" x="'+(X0-10)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+s+'</text>';});
+  [X0,W-4].forEach(bx=>{lines+='<line class="br" x1="'+bx+'" x2="'+bx+'" y1="'+TOP+'" y2="'+SB+'"/>';});
+  const groups=new Map();let prev=null,pm=null;
+  const pmEnd=()=>{if(!pm)return;ann+='<text class="an" x="'+f1(pm.x0)+'" y="10">P.M.</text>';if(pm.x1-pm.x0>34)ann+='<path class="dsh" d="M'+f1(pm.x0+26)+' 7H'+f1(pm.x1)+'V11"/>';pm=null;};
+  cols.forEach((c,ci)=>{
+    if(c.bar){lines+='<line class="br" x1="'+f1(c.x)+'" x2="'+f1(c.x)+'" y1="'+TOP+'" y2="'+SB+'"/>';return;}
+    const it=c.it,id=si+'.'+ci;
+    back+='<rect class="hl ev" data-e="'+id+'" x="'+f1(c.x)+'" y="'+(TOP-9)+'" width="'+f1(c.w)+'" height="'+(S2-TOP+12)+'" rx="4"/>';
+    if(it.pm){if(!pm)pm={x0:c.x+2};pm.x1=c.x+c.w-4;}else pmEnd();
+    let g='';const xr=c.cx+c.cw/2;
+    if(it.rest){
+      const v=noteVal(it.k,it.n,den),y=TOP+2.5*LG,cx=f1(c.cx);
+      if(v.lb<=2)g+='<rect class="rs" x="'+f1(c.cx-5)+'" y="'+(y-3)+'" width="10" height="5" rx="1"/>';
+      else{g+='<path class="rsl" d="M'+f1(c.cx+3)+' '+(y-6)+'L'+f1(c.cx-1)+' '+(y+6)+'"/>';for(let k=0;k<Math.min(3,v.lb-2);k++)g+='<circle class="rs" cx="'+f1(c.cx-1-k)+'" cy="'+(y-4+k*4)+'" r="1.8"/>';}
+    }
+    it.notes.forEach(nt=>{
+      const y=yS(nt.s);
+      g+='<rect class="nb" x="'+f1(c.cx-c.cw/2)+'" y="'+(y-7)+'" width="'+f1(c.cw)+'" height="14" rx="3"/><text class="nt" x="'+f1(c.cx)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+nt.f+'</text>';
+      if(nt.tech==='h'||nt.tech==='p'){
+        const p=prev&&prev.it.notes.some(q=>q.s===nt.s)?prev:null,mx=p?(p.cx+c.cx)/2:c.cx-c.cw/2-3;
+        if(p)body+='<path class="tq" d="M'+f1(p.cx+4)+' '+(y-6)+'Q'+f1(mx)+' '+(y-14)+' '+f1(c.cx-4)+' '+(y-6)+'"/>';
+        body+='<text class="lt" x="'+f1(mx)+'" y="'+(y-12)+'" text-anchor="middle">'+nt.tech+'</text>';
+      }
+      if(nt.tech==='t')ann+='<text class="an" x="'+f1(c.cx)+'" y="10" text-anchor="middle">T</text>';
+      if(nt.ph)ann+='<text class="an" x="'+f1(c.cx)+'" y="10" text-anchor="middle">P.H.</text>';
+      if(nt.b!=null){
+        const top=TOP-12,bx=xr+8;
+        body+='<path class="tq" d="M'+f1(xr+1)+' '+(y-1)+'Q'+f1(bx)+' '+(y-1)+' '+f1(bx)+' '+(top+3)+'"/><path class="ah" d="M'+f1(bx-3)+' '+(top+4)+'L'+f1(bx)+' '+top+'L'+f1(bx+3)+' '+(top+4)+'Z"/>';
+        body+='<text class="an" x="'+f1(bx)+'" y="'+(top-3)+'" text-anchor="middle">'+(BEND_TXT[nt.b-nt.f]||(nt.b-nt.f)/2)+'</text>';
+        if(nt.r!=null){const rx=bx+10;body+='<path class="tq dsh" d="M'+f1(bx+3)+' '+top+'Q'+f1(rx)+' '+top+' '+f1(rx)+' '+(y-5)+'"/><path class="ah" d="M'+f1(rx-3)+' '+(y-6)+'L'+f1(rx)+' '+(y-2)+'L'+f1(rx+3)+' '+(y-6)+'Z"/>';if(nt.r!==nt.f)body+='<text class="an" x="'+f1(rx+4)+'" y="'+(y+3)+'">('+nt.r+')</text>';}
+      }
+      if(nt.vib){
+        const x1=c.x+c.w-4,x0=Math.max(xr+3,x1-34);let d='M'+f1(x0)+' '+(y-9);
+        for(let vx=x0,k=0;vx+3<=x1;vx+=3,k++)d+='L'+f1(vx+3)+' '+(y-9+(k%2?-2.5:2.5));
+        body+='<path class="tq" d="'+d+'"/>';
+      }
+    });
+    body+='<g class="ev" data-e="'+id+'">'+g+'</g>';
+    if(!it.rest){
+      const v=noteVal(it.k,it.n,den),cx=f1(c.cx);
+      if(v.lb>=1)rh+='<line class="stm" x1="'+cx+'" x2="'+cx+'" y1="'+(v.lb===1?SB+14:SB+6)+'" y2="'+S2+'"/>';
+      if(v.dot)rh+='<circle class="bm" cx="'+f1(c.cx+4)+'" cy="'+(S2-6)+'" r="1.4"/>';
+    }
+    const key=beamKey(it.pos,meter);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(c);
+    prev=it.rest?null:c;
+  });
+  pmEnd();
+  groups.forEach(gr=>{
+    const st=gr.filter(c=>!c.it.rest).map(c=>({c,b:noteVal(c.it.k,c.it.n,den).beams})).filter(o=>o.b>0);
+    if(st.length===1)for(let l=0;l<st[0].b;l++)rh+='<path class="stm" d="M'+f1(st[0].c.cx)+' '+(S2-l*4)+'l6 -6"/>';
+    if(st.length>1)for(let l=0;l<3;l++)st.forEach((o,k)=>{
+      if(o.b<=l)return;const nx=st[k+1],pv=st[k-1];
+      if(nx&&nx.b>l)rh+='<rect class="bm" x="'+f1(o.c.cx-0.5)+'" y="'+(S2-2.5-l*4)+'" width="'+f1(nx.c.cx-o.c.cx+1)+'" height="2.5"/>';
+      else if(!(pv&&pv.b>l)){const dx=nx?6:-6;rh+='<rect class="bm" x="'+f1(Math.min(o.c.cx,o.c.cx+dx))+'" y="'+(S2-2.5-l*4)+'" width="6" height="2.5"/>';}
+    });
+    const tn=gr.find(c=>!isP2(c.it.n));
+    if(tn&&gr.length>1)rh+='<text class="tu" x="'+f1((gr[0].cx+gr[gr.length-1].cx)/2)+'" y="'+(S2+11)+'" text-anchor="middle">'+tn.it.n+'</text>';
+  });
+  return '<svg class="tb" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
+}
+const renderTab=(systems,sub,meter)=>parseTab(systems,sub).map((s,si)=>renderSystem(s,meter||'4/4',si)).join('');
 
 /* ================= лады ================= */
 const OPEN={E:40,A:45,D:50,G:55,B:59,e:64};
@@ -387,7 +516,7 @@ const EX={
 W0:{name:'Разминка',goal:'Разогреть руки и включить слух.',how:'Без гитары минуту: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке медленная хроматика по всем струнам.',tip:'Только мягкие движения. Растяжка до боли на холодные руки вредна.',sub:4,v:[{l:'Хроматика',t:[J('E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8 B5 B6 B7 B8 e5 e6 e7 e8')]}]},
 W1:{name:'Мобилизация без гитары',goal:'Разогнать кровь в кистях и предплечьях.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
 W2:{name:'Медленная хроматика',goal:'Включить синхронизацию рук без нагрузки.',how:'Чистый звук, темп заведомо низкий. 1-2-3-4 по всем струнам вверх и вниз, затем сдвиг на лад выше и снова.',tip:'Слушай, чтобы каждая нота звучала полную длительность.',sub:4,v:[{l:'Хроматика',t:[J('E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8 B5 B6 B7 B8 e5 e6 e7 e8')]}]},
-W3:{name:'Медленные свипы и трели',goal:'Подготовить обе руки к быстрой работе.',how:'Чистый звук. Свип Am на трёх струнах и трели парами пальцев. Темп — половина рабочего.',tip:'Цель — тёплые руки, а не скорость.',sub:6,v:[{l:'Свип и трели',t:[J('G14 B13 e12 eh17 ep12 B13','|','G12 Gh13 Gp12 Gh14 Gp12 Gh15 Gp12 .')]}]},
+W3:{name:'Медленные свипы и трели',goal:'Подготовить обе руки к быстрой работе.',how:'Чистый звук. Свип Am на трёх струнах и трели парами пальцев. Темп — половина рабочего.',tip:'Цель — тёплые руки, а не скорость.',sub:6,v:[{l:'Свип и трели',t:[J('G14 B13 e12 eh17 ep12 B13','|','/4 G12 Gh13 Gp12 Gh14 Gp12 Gh15 Gp12 .')]}]},
 
 /* ---- база ---- */
 B1:{n:1,name:'Тремоло на одной струне',goal:'Скорость и ровность альтернейта.',how:'Строго вниз-вверх, шестнадцатые. Каждый третий подход — секстоли, затем тридцать вторые на половине темпа.',tip:'Движение от запястья, медиатор входит в струну неглубоко. Громкость вниз и вверх одинаковая.',sub:4,v:[
@@ -397,14 +526,14 @@ B1:{n:1,name:'Тремоло на одной струне',goal:'Скорост�
 B2:{n:2,name:'Альтернейт со сменой струн',goal:'Чистые переходы медиатора между струнами.',how:'Строгий альтернейт, шестнадцатые. Нечётное число нот на струне заставляет чередовать переходы «внутри» и «снаружи».',tip:'Медиатор делает минимальную дугу при переходе. Если цепляешь соседнюю струну — сбрось темп.',sub:4,v:[
   {l:'3 ноты на струну, две струны',t:[J('G12 G14 G16 B13 B15 B17 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 B17 B15 B13 G16 G14 G12')]},
   {l:'Внутри и снаружи',t:[R('G14 B15',8)],note:'Половину подходов начинай даунстроком на G — это переход «внутри», медиатор между струнами. Вторую половину начинай апстроком — переход «снаружи».'},
-  {l:'Три струны',t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 D15 D14 D12')]}]},
+  {l:'Три струны',t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17 .:3','|','B17 B15 B13 G16 G14 G12 D15 D14 D12 .:3')]}]},
 B3:{n:3,name:'Перескок через струну',goal:'Точность правой руки на больших дистанциях.',how:'Строгий альтернейт, пропущенная струна не звучит. Шестнадцатые.',tip:'Поднимай медиатор ровно настолько, чтобы перелететь через струну.',sub:4,v:[
   {l:'G и e',t:[R('G14 e12',8)]},
   {l:'По две ноты',t:[J(R('G12 G14 e12 e15',2),'|',R('e15 e12 G14 G12',2))]},
   {l:'D и B',t:[R('D14 B13',8)]}]},
 B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальца и медиатора.',how:'Альтернейт, шестнадцатые. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. Вниз по струнам — на лад выше.',tip:'Палец ставится на лад чуть раньше удара медиатора, а не одновременно.',sub:4,gen:true},
 B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз. Точка в табе — пауза. Ребро правой ладони глушит басы, свободные пальцы левой лежат на неиграющих струнах.',tip:'Проверка: остановись на любой паузе — должно быть тихо, без гула и свиста.',sub:2,v:[
-  {l:'Палм-мьют и открытые ноты',t:[J('E0 E0 D7 . E0 E0 G7 .','|','E0 E0 D7 . E0 G9 D7 .')],note:'E — палм-мьют, верхние ноты открыто.'},
+  {l:'Палм-мьют и открытые ноты',t:[J('E0m E0m D7 . E0m E0m G7 .','|','E0m E0m D7 . E0m G9 D7 .')],note:'E — палм-мьют, верхние ноты открыто.'},
   {l:'Перескоки под перегрузом',t:[J('A7 . G9 . A7 . e7 .','|','A5 . G7 . A5 . e5 .')]},
   {l:'Аккорд и тишина',t:[J('A2+E0 . . . A2+E0 A2+E0 . .','|','A3+E1 . A3+E1 . . . A5+E3 .')]}]},
 
@@ -414,41 +543,41 @@ R6:{n:6,name:'Даунпикинг',goal:'Скорость и выносливо
   {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),'|',R('A5+E3',4),R('A3+E1',4))]},
   {l:'Через струны',t:[J('E0 E0 A2 E0 E0 A3 E0 A5','|','E0 E0 A2 E0 E0 A3 A2 E0')]}]},
 R7:{n:7,name:'Галопы',goal:'Чёткий рисунок галопа на любом темпе.',how:'Деление 16-е. Выбери аппликатуру (альтернейт или вниз-вниз-вверх) и держи её весь подход.',tip:'Длинная нота галопа не «проваливается»: она такая же громкая, как короткие.',sub:4,v:[
-  {l:'Прямой галоп',t:[J(R('E0',12),'|',R('E1',3),R('E0',3),R('E3',3),R('E0',3))],note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).'},
-  {l:'Обратный галоп',t:[J(R('E0',12),'|',R('E1',3),R('E0',3),R('E3',3),R('E0',3))],note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).'},
-  {l:'Галоп аккордами',t:[J(R('A2+E0',3),R('A3+E1',3),R('A2+E0',3),R('A5+E3',3))],note:'Чередуй прямой и обратный галоп каждый такт.'}]},
+  {l:'Прямой галоп',t:[J(R('E0:2 E0 E0',4),'|','E1:2 E1 E1 E0:2 E0 E0 E3:2 E3 E3 E0:2 E0 E0')],note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).'},
+  {l:'Обратный галоп',t:[J(R('E0 E0 E0:2',4),'|','E1 E1 E1:2 E0 E0 E0:2 E3 E3 E3:2 E0 E0 E0:2')],note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).'},
+  {l:'Галоп аккордами',t:[J('A2+E0:2 A2+E0 A2+E0 A3+E1:2 A3+E1 A3+E1 A2+E0:2 A2+E0 A2+E0 A5+E3:2 A5+E3 A5+E3','|','A2+E0 A2+E0 A2+E0:2 A3+E1 A3+E1 A3+E1:2 A2+E0 A2+E0 A2+E0:2 A5+E3 A5+E3 A5+E3:2')],note:'Чередуй прямой и обратный галоп каждый такт.'}]},
 R8:{n:8,name:'Тремоло двойными нотами',goal:'Ровное тремоло по нескольким струнам.',how:'Альтернейт шестнадцатыми. Медиатор цепляет все струны созвучия одинаково вниз и вверх.',tip:'Неиграющие струны глуши левой рукой: на тремоло созвучием любой лишний призвук слышен сразу.',sub:4,v:[
   {l:'Тритон',t:[J(R('A1+E0',8),'|',R('A2+E0',8))]},
   {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),R('A5+E3',4),R('A3+E1',4))]},
   {l:'Малая секунда',t:[J(R('G4+D8',8),'|',R('G3+D7',8))]}]},
 R9:{n:9,name:'Палм-мьют и открытые ноты',goal:'Мгновенное переключение окраски звука.',how:'Шестнадцатые. Ладонь ложится и снимается точно в момент смены, ритм не меняется.',tip:'Громкость открытых нот не должна прыгать. Сравни по записи.',sub:4,v:[
-  {l:'Чаг и открытые ноты',t:[J(R('E0',6),'A7 A8','|',R('E0',6),'A10 A8')],note:'E — палм-мьют, ноты на A — открыто.'},
-  {l:'Чаг и аккорд',t:[J('E0 E0 E0 D9+A7 E0 E0 D10+A8 .')],note:'Аккорд звучит открыто и полную длительность.'},
-  {l:'Одна нота, две окраски',t:[R('E0',16)],note:'Первая доля — с ладонью, вторая — открыто, и так далее.'}]},
+  {l:'Чаг и открытые ноты',t:[J(R('E0m',6),'A7 A8','|',R('E0m',6),'A10 A8')],note:'E — палм-мьют, ноты на A — открыто.'},
+  {l:'Чаг и аккорд',t:[J('E0m E0m E0m D9+A7 E0m E0m D10+A8 .')],note:'Аккорд звучит открыто и полную длительность.'},
+  {l:'Одна нота, две окраски',t:[J(R('E0m',4),R('E0',4),R('E0m',4),R('E0',4))],note:'Первая доля — с ладонью, вторая — открыто, и так далее.'}]},
 R10:{n:10,name:'Стоп-старт',goal:'Резкие обрывы и точные вступления.',how:'Шестнадцатые. Точка в табе — пауза: обе руки глушат струны, тишина ровно до следующей ноты.',tip:'Обрыв так же важен, как удар. Без хвостов и шипения.',sub:4,v:[
-  {l:'Обрывы на долю',t:[J('E0 E0 E0 E0 . . . . E0 E0 . . E0 . E0 .')]},
-  {l:'Аккордовые стопы',t:[J('A2+E0 . A2+E0 . . . A3+E1 A3+E1','|','. . . . A5+E3 . . .')]},
-  {l:'Группы 3+3+2',t:[J('E0 E0 E0 . E0 E0 E0 . E0 E0 . E0 E0 . E0 .')]}]},
+  {l:'Обрывы на долю',t:[J('E0 E0 E0 E0 .:4 E0 E0 .:2 E0 . E0 .')]},
+  {l:'Аккордовые стопы',t:[J('A2+E0 . A2+E0 .:3 A3+E1 A3+E1','|','.:4 A5+E3 .:3')]},
+  {l:'Группы 3+3+2',t:[R('E0 E0 . E0 E0 . E0 .',2)]}]},
 R11:{n:11,name:'Ритмические группировки',goal:'Точное деление доли на 3, 4, 5, 6, 7.',how:'Метроном щёлкает четвертями без деления, ты делишь долю сам. Каждый такт таба — одна доля метронома.',tip:'Считай слогами вслух. Акцент на первой ноте каждой доли.',sub:1,v:[
-  {l:'От 3 до 7',t:[J(R('E0',3),'|',R('E0',4),'|',R('E0',5),'|',R('E0',6),'|',R('E0',7))]},
-  {l:'16-е и секстоли',t:[J(R('E0',4),'|',R('E0',6),'|',R('E0',4),'|',R('E0',6))]},
-  {l:'Квинтоли и септоли',t:[J(R('E0',5),'|',R('E0',7),'|',R('E0',5),'|',R('E0',7))]}]},
+  {l:'От 3 до 7',t:[J('/3',R('E0',3),'| /4',R('E0',4),'| /5',R('E0',5),'| /6',R('E0',6),'| /7',R('E0',7))]},
+  {l:'16-е и секстоли',t:[J('/4',R('E0',4),'| /6',R('E0',6),'| /4',R('E0',4),'| /6',R('E0',6))]},
+  {l:'Квинтоли и септоли',t:[J('/5',R('E0',5),'| /7',R('E0',7),'| /5',R('E0',5),'| /7',R('E0',7))]}]},
 R12:{n:12,name:'Нечётные размеры',goal:'Чувство группировки в неровном такте.',how:'Восьмые. Метроном сам переключится на нужный размер: щелчок — восьмая, акценты — начала групп.',tip:'Сначала простучи группировку ладонью по колену, потом играй.',sub:1,v:[
   {l:'7/8 (2+2+3)',meter:'7/8',t:[J('E0 E0 A1 E0 E0 E0 A3','|','E0 E0 A1 E0 E0 A3 A1')]},
   {l:'5/8 (3+2)',meter:'5/8',t:[J('E0 E0 E0 A2 A3','|','E0 E0 E0 A5 A3')]},
   {l:'11/8 (3+3+3+2)',meter:'11/8',t:[J('E0 E0 A1 E0 E0 A3 E0 E0 A1 A5 A3')]}]},
 R13:{n:13,name:'Полиритмия',goal:'Держать фигуру поверх чужой сетки.',how:'Шестнадцатые в 4/4, метроном с акцентом на первую долю. Фигура идёт своим кругом и не подстраивается под такт.',tip:'Считай вслух доли (1-2-3-4), а не ноты фигуры.',sub:4,v:[
-  {l:'Фигура из 5 нот',t:[R('E0 E0 A1 E0 A3',4)],note:'Фигура снова совпадёт с первой долей через 5 тактов.'},
-  {l:'3 против 4',t:[R('E0 E0 A2',6)],note:'Акцент на первой ноте каждой тройки. Сходится с тактом через 3 такта.'},
-  {l:'Фигура из 7 нот',t:[R('E0 E0 A1 E0 A3 E0 A1',3)],note:'Сходится через 7 тактов.'}]},
+  {l:'Фигура из 5 нот',t:poly('E0 E0 A1 E0 A3'),note:'Фигура снова совпадёт с первой долей через 5 тактов.'},
+  {l:'3 против 4',t:poly('E0 E0 A2'),note:'Акцент на первой ноте каждой тройки. Сходится с тактом через 3 такта.'},
+  {l:'Фигура из 7 нот',t:poly('E0 E0 A1 E0 A3 E0 A1'),note:'Сходится через 7 тактов.'}]},
 R14:{n:14,name:'Синкопы',goal:'Удары между долями без сдвига сетки.',how:'Шестнадцатые. Чаги на E — палм-мьют, аккорды — открыто с акцентом, после аккорда короткая пауза.',tip:'Метроном держит сильные доли, аккорды попадают между ними. Не дай им съехать на долю.',sub:4,v:[
-  {l:'Акцент на «а»',t:[J('E0 E0 E0 A2+E0 . E0 E0 E0 E0 A2+E0 . E0 E0 E0 A3+E1 .')]},
-  {l:'Акцент на «и»',t:[J('E0 A2+E0 . E0 E0 E0 A2+E0 . E0 E0 A3+E1 . E0 E0 E0 E0')]},
-  {l:'С паузы',t:[J('. E0 E0 A2+E0 . E0 E0 A3+E1 . E0 E0 A5+E3 . E0 A3+E1 .')]}]},
+  {l:'Акцент на «а»',t:[J('E0m E0m E0m A2+E0 . E0m E0m E0m E0m A2+E0 . E0m E0m E0m A3+E1 .')]},
+  {l:'Акцент на «и»',t:[J('E0m A2+E0 . E0m E0m E0m A2+E0 . E0m E0m A3+E1 . E0m E0m E0m E0m')]},
+  {l:'С паузы',t:[J('. E0m E0m A2+E0 . E0m E0m A3+E1 . E0m E0m A5+E3 . E0m A3+E1 .')]}]},
 R15:{n:15,name:'Флажолеты медиатором',goal:'Визг с первой попытки.',how:'* — флажолет медиатором: подушечка большого пальца касается струны сразу после медиатора. Ищи точку над звукоснимателем, где флажолет громче всего.',tip:'Добавь широкое вибрато на каждый флажолет.',sub:2,v:[
-  {l:'Одна позиция',t:[J('G7* . G7* . G9* . G7* .')]},
-  {l:'Разные струны',t:[J('D7* . G7* . D9* . G9* .')]},
-  {l:'В риффе',t:[J('E0 E0 E0 G7* E0 E0 G9* .')]}]},
+  {l:'Одна позиция',t:[J('G7*:2 G7*:2 G9*:2 G7*:2')]},
+  {l:'Разные струны',t:[J('D7*:2 G7*:2 D9*:2 G9*:2')]},
+  {l:'В риффе',t:[J('E0m E0m E0m G7* E0m E0m G9*:2')]}]},
 
 /* ---- арпеджио ---- */
 A16:{n:16,name:'Свип на 3 струнах',goal:'Чистое разделение нот в свипе.',how:'Секстоли: одна нота на щелчок деления. Вверх — одно движение вниз через струны, вниз — одно движение вверх. Верхние ноты — хаммер и пулл-офф.',tip:'Палец снимается с лада сразу после ноты. Если звучит аккорд, это ещё не свип.',sub:6,v:[
@@ -505,31 +634,31 @@ L30:{n:30,name:'Смена аккордовых форм',goal:'Мгновенн
   {l:'То же на 7 ладу',t:[J('D9+A9+E7 D9+A9+E7 A9+E8 A9+E8 G12+D12+A10 G12+D12+A10 D10+A8 D10+A8')]},
   {l:'Тремоло со сменой',sub:4,t:[J(R('D2+A2+E0',4),R('A2+E1',4),R('G5+D5+A3',4),R('D3+A1',4))]}]},
 L31:{n:31,name:'Вибрато и бенды',goal:'Точная высота и живой звук в соло.',how:'b — бенд, r — возврат, ~ — вибрато. Бенд тянут 2–3 пальца вместе, движение идёт от кисти.',tip:'Сверяй высоту с эталонной нотой. Бенд мимо ноты слышен сильнее, чем ошибка в скорости.',sub:1,v:[
-  {l:'Бенды в ноту',t:[J('B17 . B15b17 . B15b17r15 .')],note:'Сначала сыграй целевую ноту (17 лад), потом подтяни 15 лад до той же высоты.'},
-  {l:'Вибрато в ритм',sub:2,t:[J('G14~ . . . G14~ . . .')],note:'Вибрато ровно восьмыми, затем триолями, затем шестнадцатыми под метроном.'},
-  {l:'Полтона, тон, полтора',t:[J('B14 B13b14 . B15 B13b15 . B16 B13b16 .')]}]},
+  {l:'Бенды в ноту',t:[J('B17:2 B15b17:2','|','B15b17r15:4')],note:'Сначала сыграй целевую ноту (17 лад), потом подтяни 15 лад до той же высоты.'},
+  {l:'Вибрато в ритм',sub:2,t:[J('G14~:4 G14~:4')],note:'Вибрато ровно восьмыми, затем триолями, затем шестнадцатыми под метроном.'},
+  {l:'Полтона, тон, полтора',t:[J('B14 B13b14:3','|','B15 B13b15:3','|','B16 B13b16:3')]}]},
 
 /* ---- связки ---- */
 C32:{n:32,name:'Свип → альтернейт',goal:'Переход между техниками без шва.',how:'Сначала каждая часть отдельно, потом склейка. Главное место — стык: последняя нота одной техники и первая другой.',tip:'После свипа медиатор оказывается в другом положении. Найди, каким движением начинается альтернейт, и закрепи его.',sub:4,v:[
   {l:'Am',t:[J('G14 B13 e12 eh17','|','e15 e13 e12 B15 B13 B12 G14 G12')]},
-  {l:'Альтернейт → свип',t:[J('G12 G14 G16 B13 B15 B17','|','e17 ep12 B13 G14')]},
+  {l:'Альтернейт → свип',t:[J('/6 G12 G14 G16 B13 B15 B17','|','/4 e17 ep12 B13 G14')]},
   {l:'Dm',t:[J('G7 B6 e5 eh10','|','e8 e6 e5 B8 B6 B5 G7 G5')]}]},
 C33:{n:33,name:'Легато → теппинг → легато',goal:'Одна линия из трёх техник.',how:'Сначала каждая часть отдельно, потом склейка. Медиатором — только первая нота на струне.',tip:'Громкость тэпа равна громкости легато. Если тэп выпирает, бей легче.',sub:4,v:[
   {l:'Высокие струны',t:[J('e12 eh13 eh15 et20 ep15 ep13 ep12 B15','|','B13 Bh15 Bh17 Bt20 Bp17 Bp15 Bp13 G14')]},
   {l:'Средние струны',t:[J('G12 Gh14 Gh16 Gt19 Gp16 Gp14 Gp12 D15','|','D12 Dh14 Dh15 Dt19 Dp15 Dp14 Dp12 .')]},
   {l:'5 позиция',t:[J('e5 eh7 eh8 et12 ep8 ep7 ep5 B8','|','B5 Bh6 Bh8 Bt13 Bp8 Bp6 Bp5 G7')]}]},
 C34:{n:34,name:'Тремоло → чаги → тремоло',goal:'Смена техники правой руки без сбоя сетки.',how:'Тремоло открыто, чаги — палм-мьют. Ладонь ложится и снимается точно в момент смены.',tip:'Темп шестнадцатых не меняется при смене техники. Проверь по записи.',sub:4,v:[
-  {l:'Одна струна',t:[J(R('A7',4),R('A8',4),'|','E0 E0 E0 . E0 E0 E0 .','|',R('A10',4),R('A8',4))]},
-  {l:'Двойные ноты',t:[J(R('A1+E0',8),'|','E0 . E0 E0 . E0 E0 E0','|',R('A2+E0',8))]},
-  {l:'Через струну',t:[J(R('D9',4),R('D10',4),'|','E0 E0 E0 E1 E0 E0 E0 E3','|',R('D12',4),R('D10',4))]}]},
+  {l:'Одна струна',t:[J(R('A7',4),R('A8',4),'|','E0m E0m E0m . E0m E0m E0m .','|',R('A10',4),R('A8',4))]},
+  {l:'Двойные ноты',t:[J(R('A1+E0',8),'|','E0m . E0m E0m . E0m E0m E0m','|',R('A2+E0',8))]},
+  {l:'Через струну',t:[J(R('D9',4),R('D10',4),'|','E0m E0m E0m E1m E0m E0m E0m E3m','|',R('D12',4),R('D10',4))]}]},
 C35:{n:35,name:'Перескок → свип',goal:'Из пикинга в свип и обратно.',how:'Сначала каждая часть отдельно, потом склейка.',tip:'Свип начинается тем же движением, которым закончился перескок. Найди его.',sub:4,v:[
   {l:'G–e и Am',t:[J('G14 e12 G14 e12 G14 e12 G14 e12','|','G14 B13 e12 eh17 ep12 B13 G14 .')]},
   {l:'Арпеджио альтернейтом и свип',sub:6,t:[J('A12 A15 G14 G17 e12 e17','|','ep12 B13 G14 D14 A12 .')]},
   {l:'D–B и Am',t:[J('D14 B13 D14 B13 D14 B13 D14 B13','|','D14 G14 B13 e12 eh17 ep12 B13 G14')]}]},
 C36:{n:36,name:'Этюд-комплекс',goal:'Четыре техники подряд, как в настоящем риффе.',how:'Четыре фрагмента подряд. Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон на телефон. Слабое место почти всегда на стыке фрагментов.',sub:4,v:[
-  {l:'Этюд 1: тремоло, свип, легато, тэп',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4)),J('G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13'),J('e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12'),J(R('et17 ep8 eh12',3),'A2+E0 . .')]},
-  {l:'Этюд 2: галоп, арпеджио, dim7, стоп',t:[J('E0 E0 E0 E0 E0 E0 E1 E1 E1 E0 E0 E0'),J('A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12'),J('G13 B12 e10 eh13 G16 B15 e13 eh16'),J(R('A1+E0',8),'. . . .')]},
-  {l:'Этюд 3: 7/8, легато, тэп, свип',t:[J('E0 E0 A1 E0 E0 E0 A3'),J('G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gp13'),J('et17 ep8 eh12 Bt17 Bp10 Bh13'),J('G13 B12 e12 eh16 ep12 B12 E0')],note:'Первый фрагмент в 7/8, остальные в 4/4.'}]}
+  {l:'Этюд 1: тремоло, свип, легато, тэп',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4)),J('/6 G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13'),J('/6 e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12'),J('/3',R('et17 ep8 eh12',3),'A2+E0 .:2')]},
+  {l:'Этюд 2: галоп, арпеджио, dim7, стоп',t:[J('E0:2 E0 E0 E0:2 E0 E0 E1:2 E1 E1 E0:2 E0 E0'),J('/6 A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12'),J('G13 B12 e10 eh13 G16 B15 e13 eh16'),J(R('A1+E0',8),'.:8')]},
+  {l:'Этюд 3: 7/8, легато, тэп, свип',t:[J('/2 E0 E0 A1 E0 E0 E0 A3','|','E0 E0 A1 E0 E0 E0 A3'),J('G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gp13'),J('/6 et17 ep8 eh12 Bt17 Bp10 Bh13'),J('/6 G13 B12 e12 eh16 ep12 B12 /1 E0')],note:'Первый фрагмент в 7/8, остальные в 4/4.'}]}
 };
 /* ================= упражнения (EN) ================= */
 const EXEN={
@@ -712,7 +841,7 @@ function resolveEx(s,d){
     const mn=matName(d.material);
     if(s.id==='B4'){const p=PERMS[mod(d.i,24)];const up=[],dn=[];LOW_TO_HIGH.forEach(st=>p.forEach(f=>up.push(st+(8+f))));LOW_TO_HIGH.slice().reverse().forEach(st=>p.forEach(f=>dn.push(st+(9+f))));v={l:L('Порядок пальцев дня: ','Today’s finger order: ')+p.join('-'),t:[up.join(' '),dn.join(' ')]};}
     else if(s.id==='A21'){v={l:mn+L(', 3 ноты на струну',', 3 notes per string'),t:npsTokens(d.material,'pick')};}
-    else if(s.id==='L24'){const pr=PAIRS[mod(d.i,6)];const a=11+pr[0],b2=11+pr[1];v={l:L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn,t:[J('G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2)].concat(npsTokens(d.material,'legato'))};}
+    else if(s.id==='L24'){const pr=PAIRS[mod(d.i,6)];const a=11+pr[0],b2=11+pr[1];v={l:L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn,t:[J('/4 G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2)].concat(npsTokens(d.material,'legato'))};}
     else if(s.id==='L28'){v={l:mn+L(' на струне e',' on the e string'),t:oneStringSeq(d.material)};}
   }else if(ex.v){
     const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
@@ -792,8 +921,13 @@ function renderPlan(){
   $('riffCard').innerHTML='<h3>'+L('Рифф дня','Riff of the day')+'</h3><dl><dt>'+L('Размер','Meter')+'</dt><dd>'+esc(r.meter)+'</dd><dt>'+L('Лад','Scale')+'</dt><dd>'+esc(r.material)+'</dd><dt>'+L('Техника','Technique')+'</dt><dd>'+esc(r.tech)+'</dd><dt>'+L('Условие','Rule')+'</dt><dd>'+esc(r.rule)+'</dd></dl><p class="legend" style="margin:0">'+L('Одинаковый для всех в этот день.','The same for everyone today.')+(inPlan?'':L(' В плане на это время его нет — сочини на досуге.',' It is not in the plan at this length: write it in your spare time.'))+'</p>';
 }
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
-function tabHtml(label,systems){return '<div class="tabbox"><div class="tabhd"><span>'+esc(label)+'</span><span>'+L('стандартный строй','standard tuning')+'</span></div><pre>'+esc(renderTab(systems))+'</pre></div>';}
-function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, t — тэп, b — бенд, r — возврат, ~ — вибрато, * — флажолет медиатором, столбец без цифры — пауза. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, t tap, b bend, r release, ~ vibrato, * pinch harmonic, a column with no number is a rest. 7–8 strings: play on the top six.'))+'</p>';}
+function tabHtml(label,systems,sub,meter){
+  const key=JSON.stringify([systems,sub||1,meter||'4/4']),on=Pl.on&&Pl.key===key;
+  return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+L('стандартный строй','standard tuning')+'</span></div>'+
+    '<div class="tabsc">'+renderTab(systems,sub,meter)+'</div>'+
+    '<div class="tabft"><button class="btn tplay" data-play aria-pressed="'+on+'">'+plLabel(on)+'</button><label class="tloop"><input type="checkbox" data-loop'+(Pl.loop?' checked':'')+'> '+L('по кругу','loop')+'</label><span class="legend">'+L('темп метронома','metronome tempo')+'</span></div></div>';
+}
+function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. 7–8 strings: play on the top six.'))+'</p>';}
 function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
 
 function renderNow(){
@@ -814,14 +948,14 @@ function renderNow(){
     h=stepsHtml(L('Протокол теста','Test protocol'),TEST_STEPS[LANG]);
     const hist=lsGet('tests',{});
     h+='<div class="tests">'+TESTS.map(tt=>{const arr=hist[tt.id]||[];const last=arr[arr.length-1];const best=arr.reduce((m,x)=>Math.max(m,x.bpm),0);const nm=tt[LANG];
-      return '<div class="test"><div><b>'+esc(nm[0])+'</b><div class="legend">'+esc(nm[1])+'</div></div><div class="tabbox"><pre>'+esc(renderTab(tt.t))+'</pre></div><div class="row"><input id="ti-'+tt.id+'" type="number" min="30" max="400" placeholder="bpm" aria-label="'+esc(nm[0])+'"><button class="btn" data-save="'+tt.id+'">'+L('Записать','Save')+'</button><button class="btn" data-sub="'+tt.sub+'">'+L('Метроном: ','Metronome: ')+subName(tt.sub)+'</button><span class="hist">'+(last?L('прошлый: ','last: ')+last.bpm+' ('+esc(last.date)+') · '+L('лучший: ','best: ')+best:L('результатов пока нет','no results yet'))+'</span></div></div>';}).join('')+'</div>';
+      return '<div class="test"><div><b>'+esc(nm[0])+'</b><div class="legend">'+esc(nm[1])+'</div></div>'+tabHtml('',tt.t,tt.sub)+'<div class="row"><input id="ti-'+tt.id+'" type="number" min="30" max="400" placeholder="bpm" aria-label="'+esc(nm[0])+'"><button class="btn" data-save="'+tt.id+'">'+L('Записать','Save')+'</button><button class="btn" data-sub="'+tt.sub+'">'+L('Метроном: ','Metronome: ')+subName(tt.sub)+'</button><span class="hist">'+(last?L('прошлый: ','last: ')+last.bpm+' ('+esc(last.date)+') · '+L('лучший: ','best: ')+best:L('результатов пока нет','no results yet'))+'</span></div></div>';}).join('')+'</div>';
   }
   else{
     const r=resolveEx(s,d);
     if(s.kind==='maint')h+=stepsHtml(L('Протокол поддержки','Maintenance protocol'),MAINT_STEPS[LANG]);
     else if(s.kind!=='warm'){const ph=PH(d.week);h+=stepsHtml(L('Протокол недели ','Week ')+(d.week+1)+L(': ',' protocol: ')+ph.name,ph.steps);if(s.kind==='combo')h+='<div class="sect"><p class="note">'+esc(COMBO_STEP[LANG])+'</p></div>';}
     h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
-    if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t)+legendHtml();
+    if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter)+legendHtml();
   }
   $('nowBody').innerHTML=h;
   renderClock();
@@ -914,6 +1048,113 @@ function applyMetroDefaults(){
   if(!(fast&&d.week===2)){Mt.burst=0;$('mBurst').value='0';}
 }
 
+/* ================= плеер ================= */
+// Синтез гитары: Karplus–Strong в буфер (кэш по высоте) → перегруз WaveShaper → «кабинет». Время в долях метронома, темп — Mt.bpm.
+const Pl={on:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bufs:{},voices:[],q:[],lit:''};
+function plLabel(on){return on?'■ '+L('Стоп','Stop'):'▶ '+L('Послушать','Listen');}
+function plBus(c){
+  if(Pl.bus)return Pl.bus;
+  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=110;
+  const drive=c.createGain();drive.gain.value=9;
+  const sh=c.createWaveShaper(),cv=new Float32Array(2048);
+  for(let i=0;i<cv.length;i++){const x=i/(cv.length-1)*2-1;cv[i]=Math.tanh(2.5*x);}
+  sh.curve=cv;sh.oversample='4x';
+  const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=800;mid.Q.value=0.8;mid.gain.value=-6;
+  const cab=c.createBiquadFilter();cab.type='lowpass';cab.frequency.value=4500;cab.Q.value=0.9;
+  const out=c.createGain();out.gain.value=0.16;
+  hp.connect(drive).connect(sh).connect(mid).connect(cab).connect(out).connect(c.destination);
+  return Pl.bus=hp;
+}
+function plBuf(c,midi,pm){
+  const key=midi+(pm?'m':'');if(Pl.bufs[key])return Pl.bufs[key];
+  const sr=c.sampleRate,f=440*Math.pow(2,(midi-69)/12),N=Math.max(2,Math.round(sr/f-0.5));
+  const len=Math.floor(sr*(pm?0.5:2.2)),b=c.createBuffer(1,len,sr),y=b.getChannelData(0),r=rng(midi*31+(pm?7:0));
+  let lp=0,mean=0;
+  for(let i=0;i<N;i++){lp+=(pm?0.3:0.75)*((r()*2-1)-lp);y[i]=lp;mean+=lp/N;}
+  for(let i=0;i<N;i++)y[i]-=mean;
+  const d=Math.pow(0.001,1/(f*(pm?0.2:3)));
+  for(let i=N;i<len;i++)y[i]=d*0.5*(y[i-N]+(i>N?y[i-N-1]:0));
+  return Pl.bufs[key]={b,rate:f*(N+0.5)/sr};
+}
+function plNote(c,nt,t0,len,pm,vel){
+  const bf=plBuf(c,OPEN[nt.s]+nt.f+(nt.ph?19:0),pm);
+  const src=c.createBufferSource(),g=c.createGain(),pr=src.playbackRate,rt=bf.rate;
+  src.buffer=bf.b;pr.setValueAtTime(rt,t0);
+  if(nt.b!=null){const up=rt*Math.pow(2,(nt.b-nt.f)/12);pr.linearRampToValueAtTime(up,t0+len*0.35);
+    if(nt.r!=null){pr.setValueAtTime(up,t0+len*0.6);pr.linearRampToValueAtTime(rt*Math.pow(2,(nt.r-nt.f)/12),t0+len*0.9);}}
+  let lfo=null;
+  if(nt.vib){lfo=c.createOscillator();const lg=c.createGain();lfo.frequency.value=5.5;lg.gain.setValueAtTime(0,t0);lg.gain.linearRampToValueAtTime(rt*(nt.b!=null?Math.pow(2,(nt.b-nt.f)/12):1)*0.022,t0+Math.min(0.25,len*0.4));lfo.connect(lg).connect(pr);lfo.start(t0);lfo.stop(t0+len+0.1);}
+  g.gain.setValueAtTime(vel,t0);g.gain.setValueAtTime(vel,t0+len);g.gain.setTargetAtTime(0,t0+len,0.012);
+  let node=src;
+  if(pm){const lpf=c.createBiquadFilter();lpf.type='lowpass';lpf.frequency.value=900;node=src.connect(lpf);}
+  node.connect(g).connect(plBus(c));
+  src.start(t0);src.stop(t0+len+0.12);
+  Pl.voices.push({src,g,lfo,end:t0+len+0.12});
+}
+function plClick(c,tm,acc){
+  const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1600:1150;
+  g.gain.setValueAtTime(0.0001,tm);g.gain.exponentialRampToValueAtTime(acc?0.32:0.18,tm+0.002);g.gain.exponentialRampToValueAtTime(0.0001,tm+0.04);
+  o.connect(g).connect(c.destination);o.start(tm);o.stop(tm+0.05);
+}
+function plTick(){
+  const c=Mt.ctx;if(!Pl.on||!c)return;
+  if(!Pl.box||!Pl.box.isConnected){
+    // таб перерисован (язык, тот же сегмент) — продолжаем на новом элементе, иначе стоп
+    Pl.box=[...document.querySelectorAll('.tabbox[data-tab]')].find(b=>b.dataset.tab===Pl.key)||null;Pl.lit='';
+    if(!Pl.box){plStop();return;}
+  }
+  Pl.voices=Pl.voices.filter(v=>v.end>c.currentTime);
+  while(Pl.next<c.currentTime+0.15){
+    if(Pl.i>=Pl.ev.length){if(!Pl.loop){if(c.currentTime>=Pl.next)plStop();return;}Pl.i=0;}
+    const e=Pl.ev[Pl.i],spb=60/Mt.bpm,len=e.dur*spb;
+    if(!e.rest){const vel=0.9/Math.sqrt(e.notes.length);e.notes.forEach(nt=>plNote(c,nt,Pl.next,len,e.pm,nt.tech?vel*0.6:vel));}
+    if(!Mt.on)for(let p=Math.ceil(Pl.pos-EPS);p<Pl.pos+e.dur-EPS;p++)plClick(c,Pl.next+(p-Pl.pos)*spb,mod(p,Pl.bar)===0);
+    Pl.q.push({t:Pl.next,id:e.id});
+    Pl.next+=len;Pl.pos+=e.dur;Pl.i++;
+  }
+}
+function plDraw(){
+  if(!Pl.on)return;
+  const c=Mt.ctx;let last=null;
+  while(Pl.q.length&&Pl.q[0].t<=c.currentTime)last=Pl.q.shift();
+  if(last&&Pl.box&&last.id!==Pl.lit){
+    Pl.box.querySelectorAll('.on[data-e]').forEach(el=>el.classList.remove('on'));
+    const els=Pl.box.querySelectorAll('[data-e="'+last.id+'"]');els.forEach(el=>el.classList.add('on'));Pl.lit=last.id;
+    const sc=Pl.box.querySelector('.tabsc');
+    if(sc&&els[0]){const r=els[0].getBoundingClientRect(),sr=sc.getBoundingClientRect();if(r.left<sr.left||r.right>sr.right-8)sc.scrollLeft+=r.left-sr.left-24;}
+  }
+  requestAnimationFrame(plDraw);
+}
+function plButtons(){document.querySelectorAll('.tabbox [data-play]').forEach(b=>{const on=Pl.on&&b.closest('.tabbox')===Pl.box;b.textContent=plLabel(on);b.setAttribute('aria-pressed',String(on));});}
+function plStart(box){
+  plStop();
+  const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}
+  const [systems,sub,meter]=JSON.parse(box.dataset.tab);
+  Pl.ev=[];parseTab(systems,sub).forEach((s,si)=>{let ci=0;s.items.forEach(it=>{if(!it.bar)Pl.ev.push(Object.assign({id:si+'.'+ci},it));ci++;});});
+  if(!Pl.ev.length)return;
+  Pl.key=box.dataset.tab;Pl.box=box;Pl.bar=+meter.split('/')[0]||4;Pl.i=0;Pl.pos=0;Pl.q=[];Pl.lit='';
+  Pl.next=c.currentTime+0.12;
+  if(Mt.on&&Mt.next){
+    // вступаем с ближайшей сильной доли включённого метронома
+    const sp=60/Mt.bpm,n=meterPulses();let tp=Mt.next,p=Mt.pulse;
+    if(Mt.subi>0){tp+=(Mt.sub-Mt.subi)*sp/Mt.sub;p++;}
+    Pl.next=tp+mod(n-p,n)*sp;
+    if(Pl.next<c.currentTime+0.05)Pl.next+=n*sp;
+  }
+  Pl.on=true;Pl.timer=setInterval(plTick,25);plTick();requestAnimationFrame(plDraw);plButtons();
+}
+function plStop(){
+  if(!Pl.on)return;
+  Pl.on=false;clearInterval(Pl.timer);Pl.timer=null;
+  const c=Mt.ctx,now=c?c.currentTime:0;
+  Pl.voices.forEach(v=>{try{v.g.gain.cancelScheduledValues(now);v.g.gain.setTargetAtTime(0,now,0.01);v.src.stop(now+0.06);if(v.lfo)v.lfo.stop(now+0.06);}catch(e){}});
+  Pl.voices=[];Pl.q=[];
+  if(Pl.box)Pl.box.querySelectorAll('.on[data-e]').forEach(el=>el.classList.remove('on'));
+  plButtons();Pl.box=null;Pl.key=null;
+}
+$('nowBody').addEventListener('click',e=>{const b=e.target.closest('button[data-play]');if(!b)return;const box=b.closest('.tabbox');if(Pl.on&&Pl.box===box)plStop();else plStart(box);});
+$('nowBody').addEventListener('change',e=>{if(e.target.matches('input[data-loop]')){Pl.loop=e.target.checked;document.querySelectorAll('input[data-loop]').forEach(x=>{x.checked=Pl.loop;});}});
+
 /* ================= события ================= */
 function rebuild(){
   st.plan=buildSession(st.i,st.T);
@@ -971,7 +1212,7 @@ $('shareBtn').onclick=()=>{
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={buildSession,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,TESTS,setLang,X,VX};
+window.__grif={buildSession,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX};
 })();
 </script>
 
