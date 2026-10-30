@@ -377,14 +377,22 @@ const MONTHS={ru:['января','февраля','марта','апреля','�
 function dateText(d){const w=DOWN[LANG][mod(d.getDay()-1,7)];return LANG==='en'?w+', '+MONTHS.en[d.getMonth()]+' '+d.getDate():w+', '+d.getDate()+' '+MONTHS.ru[d.getMonth()];}
 
 /* ================= таб ================= */
-/* Токен: части через «+» (струна, h|p|t, лад, bЛАД, rЛАД, *, ~), затем m (палм-мьют) и :k (длина в шагах).
+/* Токен: части через «+» (струна, h|p|t, лад, bЛАД, rЛАД, *, ~ или струна + x — мёртвая нота), затем m (палм-мьют) и :k (длина в шагах).
    Шаг = доля / деление; деление = sub варианта, токен «/n» меняет его до конца системы. «.» — пауза, «|» — тактовая черта. */
-const STR=['e','B','G','D','A','E'];
-const TAB_PART=/^([eBGDAE])([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)$/;
+// строй: струны сверху вниз и открытые струны (midi). Бас: B — низкая B, C — высокая C.
+const TUNINGS={
+  guitar:{strs:['e','B','G','D','A','E'],open:{E:40,A:45,D:50,G:55,B:59,e:64}},
+  bass4:{strs:['G','D','A','E'],open:{E:28,A:33,D:38,G:43},bass:true},
+  bass5:{strs:['G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43},bass:true},
+  bass6:{strs:['C','G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43,C:48},bass:true}
+};
+const TUN=tu=>TUNINGS[tu]||TUNINGS.guitar;
+const TAB_PART=/^([A-Za-z])(?:([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)|(x))$/;
 const TAB_TOK=/^(.+?)(m?)(?::(\d+))?$/;
 const EPS=1e-6;
 const isInt=x=>Math.abs(x-Math.round(x))<EPS;
-function parseSystem(src,sub){
+function parseSystem(src,sub,tu){
+  const strs=TUN(tu).strs;
   const items=[],errs=[];let n=sub||1,pos=0;
   src.trim().split(/\s+/).forEach(tok=>{
     if(tok==='|'){items.push({bar:true,pos});return;}
@@ -395,13 +403,15 @@ function parseSystem(src,sub){
     if(!m||k<1||(rest&&m[2])){errs.push('токен '+tok);return;}
     const notes=rest?[]:m[1].split('+').map(p=>{
       const q=p.match(TAB_PART);if(!q){errs.push('токен '+tok);return null;}
+      if(!strs.includes(q[1])){errs.push('струна '+q[1]+' в '+tok);return null;}
+      if(q[8])return {s:q[1],x:true,tech:'',f:null,b:null,r:null,ph:false,vib:false};
       return {s:q[1],tech:q[2],f:+q[3],b:q[4]!=null?+q[4]:null,r:q[5]!=null?+q[5]:null,ph:!!q[6],vib:!!q[7]};
     }).filter(Boolean);
     items.push({pos,dur:k/n,k,n,rest,pm:!!m[2],notes});pos+=k/n;
   });
   return {items,len:pos,errs};
 }
-const parseTab=(systems,sub)=>systems.map(s=>parseSystem(s,sub));
+const parseTab=(systems,sub,tu)=>systems.map(s=>parseSystem(s,sub,tu));
 const tabDen=meter=>+String(meter||'4/4').split('/')[1]||4;
 const isP2=x=>x>0&&isInt(Math.log2(x));
 // длительность → вид в нотах: lb (0 целая, 1 половинная, 2 четверть, 3 восьмая…), вязки, точка
@@ -419,13 +429,13 @@ function beamKey(pos,meter){
   return Math.floor(pos+EPS);
 }
 const BEND_TXT={1:'½',2:'full',3:'1½',4:'2'};
-function renderSystem(sys,meter,si){
-  const LG=13,TOP=32,X0=24,SB=TOP+5*LG,S2=SB+26,H=S2+14,den=tabDen(meter);
-  const yS=s=>TOP+STR.indexOf(s)*LG,f1=v=>Math.round(v*10)/10;
+function renderSystem(sys,meter,si,tu){
+  const STR=TUN(tu).strs,LG=13,TOP=32,X0=24,SB=TOP+(STR.length-1)*LG,S2=SB+26,H=S2+14,den=tabDen(meter);
+  const yS=s=>TOP+STR.indexOf(s)*LG,f1=v=>Math.round(v*10)/10,ftx=nt=>nt.x?'x':nt.f;
   let x=X0+6;const cols=[];
   sys.items.forEach(it=>{
     if(it.bar){cols.push({bar:true,x:x+3});x+=8;return;}
-    const cw=Math.max(1,...it.notes.map(nt=>String(nt.f).length))*7.4+4;
+    const cw=Math.max(1,...it.notes.map(nt=>String(ftx(nt)).length))*7.4+4;
     const ex=(it.notes.some(nt=>nt.b!=null)?(it.notes.some(nt=>nt.r!=null)?22:13):0)+(it.notes.some(nt=>nt.vib)?14:0);
     const w=Math.max(cw+ex+6,34*Math.pow(it.dur*4/den,0.75));
     cols.push({it,x,w,cw,cx:x+3+cw/2});x+=w;
@@ -449,7 +459,7 @@ function renderSystem(sys,meter,si){
     }
     it.notes.forEach(nt=>{
       const y=yS(nt.s);
-      g+='<rect class="nb" x="'+f1(c.cx-c.cw/2)+'" y="'+(y-7)+'" width="'+f1(c.cw)+'" height="14" rx="3"/><text class="nt" x="'+f1(c.cx)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+nt.f+'</text>';
+      g+='<rect class="nb" x="'+f1(c.cx-c.cw/2)+'" y="'+(y-7)+'" width="'+f1(c.cw)+'" height="14" rx="3"/><text class="nt" x="'+f1(c.cx)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+ftx(nt)+'</text>';
       if(nt.tech==='h'||nt.tech==='p'){
         const p=prev&&prev.it.notes.some(q=>q.s===nt.s)?prev:null,mx=p?(p.cx+c.cx)/2:c.cx-c.cw/2-3;
         if(p)body+='<path class="tq" d="M'+f1(p.cx+4)+' '+(y-6)+'Q'+f1(mx)+' '+(y-14)+' '+f1(c.cx-4)+' '+(y-6)+'"/>';
@@ -492,10 +502,10 @@ function renderSystem(sys,meter,si){
   });
   return '<svg class="tb" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
 }
-const renderTab=(systems,sub,meter)=>parseTab(systems,sub).map((s,si)=>renderSystem(s,meter||'4/4',si)).join('');
+const renderTab=(systems,sub,meter,tu)=>parseTab(systems,sub,tu).map((s,si)=>renderSystem(s,meter||'4/4',si,tu)).join('');
 
 /* ================= лады ================= */
-const OPEN={E:40,A:45,D:50,G:55,B:59,e:64};
+const OPEN=TUNINGS.guitar.open;
 const LOW_TO_HIGH=['E','A','D','G','B','e'];
 const MATERIALS=[
   {ru:'E фригийский',en:'E Phrygian',pcs:[4,5,7,9,11,0,2]},
@@ -951,10 +961,10 @@ function renderPlan(){
   $('riffCard').innerHTML='<h3>'+L('Рифф дня','Riff of the day')+'</h3><dl><dt>'+L('Размер','Meter')+'</dt><dd>'+esc(r.meter)+'</dd><dt>'+L('Лад','Scale')+'</dt><dd>'+esc(r.material)+'</dd><dt>'+L('Техника','Technique')+'</dt><dd>'+esc(r.tech)+'</dd><dt>'+L('Условие','Rule')+'</dt><dd>'+esc(r.rule)+'</dd></dl><p class="legend" style="margin:0">'+L('Одинаковый для всех в этот день.','The same for everyone today.')+(inPlan?'':L(' В плане на это время его нет — сочини на досуге.',' It is not in the plan at this length: write it in your spare time.'))+'</p>';
 }
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
-function tabHtml(label,systems,sub,meter){
-  const key=JSON.stringify([systems,sub||1,meter||'4/4']),on=Pl.on&&Pl.key===key;
+function tabHtml(label,systems,sub,meter,tu){
+  const key=JSON.stringify([systems,sub||1,meter||'4/4',tu||'guitar']),on=Pl.on&&Pl.key===key;
   return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+L('стандартный строй','standard tuning')+'</span></div>'+
-    '<div class="tabsc">'+renderTab(systems,sub,meter)+'</div>'+
+    '<div class="tabsc">'+renderTab(systems,sub,meter,tu)+'</div>'+
     '<div class="tabft"><button class="btn tplay" data-play aria-pressed="'+on+'">'+plLabel(on)+'</button><label class="tloop"><input type="checkbox" data-loop'+(Pl.loop?' checked':'')+'> '+L('по кругу','loop')+'</label><span class="legend">'+L('темп метронома','metronome tempo')+'</span></div></div>';
 }
 function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. 7–8 strings: play on the top six.'))+'</p>';}
@@ -1082,34 +1092,53 @@ function applyMetroDefaults(){
 
 /* ================= плеер ================= */
 // Синтез гитары: Karplus–Strong в буфер (кэш по высоте) → перегруз WaveShaper → «кабинет». Время в долях метронома, темп — Mt.bpm.
-const Pl={on:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bufs:{},voices:[],q:[],lit:''};
+// Бас: те же буферы на его открытых струнах, свой тракт (чистый низ + перегруженная середина); пальцы — мягкий щипок, медиатор — яркий.
+const Pl={on:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bbus:null,bufs:{},voices:[],q:[],lit:'',tu:'guitar',hand:'fingers'};
 function plLabel(on){return on?'■ '+L('Стоп','Stop'):'▶ '+L('Послушать','Listen');}
+function plShaper(c,k){
+  const sh=c.createWaveShaper(),cv=new Float32Array(2048);
+  for(let i=0;i<cv.length;i++){const x=i/(cv.length-1)*2-1;cv[i]=Math.tanh(k*x);}
+  sh.curve=cv;sh.oversample='4x';return sh;
+}
 function plBus(c){
   if(Pl.bus)return Pl.bus;
   const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=110;
   const drive=c.createGain();drive.gain.value=9;
-  const sh=c.createWaveShaper(),cv=new Float32Array(2048);
-  for(let i=0;i<cv.length;i++){const x=i/(cv.length-1)*2-1;cv[i]=Math.tanh(2.5*x);}
-  sh.curve=cv;sh.oversample='4x';
+  const sh=plShaper(c,2.5);
   const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=800;mid.Q.value=0.8;mid.gain.value=-6;
   const cab=c.createBiquadFilter();cab.type='lowpass';cab.frequency.value=4500;cab.Q.value=0.9;
   const out=c.createGain();out.gain.value=0.16;
   hp.connect(drive).connect(sh).connect(mid).connect(cab).connect(out).connect(c.destination);
   return Pl.bus=hp;
 }
-function plBuf(c,midi,pm){
-  const key=midi+(pm?'m':'');if(Pl.bufs[key])return Pl.bufs[key];
+function plBassBus(c){
+  if(Pl.bbus)return Pl.bbus;
+  const inp=c.createGain(),out=c.createGain();out.gain.value=0.32;
+  const lo=c.createBiquadFilter();lo.type='lowpass';lo.frequency.value=250;
+  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=250;
+  const drive=c.createGain();drive.gain.value=5;
+  const cab=c.createBiquadFilter();cab.type='lowpass';cab.frequency.value=2500;cab.Q.value=0.7;
+  const mix=c.createGain();mix.gain.value=0.35;
+  inp.connect(lo).connect(out);
+  inp.connect(hp).connect(drive).connect(plShaper(c,2)).connect(cab).connect(mix).connect(out);
+  out.connect(c.destination);
+  return Pl.bbus=inp;
+}
+function plBuf(c,midi,pm,soft){
+  const key=midi+(pm?'m':'')+(soft?'f':'');if(Pl.bufs[key])return Pl.bufs[key];
   const sr=c.sampleRate,f=440*Math.pow(2,(midi-69)/12),N=Math.max(2,Math.round(sr/f-0.5));
   const len=Math.floor(sr*(pm?0.5:2.2)),b=c.createBuffer(1,len,sr),y=b.getChannelData(0),r=rng(midi*31+(pm?7:0));
   let lp=0,mean=0;
-  for(let i=0;i<N;i++){lp+=(pm?0.3:0.75)*((r()*2-1)-lp);y[i]=lp;mean+=lp/N;}
+  for(let i=0;i<N;i++){lp+=(pm?0.3:soft?0.35:0.75)*((r()*2-1)-lp);y[i]=lp;mean+=lp/N;}
   for(let i=0;i<N;i++)y[i]-=mean;
   const d=Math.pow(0.001,1/(f*(pm?0.2:3)));
   for(let i=N;i<len;i++)y[i]=d*0.5*(y[i-N]+(i>N?y[i-N-1]:0));
   return Pl.bufs[key]={b,rate:f*(N+0.5)/sr};
 }
 function plNote(c,nt,t0,len,pm,vel){
-  const bf=plBuf(c,OPEN[nt.s]+nt.f+(nt.ph?19:0),pm);
+  const T=TUN(Pl.tu);
+  if(nt.x){pm=true;len=Math.min(len,0.06);vel*=0.6;} // мёртвая нота: короткий глухой щелчок без высоты
+  const bf=plBuf(c,T.open[nt.s]+(nt.x?3:nt.f)+(nt.ph?19:0),pm,!!T.bass&&Pl.hand==='fingers');
   const src=c.createBufferSource(),g=c.createGain(),pr=src.playbackRate,rt=bf.rate;
   src.buffer=bf.b;pr.setValueAtTime(rt,t0);
   if(nt.b!=null){const up=rt*Math.pow(2,(nt.b-nt.f)/12);pr.linearRampToValueAtTime(up,t0+len*0.35);
@@ -1118,8 +1147,8 @@ function plNote(c,nt,t0,len,pm,vel){
   if(nt.vib){lfo=c.createOscillator();const lg=c.createGain();lfo.frequency.value=5.5;lg.gain.setValueAtTime(0,t0);lg.gain.linearRampToValueAtTime(rt*(nt.b!=null?Math.pow(2,(nt.b-nt.f)/12):1)*0.022,t0+Math.min(0.25,len*0.4));lfo.connect(lg).connect(pr);lfo.start(t0);lfo.stop(t0+len+0.1);}
   g.gain.setValueAtTime(vel,t0);g.gain.setValueAtTime(vel,t0+len);g.gain.setTargetAtTime(0,t0+len,0.012);
   let node=src;
-  if(pm){const lpf=c.createBiquadFilter();lpf.type='lowpass';lpf.frequency.value=900;node=src.connect(lpf);}
-  node.connect(g).connect(plBus(c));
+  if(pm){const lpf=c.createBiquadFilter();lpf.type='lowpass';lpf.frequency.value=T.bass?500:900;node=src.connect(lpf);}
+  node.connect(g).connect(T.bass?plBassBus(c):plBus(c));
   src.start(t0);src.stop(t0+len+0.12);
   Pl.voices.push({src,g,lfo,end:t0+len+0.12});
 }
@@ -1161,8 +1190,9 @@ function plButtons(){document.querySelectorAll('.tabbox [data-play]').forEach(b=
 function plStart(box){
   plStop();
   const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}
-  const [systems,sub,meter]=JSON.parse(box.dataset.tab);
-  Pl.ev=[];parseTab(systems,sub).forEach((s,si)=>{let ci=0;s.items.forEach(it=>{if(!it.bar)Pl.ev.push(Object.assign({id:si+'.'+ci},it));ci++;});});
+  const [systems,sub,meter,tu]=JSON.parse(box.dataset.tab);
+  Pl.tu=tu||'guitar';
+  Pl.ev=[];parseTab(systems,sub,Pl.tu).forEach((s,si)=>{let ci=0;s.items.forEach(it=>{if(!it.bar)Pl.ev.push(Object.assign({id:si+'.'+ci},it));ci++;});});
   if(!Pl.ev.length)return;
   Pl.key=box.dataset.tab;Pl.box=box;Pl.bar=+meter.split('/')[0]||4;Pl.i=0;Pl.pos=0;Pl.q=[];Pl.lit='';
   Pl.next=c.currentTime+0.12;
@@ -1429,7 +1459,7 @@ $('shareBtn').onclick=()=>{
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX};
+window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX,TUNINGS,tabHtml,Pl};
 })();
 </script>
 
