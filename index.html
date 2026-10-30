@@ -563,23 +563,131 @@ W2:{name:'Медленная хроматика',goal:'Включить синх
 W3:{name:'Медленные свипы и трели',goal:'Подготовить обе руки к быстрой работе.',how:'Чистый звук. Свип Am на трёх струнах и трели парами пальцев. Темп — половина рабочего.',tip:'Цель — тёплые руки, а не скорость.',sub:6,v:[{l:'Свип и трели',t:[J('G14 B13 e12 eh17 ep12 B13','|','/4 G12 Gh13 Gp12 Gh14 Gp12 Gh15 Gp12 .')]}]},
 
 /* ---- база ---- */
-B1:{n:1,name:'Тремоло на одной струне',goal:'Скорость и ровность альтернейта.',how:'Строго вниз-вверх, шестнадцатые. Каждый третий подход — секстоли, затем тридцать вторые на половине темпа.',tip:'Движение от запястья, медиатор входит в струну неглубоко. Громкость вниз и вверх одинаковая.',sub:4,v:[
-  {l:'Открытая струна',t:[R('E0',16)]},
-  {l:'С движением по ладам',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4),'|',R('E0',4),R('E5',4),R('E3',4),R('E1',4))]},
-  {l:'Струна A',t:[J(R('A7',4),R('A8',4),R('A10',4),R('A8',4))]}]},
-B2:{n:2,name:'Альтернейт со сменой струн',goal:'Чистые переходы медиатора между струнами.',how:'Строгий альтернейт, шестнадцатые. Нечётное число нот на струне заставляет чередовать переходы «внутри» и «снаружи».',tip:'Медиатор делает минимальную дугу при переходе. Если цепляешь соседнюю струну — сбрось темп.',sub:4,v:[
-  {l:'3 ноты на струну, две струны',t:[J('G12 G14 G16 B13 B15 B17 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 B17 B15 B13 G16 G14 G12')]},
-  {l:'Внутри и снаружи',t:[R('G14 B15',8)],note:'Половину подходов начинай даунстроком на G — это переход «внутри», медиатор между струнами. Вторую половину начинай апстроком — переход «снаружи».'},
-  {l:'Три струны',t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17 .:3','|','B17 B15 B13 G16 G14 G12 D15 D14 D12 .:3')]}]},
-B3:{n:3,name:'Перескок через струну',goal:'Точность правой руки на больших дистанциях.',how:'Строгий альтернейт, пропущенная струна не звучит. Шестнадцатые.',tip:'Поднимай медиатор ровно настолько, чтобы перелететь через струну.',sub:4,v:[
-  {l:'G и e',t:[R('G14 e12',8)]},
-  {l:'По две ноты',t:[J(R('G12 G14 e12 e15',2),'|',R('e15 e12 G14 G12',2))]},
-  {l:'D и B',t:[R('D14 B13',8)]}]},
+B1:{n:1,name:'Тремоло на одной струне',goal:'Скорость и ровность альтернейта.',how:'Строго вниз-вверх, шестнадцатые. Каждый третий подход — секстоли, затем тридцать вторые на половине темпа. Нота меняется только на долю, поэтому в секстолях и 32-х смена тоже приходится на долю.',tip:'Движение от запястья, медиатор входит в струну неглубоко. Громкость вниз и вверх одинаковая.',sub:4,lvl:['Длинные ноты','Смена ладов','Смена струн','Смена позиций и перескоки'],v:[
+  {l:'Открытая струна',lv:[
+    {t:[R('E0',16)]},
+    {t:[J(R('E0',8),R('E1',4),R('E0',4))]},
+    {t:[J(R('E0',4),R('A1',4),R('E0',4),R('A3',4),'|',R('E0',4),R('D2',4),R('A1',4),R('E0',4))]},
+    {t:[J(R('E0',4),R('A7',4),R('E0',4),R('D9',4),'|',R('E0',4),R('A12',4),R('D14',4),R('E0',4))]}]},
+  {l:'С движением по ладам',lv:[
+    {t:[J(R('E0',8),R('E1',8))]},
+    {t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4),'|',R('E0',4),R('E5',4),R('E3',4),R('E1',4))]},
+    {t:[J(R('E0',4),R('E1',4),R('A0',4),R('A1',4),'|',R('E0',4),R('A2',4),R('E3',4),R('A1',4))]},
+    {t:[J(R('E0',4),R('E1',4),R('E7',4),R('E8',4),'|',R('A7',4),R('E5',4),R('D8',4),R('E1',4))]}]},
+  {l:'Струна A',lv:[
+    {t:[J(R('A7',8),R('A8',8))]},
+    {t:[J(R('A7',4),R('A8',4),R('A10',4),R('A8',4))]},
+    {t:[J(R('A7',4),R('A8',4),R('D7',4),R('A8',4),'|',R('A7',4),R('D10',4),R('D8',4),R('A10',4))]},
+    {t:[J(R('A7',4),R('A8',4),R('A12',4),R('A13',4),'|',R('G12',4),R('A10',4),R('D14',4),R('A8',4))]}]},
+  {l:'Хроматика на струне D',lv:[
+    {t:[J(R('D5',8),R('D6',8))]},
+    {t:[J(R('D5',4),R('D6',4),R('D7',4),R('D6',4),'|',R('D5',4),R('D8',4),R('D7',4),R('D6',4))]},
+    {t:[J(R('D5',4),R('D6',4),R('G5',4),R('D6',4),'|',R('A7',4),R('D6',4),R('G6',4),R('D5',4))]},
+    {t:[J(R('D5',4),R('D6',4),R('D11',4),R('D12',4),'|',R('B10',4),R('D12',4),R('A10',4),R('D6',4))]}]},
+  {l:'Тритон',lv:[
+    {t:[J(R('E0',8),R('E6',8))]},
+    {t:[J(R('E0',4),R('E6',4),R('E5',4),R('E6',4),'|',R('E0',4),R('E6',4),R('E7',4),R('E6',4))]},
+    {t:[J(R('E0',4),R('A1',4),R('E6',4),R('A7',4),'|',R('E0',4),R('A1',4),R('E5',4),R('A6',4))]},
+    {t:[J(R('E0',4),R('E6',4),R('D8',4),R('E12',4),'|',R('G9',4),R('E6',4),R('D14',4),R('E0',4))]}]},
+  {l:'Струна e',lv:[
+    {t:[J(R('e12',8),R('e13',8))]},
+    {t:[J(R('e12',4),R('e13',4),R('e15',4),R('e13',4),'|',R('e12',4),R('e16',4),R('e15',4),R('e13',4))]},
+    {t:[J(R('e12',4),R('e13',4),R('B13',4),R('e12',4),'|',R('B15',4),R('e13',4),R('B12',4),R('e12',4))]},
+    {t:[J(R('e12',4),R('e13',4),R('G12',4),R('e15',4),'|',R('e17',4),R('e18',4),R('B17',4),R('e12',4))]}]}]},
+B2:{n:2,name:'Альтернейт со сменой струн',goal:'Чистые переходы медиатора между струнами.',how:'Строгий альтернейт, шестнадцатые. Нечётное число нот на струне заставляет чередовать переходы «внутри» и «снаружи».',tip:'Медиатор делает минимальную дугу при переходе. Если цепляешь соседнюю струну — сбрось темп.',sub:4,lvl:['Короткая фраза','Полная фраза','Смена позиции','Длинная фраза со сменами'],v:[
+  {l:'3 ноты на струну, две струны',lv:[
+    {t:[J('G12 G14 G16 B13 B15 B17 G12 G14 G16 B13 B15 B17 .:4')]},
+    {t:[J('G12 G14 G16 B13 B15 B17 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 B17 B15 B13 G16 G14 G12')]},
+    {t:[J('G12 G14 G16 B13 B15 B17 G14 G16 G17 B15 B17 B18','|','B18 B17 B15 G17 G16 G14 B17 B15 B13 G16 G14 G12')]},
+    {t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17 e13 e15 e17','|','e19 e17 e15 B18 B17 B15 G17 G16 G14 D17 D15 D14')]}]},
+  {l:'Внутри и снаружи',note:'Половину подходов начинай даунстроком на G — это переход «внутри», медиатор между струнами. Вторую половину начинай апстроком — переход «снаружи».',lv:[
+    {t:[J('G14 G16 G14 B15 B17 B15 .:2')]},
+    {t:[R('G14 B15',8)]},
+    {t:[J(R('G14 B15',4),R('G16 B17',4),'|',R('G12 B13',4),R('G14 B15',4))]},
+    {t:[J('G14 B15 B17 B15 G14 B15 G16 G14 G12 B13 G12 B13 B15 B13 G12 B13'),J('G17 B18 B20 B18 G17 B18 G19 G17 G15 B16 G15 B16 B18 B16 G15 B16')]}]},
+  {l:'Три струны',lv:[
+    {t:[J('D12 D14 D15 G12 G14 G16 .:2','|','G16 G14 G12 D15 D14 D12 .:2')]},
+    {t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17 .:3','|','B17 B15 B13 G16 G14 G12 D15 D14 D12 .:3')]},
+    {t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17 .:3','|','D14 D15 D17 G14 G16 G17 B15 B17 B18 .:3'),J('B18 B17 B15 G17 G16 G14 D17 D15 D14 .:3','|','B17 B15 B13 G16 G14 G12 D15 D14 D12 .:3')]},
+    {t:[J('A12 A14 A15 D12 D14 D15 G12 G14 G16 B13 B15 B17 e13 e15 e17 .','|','e19 e17 e15 B18 B17 B15 G17 G16 G14 D17 D15 D14 A17 A15 A14 .')]}]},
+  {l:'Гармонический минор',lv:[
+    {t:[J('G12 G14 G16 B13 B16 B17 .:2','|','B17 B16 B13 G16 G14 G12 .:2')]},
+    {t:[J('D13 D14 D16 G12 G14 G16 B13 B16 B17 .:3','|','B17 B16 B13 G16 G14 G12 D16 D14 D13 .:3')]},
+    {t:[J('G12 G14 G16 B13 B16 B17 G14 G16 G17 B16 B17 B19','|','B19 B17 B16 G17 G16 G14 B17 B16 B13 G16 G14 G12')]},
+    {t:[J('D13 D14 D16 G12 G14 G16 B13 B16 B17 e14 e15 e17','|','e19 e17 e15 B19 B17 B16 G17 G16 G14 D17 D16 D14')]}]},
+  {l:'Фригийский от открытой E',lv:[
+    {t:[J('E0 E1 E3 A0 A2 A3 .:2','|','A3 A2 A0 E3 E1 E0 .:2')]},
+    {t:[J('E0 E1 E3 A0 A2 A3 D0 D2 D3 .:3','|','D3 D2 D0 A3 A2 A0 E3 E1 E0 .:3')]},
+    {t:[J('E0 E1 E3 A0 A2 A3 D0 D2 D3 .:3','|','E5 E7 E8 A5 A7 A8 D5 D7 D9 .:3'),J('D9 D7 D5 A8 A7 A5 E8 E7 E5 .:3','|','D3 D2 D0 A3 A2 A0 E3 E1 E0 .:3')]},
+    {t:[J('E0 E1 E3 A0 A2 A3 D0 D2 D3 G0 G2 G4 B1 B3 B5 .','|','B8 B6 B5 G7 G5 G4 D7 D5 D3 A7 A5 A3 E7 E5 E3 .')]}]},
+  {l:'Уменьшённый лад',lv:[
+    {t:[J('G13 G15 G16 B14 B15 B17 .:2','|','B17 B15 B14 G16 G15 G13 .:2')]},
+    {t:[J('D14 D15 D17 G13 G15 G16 B14 B15 B17 .:3','|','B17 B15 B14 G16 G15 G13 D17 D15 D14 .:3')]},
+    {t:[J('D14 D15 D17 G13 G15 G16 B14 B15 B17 .:3','|','D17 D18 D20 G16 G18 G19 B17 B18 B20 .:3'),J('B20 B18 B17 G19 G18 G16 D20 D18 D17 .:3','|','B17 B15 B14 G16 G15 G13 D17 D15 D14 .:3')]},
+    {t:[J('D14 D15 D17 G13 G15 G16 B14 B15 B17 e13 e15 e16','|','e19 e18 e16 B20 B18 B17 G19 G18 G16 D20 D18 D17')]}]}]},
+B3:{n:3,name:'Перескок через струну',goal:'Точность правой руки на больших дистанциях.',how:'Строгий альтернейт, пропущенная струна не звучит. Шестнадцатые.',tip:'Поднимай медиатор ровно настолько, чтобы перелететь через струну.',sub:4,lvl:['Редкие перескоки','Частые перескоки','Со сменой ладов','Широкие перескоки, смена позиции'],v:[
+  {l:'G и e',lv:[
+    {t:[R('G14 G14 G14 G14 e12 e12 e12 e12',2)]},
+    {t:[R('G14 e12',8)]},
+    {t:[J(R('G14 e12',2),R('G12 e12',2),R('G14 e15',2),R('G16 e15',2))]},
+    {t:[J(R('G14 e12',2),R('D14 e12',2),R('G16 e15',2),R('D17 e15',2),'|',R('G19 e17',2),R('D19 e17',2),R('G17 e15',2),R('D14 e12',2))]}]},
+  {l:'По две ноты',lv:[
+    {t:[J('G12 G14 G12 G14 e12 e15 e12 e15','|','e15 e12 e15 e12 G14 G12 G14 G12')]},
+    {t:[J(R('G12 G14 e12 e15',2),'|',R('e15 e12 G14 G12',2))]},
+    {t:[J(R('G12 G14 e12 e15',2),R('G14 G16 e13 e15',2),'|',R('e15 e13 G16 G14',2),R('e15 e12 G14 G12',2))]},
+    {t:[J(R('D12 D14 B13 B15',2),'|',R('G12 G14 e12 e15',2)),J(R('G14 G16 e13 e15',2),'|',R('D14 D15 B15 B17',2))]}]},
+  {l:'D и B',lv:[
+    {t:[R('D14 D14 D14 D14 B13 B13 B13 B13',2)]},
+    {t:[R('D14 B13',8)]},
+    {t:[J(R('D14 B13',2),R('D12 B13',2),R('D14 B15',2),R('D15 B13',2))]},
+    {t:[J(R('D14 B13',2),R('A14 B13',2),R('D17 B17',2),R('A17 B15',2),'|',R('D19 B20',2),R('A19 B17',2),R('D15 B15',2),R('A14 B13',2))]}]},
+  {l:'A и G',lv:[
+    {t:[R('A7 A7 A7 A7 G9 G9 G9 G9',2)]},
+    {t:[R('A7 G9',8)]},
+    {t:[J(R('A7 G9',2),R('A8 G9',2),R('A10 G10',2),R('A8 G7',2))]},
+    {t:[J(R('A7 G9',2),R('E7 G9',2),R('A10 G12',2),R('E12 G12',2),'|',R('A12 G14',2),R('E14 G12',2),R('A10 G9',2),R('E7 G9',2))]}]},
+  {l:'Октавы E и D',lv:[
+    {t:[R('E0 E0 E0 E0 D2 D2 D2 D2',2)]},
+    {t:[R('E0 D2',8)]},
+    {t:[J(R('E0 D2',2),R('E1 D3',2),R('E3 D5',2),R('E1 D3',2))]},
+    {t:[J(R('E0 D2',2),R('E0 G4',2),R('E5 D7',2),R('E5 G9',2),'|',R('E8 D10',2),R('E8 G12',2),R('E1 D3',2),R('E0 G4',2))]}]},
+  {l:'Три струны через одну',lv:[
+    {t:[J(R('A7',4),R('G9',4),R('e7',4),R('G9',4))]},
+    {t:[R('A7 G9 e7 G9',4)]},
+    {t:[J(R('A7 G9 e7 G9',2),R('A8 G10 e8 G10',2),'|',R('A10 G9 e10 G9',2),R('A8 G10 e8 G10',2))]},
+    {t:[J(R('E7 G9 e7 G9',2),R('E8 G10 e8 G10',2),'|',R('E12 G14 e12 G14',2),R('E7 G9 e7 G9',2))]}]}]},
 B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальца и медиатора.',how:'Альтернейт, шестнадцатые. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. На обратном пути позиция на лад выше.',tip:'Палец ставится на лад чуть раньше удара медиатора, а не одновременно.',sub:4,gen:true,lvl:['Три струны','Шесть струн','Сдвиг на лад на каждой струне','Перескок через струну']},
-B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз. Точка в табе — пауза. Ребро правой ладони глушит басы, свободные пальцы левой лежат на неиграющих струнах.',tip:'Проверка: остановись на любой паузе — должно быть тихо, без гула и свиста.',sub:2,v:[
-  {l:'Палм-мьют и открытые ноты',t:[J('E0m E0m D7 . E0m E0m G7 .','|','E0m E0m D7 . E0m G9 D7 .')],note:'E — палм-мьют, верхние ноты открыто.'},
-  {l:'Перескоки под перегрузом',t:[J('A7 . G9 . A7 . e7 .','|','A5 . G7 . A5 . e5 .')]},
-  {l:'Аккорд и тишина',t:[J('A2+E0 . . . A2+E0 A2+E0 . .','|','A3+E1 . A3+E1 . . . A5+E3 .')]}]},
+B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз. Точка в табе — пауза. Ребро правой ладони глушит басы, свободные пальцы левой лежат на неиграющих струнах.',tip:'Проверка: остановись на любой паузе — должно быть тихо, без гула и свиста.',sub:2,lvl:['Длинные паузы','Короткие паузы','Шестнадцатые','Синкопы и шестнадцатые'],v:[
+  {l:'Палм-мьют и открытые ноты',note:'E — палм-мьют, верхние ноты открыто.',lv:[
+    {t:[J('E0m E0m D7 . . . . .','|','E0m E0m G7 . . . . .')]},
+    {t:[J('E0m E0m D7 . E0m E0m G7 .','|','E0m E0m D7 . E0m G9 D7 .')]},
+    {sub:4,t:[J('E0m E0m E0m E0m D7:2 .:2 E0m E0m E0m E0m G7:2 .:2','|','E0m E0m E0m E0m D7:2 .:2 E0m E0m G9 . D7:2 .:2')]},
+    {sub:4,t:[J('E0m E0m . E0m D7 . E0m E0m . E0m G7:2 . E0m E0m E0m','|','E0m . E0m E0m D7 . . E0m G9 . D7 . E0m E0m .:2')]}]},
+  {l:'Перескоки под перегрузом',lv:[
+    {t:[J('A7 . . . G9 . . .','|','A5 . . . G7 . . .')]},
+    {t:[J('A7 . G9 . A7 . e7 .','|','A5 . G7 . A5 . e5 .')]},
+    {sub:4,t:[J('A7 . G9 . A7 . e7 . A7 . G9 . e7:2 .:2','|','A5 . G7 . A5 . e5 . A5 . G7 . e5:2 .:2')]},
+    {sub:4,t:[J('A7 G9 . e7 . A7 G9 . A7 . e7 G9 . A7 .:2','|','A5 G7 . e5 . A5 G7 . A5 . e5 G7 . A5 .:2')]}]},
+  {l:'Аккорд и тишина',lv:[
+    {t:[J('A2+E0 . . . . . . .','|','A3+E1 . . . A5+E3 . . .')]},
+    {t:[J('A2+E0 . . . A2+E0 A2+E0 . .','|','A3+E1 . A3+E1 . . . A5+E3 .')]},
+    {sub:4,t:[J('A2+E0 A2+E0 . . A2+E0 . A2+E0 . . . A3+E1 . A3+E1:2 .:2','|','A2+E0 A2+E0 . . A3+E1 . . . A5+E3 . A5+E3 . A3+E1:2 .:2')]},
+    {sub:4,t:[J('A2+E0m A2+E0m . A2+E0 . . A3+E1m A3+E1m . A3+E1 . . A5+E3:2 .:2','|','A2+E0m . A2+E0m A2+E0m . A6+E4 . . A5+E3m A5+E3m . A3+E1 .:2 A2+E0:2')]}]},
+  {l:'Пауэр-аккорды на A',lv:[
+    {t:[J('D2+A0 . . . . . . .','|','D3+A1 . . . D5+A3 . . .')]},
+    {t:[J('D2+A0 . D2+A0 . . . D3+A1 .','|','D2+A0 . . D5+A3 . D3+A1 . .')]},
+    {sub:4,t:[J('D2+A0 D2+A0 . . D2+A0 . . . D3+A1 D3+A1 . . D5+A3:2 .:2','|','D2+A0 . D2+A0 . D3+A1 . . . D7+A5 . D5+A3 . D3+A1:2 .:2')]},
+    {sub:4,t:[J('E0m E0m D2+A0 . E0m E0m D3+A1 . E0m D5+A3 . E0m E0m D3+A1 .:2','|','E0m . E0m D2+A0 . E0m D3+A1 . E0m E0m D7+A5 . D6+A4 . .:2')]}]},
+  {l:'Высокие ноты и тишина',lv:[
+    {t:[J('e12 . . . B13 . . .','|','e15 . . . e13 . . .')]},
+    {t:[J('e12 . B13 . e15 . e13 .','|','e12 . B15 . B13 . e12 .')]},
+    {sub:4,t:[J('e12 . B13 . e15 . e13 . e12 . B15 . B13:2 .:2','|','e12 . e13 . B13 . e15 . e17 . e15 . e13:2 .:2')]},
+    {sub:4,t:[J('e12 . G14 . e13 . . G12 . e15 . G14 e12 . .:2','|','B13 . G14 . e15 . . G16 . e17 . G14 e12 . .:2')]}]},
+  {l:'E-педаль и тритоны',lv:[
+    {t:[J('E0m E0m . . A1 . . .','|','E0m E0m . . E6 . . .')]},
+    {t:[J('E0m E0m A1 . E0m E0m E6 .','|','E0m A1 . E0m E0m E6 E5 .')]},
+    {sub:4,t:[J('E0m E0m E0m E0m A1:2 .:2 E0m E0m E0m E0m E6:2 .:2','|','E0m E0m A1 . E0m E0m E6 . E0m E0m E5 . E6:2 .:2')]},
+    {sub:4,t:[J('E0m E0m A1 E0m . E0m E6 . E0m A1 . E0m E7 E6 .:2','|','E0m . E0m A1 . E0m D8 . E0m E0m A7 . E6 . .:2')]}]}]},
 
 /* ---- ритм ---- */
 R6:{n:6,name:'Даунпикинг',goal:'Скорость и выносливость даунстроков.',how:'Только даунстроки. Восьмые, на четвёртом уровне — триоли. Найди темп, который держишь 60 секунд подряд, и применяй к нему протокол недели.',tip:'Сила не нужна. Короткое движение, медиатор отскакивает от струны. Плечо и шея расслаблены.',sub:2,lvl:['Ровные восьмые, редкая смена нот','Смена нот и аккордов','Синкопы и паузы','Даунпикинг триолями'],v:[
@@ -1040,11 +1148,11 @@ W0:{name:'Warm-up',goal:'Warm up the hands and wake up the ears.',how:'One minut
 W1:{name:'Mobility without the guitar',goal:'Get blood flowing in the hands and forearms.',how:'Rub your palms until warm. Wrist circles both ways, 10 each. Shoulders up, back, down. Open and close your fists 20 times. Shake out relaxed hands.',tip:'No stretching into pain: only warmth and mobility.'},
 W2:{name:'Slow chromatics',goal:'Switch on hand sync without load.',how:'Clean tone, deliberately slow tempo. 1-2-3-4 across all strings up and down, then shift one fret up and repeat.',tip:'Listen for every note ringing its full length.',v:['Chromatics']},
 W3:{name:'Slow sweeps and trills',goal:'Prepare both hands for fast work.',how:'Clean tone. Three-string Am sweep and finger-pair trills at half your working tempo.',tip:'The goal is warm hands, not speed.',v:['Sweep and trills']},
-B1:{name:'Single-string tremolo',goal:'Speed and evenness of alternate picking.',how:'Strict down-up, sixteenth notes. Every third set as sextuplets, then thirty-seconds at half tempo.',tip:'Move from the wrist and keep the pick shallow in the string. Downstrokes and upstrokes equally loud.',v:['Open string','Moving across frets','A string']},
-B2:{name:'Alternate picking across strings',goal:'Clean pick transitions between strings.',how:'Strict alternate picking, sixteenths. An odd number of notes per string makes you alternate inside and outside string changes.',tip:'Use the smallest possible arc between strings. If you catch the neighbouring string, drop the tempo.',v:['3 notes per string, two strings',{l:'Inside and outside',note:'Start half of your sets with a downstroke on G: that is an inside change, with the pick between the strings. Start the other half with an upstroke: an outside change.'},'Three strings']},
-B3:{name:'String skipping',goal:'Picking-hand accuracy over larger distances.',how:'Strict alternate picking, the skipped string stays silent. Sixteenths.',tip:'Lift the pick just enough to clear the string.',v:['G and e','Two notes each','D and B']},
+B1:{name:'Single-string tremolo',goal:'Speed and evenness of alternate picking.',how:'Strict down-up, sixteenth notes. Every third set as sextuplets, then thirty-seconds at half tempo. Notes change only on the beat, so in sextuplets and 32nds the change also falls on the beat.',tip:'Move from the wrist and keep the pick shallow in the string. Downstrokes and upstrokes equally loud.',lvl:['Long notes','Fret changes','String changes','Position shifts and skips'],v:['Open string','Moving across frets','A string','Chromatic on the D string','Tritone','High e string']},
+B2:{name:'Alternate picking across strings',goal:'Clean pick transitions between strings.',how:'Strict alternate picking, sixteenths. An odd number of notes per string makes you alternate inside and outside string changes.',tip:'Use the smallest possible arc between strings. If you catch the neighbouring string, drop the tempo.',lvl:['Short phrase','Full phrase','Position shift','Long phrase with shifts'],v:['3 notes per string, two strings',{l:'Inside and outside',note:'Start half of your sets with a downstroke on G: that is an inside change, with the pick between the strings. Start the other half with an upstroke: an outside change.'},'Three strings','Harmonic minor','Phrygian from the open E','Diminished scale']},
+B3:{name:'String skipping',goal:'Picking-hand accuracy over larger distances.',how:'Strict alternate picking, the skipped string stays silent. Sixteenths.',tip:'Lift the pick just enough to clear the string.',lvl:['Rare skips','Frequent skips','Moving frets','Wider skips, position shifts'],v:['G and e','Two notes each','D and B','A and G','Octaves on E and D','Three strings, skipping one']},
 B4:{name:'Sync: chromatics',goal:'Finger and pick land together.',how:'Alternate picking, sixteenths. The finger order changes every day; today’s is shown in the variant. On the way back, the position is one fret higher.',tip:'The finger lands on the fret slightly before the pick hits, not at the same moment.',lvl:['Three strings','Six strings','Shift one fret on every string','String skipping']},
-B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'High gain. A dot in the tab is a rest. The edge of the picking hand mutes the low strings, free fretting-hand fingers rest on unused strings.',tip:'Test: stop on any rest. It should be silent, with no hum or squeal.',v:[{l:'Palm mute and open notes',note:'E palm-muted, upper notes open.'},'Skips under high gain','Chord and silence']},
+B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'High gain. A dot in the tab is a rest. The edge of the picking hand mutes the low strings, free fretting-hand fingers rest on unused strings.',tip:'Test: stop on any rest. It should be silent, with no hum or squeal.',lvl:['Long rests','Short rests','Sixteenths','Syncopation and sixteenths'],v:[{l:'Palm mute and open notes',note:'E palm-muted, upper notes open.'},'Skips under high gain','Chord and silence','Power chords on A','High notes and silence','E pedal and tritones']},
 R6:{name:'Downpicking',goal:'Downstroke speed and endurance.',how:'Downstrokes only. Eighth notes, triplets on level 4. Find the tempo you can hold for 60 seconds straight and apply the week protocol to it.',tip:'No force needed. Short motion, the pick bounces off the string. Shoulder and neck stay relaxed.',lvl:['Even eighths, few note changes','Note and chord changes','Syncopation and rests','Downpicked triplets'],v:['Moving chugs','Power chords','Across strings','Pedal and notes on D','Chromatic chords',{l:'Octaves',note:'The A string between the octave notes stays silent: a fretting finger touches it lightly.'}]},
 R7:{name:'Gallops',goal:'A crisp gallop at any tempo.',how:'Sixteenth subdivision. Choose one picking pattern (alternate or down-down-up) and keep it for the whole set.',tip:'The long note of the gallop does not drop out: it is as loud as the short ones.',lvl:['Hardly any note changes','Note changes','Mixed with sixteenths and rests','String skips and chords'],v:[{l:'Forward gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop',note:'Each group of three: two sixteenths, then one eighth.'},{l:'Chord gallops',note:'Alternate forward and reverse gallops every bar.'},{l:'Chromatic gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop with a tritone',note:'Each group of three: two sixteenths, then one eighth.'},'Gallop in 3/4']},
 R8:{name:'Double-stop tremolo',goal:'Even tremolo across several strings.',how:'Alternate sixteenths, plus sextuplets on level 4. The pick catches every string of the interval equally on downstrokes and upstrokes.',tip:'Mute unused strings with the fretting hand: any stray noise is obvious in interval tremolo.',lvl:['Rare changes','A change every 1–2 beats','Syncopation and rests','Sextuplets and string shifts'],v:['Tritone','Power chords','Minor second',{l:'Fourths',note:'Both notes of the fourth with one finger, a flat barre across two strings.'},{l:'Octaves',note:'The string between the octave notes stays silent: a fretting finger touches it lightly.'},'Fifths on D and G']},
