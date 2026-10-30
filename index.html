@@ -123,6 +123,8 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .lvlb button{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:34px;padding:4px 10px;font-family:var(--f-mono);font-size:14px}
 .lvlb button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 .lvld{font-size:13px}
+.lvlb button.day{box-shadow:inset 0 -3px 0 var(--accent)}
+.lvlb button.day[aria-pressed="true"]{box-shadow:inset 0 -3px 0 var(--accent-ink)}
 .tloop{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .tb text{font-family:var(--f-mono)}
 .tb .ln{stroke:var(--muted);stroke-opacity:.45}
@@ -1922,6 +1924,9 @@ function genEx(id,d,lv){
   }
   return null;
 }
+// Вариант: по умолчанию вариант дня; s.pick — выбор вручную на этом сегменте, живёт до пересборки плана (смена дня, времени, перезагрузка).
+const dayVar=(s,d)=>mod(s.variant!=null?s.variant:d.pool,EX[s.id].v.length);
+const varIdx=(s,d)=>s.pick!=null?s.pick:dayVar(s,d);
 // lv — уровень; без него берётся сохранённый для упражнения.
 function resolveEx(s,d,lv){
   const ex=EX[s.id];if(!ex)return null;
@@ -1929,7 +1934,7 @@ function resolveEx(s,d,lv){
   let v=null;
   if(ex.gen)v=genEx(s.id,d,lv||LVL_DEF);
   else if(ex.v){
-    const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
+    const idx=varIdx(s,d);const raw=ex.v[idx];
     const e=(lv&&raw.lv)?raw.lv[lv-1]:raw;
     v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
     // бас: версия под число струн, если есть (t6 → t5 → t)
@@ -2026,6 +2031,11 @@ function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — 
 function handHtml(id){if(INST!=='bass')return '';const f=HAND==='pick'?'hp':'hf',x=X(id,f);return x?'<p class="note"><b>'+esc(HAND==='pick'?L('Медиатор','Pick'):L('Пальцы','Fingers'))+':</b> '+esc(x)+'</p>':'';}
 function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
 
+function varHtml(s,d){
+  const n=EX[s.id].v.length,cur=varIdx(s,d),day=dayVar(s,d);
+  let b='';for(let k=0;k<n;k++)b+='<button data-var="'+k+'" aria-pressed="'+(k===cur)+'"'+(k===day?' class="day" title="'+L('Вариант дня','Today’s variant')+'"':'')+'>'+(k+1)+'</button>';
+  return '<div class="lvl"><span class="lbl">'+L('Вариант','Variant')+'</span><div class="lvlb" role="group" aria-label="'+L('Вариант упражнения','Exercise variant')+'">'+b+'</div><span class="lvld">'+esc(L('вариант дня — ','today’s variant: ')+(day+1))+'</span></div>';
+}
 function lvlHtml(id,lv,nl){
   let b='';for(let k=1;k<=nl;k++)b+='<button data-lvl="'+k+'" aria-pressed="'+(k===lv)+'">'+k+'</button>';
   return '<div class="lvl"><span class="lbl">'+L('Уровень','Level')+'</span><div class="lvlb" role="group" aria-label="'+L('Уровень сложности','Difficulty level')+'">'+b+'</div><span class="lvld">'+esc(X(id,'lvl')[lv-1])+'</span></div>';
@@ -2055,6 +2065,7 @@ function renderNow(){
     if(s.kind==='maint')h+=stepsHtml(L('Протокол поддержки','Maintenance protocol'),MAINT_STEPS[LANG]);
     else if(s.kind!=='warm'){const ph=PH(d.week);h+=stepsHtml(L('Протокол недели ','Week ')+(d.week+1)+L(': ',' protocol: ')+ph.name,ph.steps);if(s.kind==='combo')h+='<div class="sect"><p class="note">'+esc(COMBO_STEP[LANG])+'</p></div>';}
     h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+handHtml(s.id)+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
+    if(!r.ex.gen&&r.ex.v&&r.ex.v.length>1)h+=varHtml(s,d);
     if(r.nl)h+=lvlHtml(s.id,r.lv,r.nl);
     if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter,r.tu)+legendHtml();
   }
@@ -2369,7 +2380,7 @@ function coachPlan(s,d,lv){
   const lead=s.kind==='warm'?s.id!=='W1':['base','focus','maint','combo'].includes(s.kind);
   if(!lead)return null;
   const r=resolveEx(s,d,lv);const c=COACH[s.id]||{};
-  const vi=(EX[s.id].v&&EX[s.id].v.length)?mod(s.variant!=null?s.variant:d.pool,EX[s.id].v.length):-1;
+  const vi=(EX[s.id].v&&EX[s.id].v.length)?varIdx(s,d):-1;
   const cv=(c.v&&c.v[vi])||{};const cyc=cv.cyc||c.cyc;const stages=cv.stages||c.stages||(s.kind==='combo'?COMBO_STAGES:null);
   const head=[];if(c.free)head.push(fixed('free',c.free));head.push(fixed('prep',CO_PREP));
   let co,nPref=null;
@@ -2401,7 +2412,7 @@ const co={on:true,key:'',iv:null,idx:-1,beep:0};
 const coActive=()=>co.on&&!!co.iv;
 // Смена уровня пересчитывает указания, но не позицию: раскладка подходов от уровня не зависит.
 function coSync(){
-  const s=st.plan.segs[st.cur],key=st.i+'|'+st.T+'|'+st.cur,lk=s.id?getLvl(s.id):0;
+  const s=st.plan.segs[st.cur],key=st.i+'|'+st.T+'|'+st.cur,lk=s.id?getLvl(s.id)+'|'+s.pick:'';
   if(co.key!==key){co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;co.beep=0;}
   else if(co.lk!==lk){co.lk=lk;co.iv=coachPlan(s,st.plan.d);}
 }
@@ -2527,11 +2538,21 @@ $('nowBody').addEventListener('click',e=>{
     const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
   const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
   const lb=e.target.closest('button[data-lvl]');if(lb)changeLvl(+lb.dataset.lvl);
+  const vb=e.target.closest('button[data-var]');if(vb)changeVar(+vb.dataset.var);
 });
 // Уровень меняется на ходу: таймер и позиция тренера не трогаются, деление и размер метронома — по новому материалу.
 function changeLvl(k){
   const s=st.plan.segs[st.cur];if(!s.id||!lvlCount(s.id)||k===getLvl(s.id))return;
   setLvl(s.id,k);
+  materialChanged(s);
+}
+// Вариант меняется вручную так же: план дня не меняется, выбор не запоминается.
+function changeVar(k){
+  const s=st.plan.segs[st.cur];if(!s.id||EX[s.id].gen||!EX[s.id].v||k===varIdx(s,st.plan.d))return;
+  s.pick=k===dayVar(s,st.plan.d)?null:k;
+  materialChanged(s);
+}
+function materialChanged(s){
   if(Pl.on)plStop();
   renderNow();
   let x=null;
