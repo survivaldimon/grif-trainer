@@ -98,6 +98,13 @@ test('EXEN покрывает EX', async ({ page }) => {
       if (rl.length !== el.length) errs.push(`${id}: уровней RU ${rl.length}, EN ${el.length}`);
       if (rl.length && (rl.length < 3 || rl.length > 5)) errs.push(`${id}: уровней ${rl.length}, нужно 3–5`);
       rl.forEach((x, j) => { if (!x || !el[j]) errs.push(`${id}.lvl${j + 1}: пустая подпись`); });
+      // разминка без уровней; у остальных уровни, и кроме gen — 6 вариантов, у каждого таб на каждый уровень
+      if (/^W/.test(id)) { if (rl.length) errs.push(`${id}: у разминки нет уровней`); }
+      else {
+        if (!rl.length) errs.push(`${id}: нет уровней`);
+        if (!EX[id].gen && rv.length !== 6) errs.push(`${id}: вариантов ${rv.length}, нужно 6`);
+        rv.forEach((v, k) => { if (!v.lv) errs.push(`${id}.v${k}: нет lv`); else if (v.t) errs.push(`${id}.v${k}: и t, и lv`); });
+      }
     }
     return errs;
   });
