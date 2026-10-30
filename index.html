@@ -874,25 +874,165 @@ L40:{n:40,name:'Пулл-оффы к открытой струне',goal:'Пед
 
 /* ---- связки ---- */
 C32:{n:32,name:'Свип → альтернейт',goal:'Переход между техниками без шва.',how:'Сначала каждая часть отдельно, потом склейка. Главное место — стык: последняя нота одной техники и первая другой.',tip:'После свипа медиатор оказывается в другом положении. Найди, каким движением начинается альтернейт, и закрепи его.',sub:4,v:[
-  {l:'Am',t:[J('G14 B13 e12 eh17','|','e15 e13 e12 B15 B13 B12 G14 G12')]},
-  {l:'Альтернейт → свип',t:[J('/6 G12 G14 G16 B13 B15 B17','|','/4 e17 ep12 B13 G14')]},
-  {l:'Dm',t:[J('G7 B6 e5 eh10','|','e8 e6 e5 B8 B6 B5 G7 G5')]}]},
+  {l:'Am',lv:[
+    {t:[J('/3 G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13','|','/4 e12 e13 e15 e13 e12 e13 e15 e13 e12 B15 B13 B15 B13 B15 e12 .')]},
+    {t:[J('G14 B13 e12 eh17','|','e15 e13 e12 B15 B13 B12 G14 G12')]},
+    {t:[J('G14 B13 e12 eh17 ep12 B13 G14 B13','e12 e13 e15 e13 e12 B15 B13 B12','|','G14 G12 G14 B12 B13 B15 B13 B12','G14 B13 e12 eh17 ep12 B13 G14 .')]},
+    {t:[J('/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15','/4 A12 A14 A15 D12 D14 D15 G12 G14','|','/6 G14 B13 e12 eh17 ep12 B13','/4 G14 G12 D15 D14 D12 A15 A14 A12','/6 D14 G14 B13 e12 eh17 .')]}]},
+  {l:'Альтернейт → свип',lv:[
+    {t:[J('/3 G12 G14 G16 B13 B15 B17 e15 e17 e15 B17 B15 B13','|','G14 B13 e12 eh17 ep12 B13 G14 .:5')]},
+    {t:[J('/6 G12 G14 G16 B13 B15 B17','|','/4 e17 ep12 B13 G14')]},
+    {t:[J('G12 G14 G16 B13 B15 B17 e15 e17','ep12 B13 G14 B13 e12 eh17 ep12 B13','|','G14 G12 D15 D14 D12 A15 A14 A12','D14 G14 B13 e12 eh17 ep12 B13 G14')]},
+    {t:[J('/6 A12 A14 A15 D12 D14 D15 G12 G14 G16 B13 B15 B17','/4 e17 ep12 B13 G14 D14 A15 Ap12 .','|','/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15','/4 A12 A14 A15 D12 D14 D15 D14 D12')]}]},
+  {l:'Dm',lv:[
+    {t:[J('/3 G7 B6 e5 eh10 ep5 B6 G7 B6 e5 eh10 ep5 B6','|','/4 e5 e6 e8 e6 e5 e6 e8 e6 e5 B8 B6 B8 B6 B8 e5 .')]},
+    {t:[J('G7 B6 e5 eh10','|','e8 e6 e5 B8 B6 B5 G7 G5')]},
+    {t:[J('G7 B6 e5 eh10 ep5 B6 G7 B6','e5 e6 e8 e6 e5 B8 B6 B5','|','G7 G5 G7 B5 B6 B8 B6 B5','G7 B6 e5 eh10 ep5 B6 G7 .')]},
+    {t:[J('/6 A5 Ah8 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A8','/4 A5 A7 A8 D5 D7 D8 G5 G7','|','/6 G7 B6 e5 eh10 ep5 B6','/4 G7 G5 D8 D7 D5 A8 A7 A5','/6 D7 G7 B6 e5 eh10 .')]}]},
+  {l:'Em, свип вниз',lv:[
+    {t:[J('/3 e12 ep7 B8 G9 B8 e7 e12 ep7 B8 G9 B8 e7','|','/4 G9 G7 G9 B8 B10 B8 B7 B8 B10 e7 e8 e10 e12 .:3')]},
+    {t:[J('e12 ep7 B8 G9 D9 G9 B8 e7','|','e8 e7 B10 B8 B7 B8 B10 e7')]},
+    {t:[J('e12 ep7 B8 G9 B8 e7 eh12 ep7','B8 B10 B8 B7 G9 G7 G9 B7','|','B8 B10 e7 e8 e10 e8 e7 B10','e12 ep7 B8 G9 B8 e7 eh12 .')]},
+    {t:[J('/6 e12 ep7 B8 G9 D9 A10 Ap7 D9 G9 B8 e7 eh12','/4 e10 e8 e7 B10 B8 B7 G9 G7','|','/6 D9 G9 B8 e7 eh12 ep7','/4 B8 G9 G7 D10 D9 D7 A10 A9','/6 A7 Ah10 D9 G9 B8 e7')]}]},
+  {l:'Уменьшённый',lv:[
+    {t:[J('/3 G13 B12 e10 eh13 ep10 B12 G13 B12 e10 eh13 ep10 B12','|','/4 e13 e12 e11 e10 e13 e12 e11 e10 B13 B12 B11 B10 B13 .:3')]},
+    {t:[J('G13 B12 e10 eh13 ep10 B12 G13 B12','|','e13 e12 e11 e10 B13 B12 B11 B10')]},
+    {t:[J('G13 B12 e10 eh13 ep10 B12 G13 B12','e13 e12 e11 e10 B13 B12 B11 B10','|','G16 B15 e13 eh16 ep13 B15 G16 B15','e16 e15 e14 e13 B16 B15 B14 B13')]},
+    {t:[J('/6 D12 G13 B12 e10 eh13 ep10 B12 G13 D15 Dp12 G13 B12','/4 e13 e12 e11 e10 B13 B12 B11 B10','|','e16 e15 e14 e13 B16 B15 B14 B13','/6 G16 B15 e13 eh16 ep13 B15 G16 B15 e13 eh16 ep13 .')]}]},
+  {l:'Свип → E-педаль',lv:[
+    {t:[J('/3 G9 B8 e7 eh12 ep7 B8 G9 B8 e7 eh12 ep7 B8','|','/4 E0m E0m E1 E0m E0m E3 E0m E0m E1 E0m E0m E5 E0m .:3')]},
+    {t:[J('A7 Ah10 D9 G9 B8 e7 eh12 ep7','|','E0m E0m E1 E0m E0m E3 E0m E5')]},
+    {t:[J('G9 B8 e7 eh12 ep7 B8 G9 D9','E0m E0m E1 E0m E0m E3 E0m E0m','|','E5 E0m E0m E6 E0m E0m E7 E0m','A7 D9 G9 B8 e7 eh12 ep7 B8')]},
+    {t:[J('/6 A7 Ah10 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A10','/4 E0m E0m E1 E0m E0m E3 E0m E0m','|','/6 E0m E0m E1 E0m E0m E3','/4 E0m E5 E0m E6 E0m E7 E0m E8','/6 A7 D9 G9 B8 e7 eh12')]}]}],
+  lvl:['Техника на такт, свип триолями','Короткая связка, стык на такте','Стык посреди такта, туда и обратно','Длинный свип, смена деления /6 ↔ /4']},
 C33:{n:33,name:'Легато → теппинг → легато',goal:'Одна линия из трёх техник.',how:'Сначала каждая часть отдельно, потом склейка. Медиатором — только первая нота на струне.',tip:'Громкость тэпа равна громкости легато. Если тэп выпирает, бей легче.',sub:4,v:[
-  {l:'Высокие струны',t:[J('e12 eh13 eh15 et20 ep15 ep13 ep12 B15','|','B13 Bh15 Bh17 Bt20 Bp17 Bp15 Bp13 G14')]},
-  {l:'Средние струны',t:[J('G12 Gh14 Gh16 Gt19 Gp16 Gp14 Gp12 D15','|','D12 Dh14 Dh15 Dt19 Dp15 Dp14 Dp12 .')]},
-  {l:'5 позиция',t:[J('e5 eh7 eh8 et12 ep8 ep7 ep5 B8','|','B5 Bh6 Bh8 Bt13 Bp8 Bp6 Bp5 G7')]}]},
-C34:{n:34,name:'Тремоло → чаги → тремоло',goal:'Смена техники правой руки без сбоя сетки.',how:'Тремоло открыто, чаги — палм-мьют. Ладонь ложится и снимается точно в момент смены.',tip:'Темп шестнадцатых не меняется при смене техники. Проверь по записи.',sub:4,v:[
-  {l:'Одна струна',t:[J(R('A7',4),R('A8',4),'|','E0m E0m E0m . E0m E0m E0m .','|',R('A10',4),R('A8',4))]},
-  {l:'Двойные ноты',t:[J(R('A1+E0',8),'|','E0m . E0m E0m . E0m E0m E0m','|',R('A2+E0',8))]},
-  {l:'Через струну',t:[J(R('D9',4),R('D10',4),'|','E0m E0m E0m E1m E0m E0m E0m E3m','|',R('D12',4),R('D10',4))]}]},
+  {l:'Высокие струны',lv:[
+    {t:[J('/2 e12 eh13 eh15 ep13 ep12 eh13 eh15 .','|','et20 ep15 et20 ep15 et20 ep15 ep13 ep12')]},
+    {t:[J('e12 eh13 eh15 et20 ep15 ep13 ep12 B15','|','B13 Bh15 Bh17 Bt20 Bp17 Bp15 Bp13 G14')]},
+    {t:[J('e12 eh13 eh15 et20 ep15 ep13 ep12 B15','Bp13 Bp12 Bh13 Bh15 Bt20 Bp15 Bp13 Bp12','|','G14 Gh16 Gt19 Gp16 Gp14 Gh16 Gt21 Gp16','Gp14 Gh16 Gh17 Gp16 Gp14 D17 Dp15 Dp14')]},
+    {t:[J('e12 eh13 eh15 eh17','/6 et20 ep12 eh15 et20 ep12 eh15 et22 ep12 eh15 et20 ep12 eh15','/4 ep13 ep12 B15 Bp13','|','Bp12 Bh13 Bh15 Bh17','/6 Bt20 Bp12 Bh15 Bt22 Bp12 Bh15 Bt20 Bp12 Bh15 Bt18 Bp12 Bh15','/4 Bp13 Bp12 G14 Gp12')]}]},
+  {l:'Средние струны',lv:[
+    {t:[J('/2 G12 Gh14 Gh16 Gp14 Gp12 Gh14 Gh16 .','|','Gt19 Gp16 Gt19 Gp16 Gt19 Gp16 Gp14 Gp12')]},
+    {t:[J('G12 Gh14 Gh16 Gt19 Gp16 Gp14 Gp12 D15','|','D12 Dh14 Dh15 Dt19 Dp15 Dp14 Dp12 .')]},
+    {t:[J('G12 Gh14 Gh16 Gt19 Gp16 Gp14 Gp12 D15','Dp14 Dp12 Dh14 Dh15 Dt19 Dp15 Dp14 Dp12','|','A15 Ah17 At20 Ap17 Ap15 Ah17 At22 Ap17','Ap15 Ap14 Ap12 E15 Ep13 Ep12 .:2')]},
+    {t:[J('G12 Gh14 Gh16 Gh17','/6 Gt21 Gp12 Gh16 Gt21 Gp12 Gh16 Gt19 Gp12 Gh16 Gt21 Gp12 Gh16','/4 Gp14 Gp12 D15 Dp14','|','Dp12 Dh14 Dh15 Dh17','/6 Dt21 Dp12 Dh15 Dt22 Dp12 Dh15 Dt19 Dp12 Dh15 Dt21 Dp12 Dh15','/4 Dp14 Dp12 A15 Ap12')]}]},
+  {l:'5 позиция',lv:[
+    {t:[J('/2 e5 eh7 eh8 ep7 ep5 eh7 eh8 .','|','et12 ep8 et12 ep8 et12 ep8 ep7 ep5')]},
+    {t:[J('e5 eh7 eh8 et12 ep8 ep7 ep5 B8','|','B5 Bh6 Bh8 Bt13 Bp8 Bp6 Bp5 G7')]},
+    {t:[J('e5 eh7 eh8 et12 ep8 ep7 ep5 B8','Bp6 Bp5 Bh6 Bh8 Bt13 Bp8 Bp6 Bp5','|','G7 Gh9 Gt14 Gp9 Gp7 Gh9 Gt12 Gp9','Gp7 Gp5 D7 Dp5 Dh7 Dh9 Dh10 .')]},
+    {t:[J('e5 eh7 eh8 eh10','/6 et15 ep5 eh8 et13 ep5 eh8 et15 ep5 eh8 et17 ep5 eh8','/4 ep7 ep5 B8 Bp6','|','Bp5 Bh6 Bh8 Bh10','/6 Bt13 Bp5 Bh8 Bt15 Bp5 Bh8 Bt17 Bp5 Bh8 Bt13 Bp5 Bh8','/4 Bp6 Bp5 G7 Gp5')]}]},
+  {l:'Фригийский, B и G',lv:[
+    {t:[J('/2 B8 Bh10 Bh12 Bp10 Bp8 Bh10 Bh12 .','|','Bt17 Bp12 Bt17 Bp12 Bt17 Bp12 Bp10 Bp8')]},
+    {t:[J('B8 Bh10 Bh12 Bt17 Bp12 Bp10 Bp8 G12','|','G9 Gh10 Gh12 Gt17 Gp12 Gp10 Gp9 D10')]},
+    {t:[J('B8 Bh10 Bh12 Bt17 Bp12 Bp10 Bp8 G12','Gp10 Gp9 Gh10 Gh12 Gt17 Gp12 Gp10 Gp9','|','D10 Dh12 Dt17 Dp12 Dp10 Dh12 Dt19 Dp12','Dp10 Dp9 Dp7 A10 Ap8 Ap7 .:2')]},
+    {t:[J('B8 Bh10 Bh12 Bh13','/6 Bt17 Bp8 Bh12 Bt18 Bp8 Bh12 Bt20 Bp8 Bh12 Bt17 Bp8 Bh12','/4 Bp10 Bp8 G12 Gp10','|','Gp9 Gh10 Gh12 Gh14','/6 Gt17 Gp9 Gh12 Gt19 Gp9 Gh12 Gt21 Gp9 Gh12 Gt17 Gp9 Gh12','/4 Gp10 Gp9 D10 Dp7')]}]},
+  {l:'Уменьшённый',lv:[
+    {t:[J('/2 e10 eh13 eh16 ep13 ep10 eh13 eh16 .','|','et19 ep16 et19 ep16 et19 ep16 ep13 ep10')]},
+    {t:[J('e10 eh13 eh16 et19 ep16 ep13 ep10 B12','|','Bp9 Bh12 Bh15 Bt18 Bp15 Bp12 Bp9 G10')]},
+    {t:[J('e10 eh13 eh16 et19 ep16 ep13 ep10 B12','Bp9 Bh12 Bh15 Bt18 Bp15 Bp12 Bp9 G10','|','Gp7 Gh10 Gh13 Gt16 Gp13 Gp10 Gp7 Gh10','Gt19 Gp13 Gp10 Gp7 D9 Dp6 .:2')]},
+    {t:[J('e10 eh13','/6 et19 ep10 eh13 et22 ep10 eh13 et19 ep10 eh13 et16 ep10 eh13','/4 eh16 ep13 ep10 B12 Bp9 Bh12','|','Bh15 Bt21 Bp12 Bp9','/6 Bt18 Bp9 Bh12 Bt21 Bp9 Bh12 Bt18 Bp9 Bh12 Bt15 Bp9 Bh12','/4 Bp9 G10 Gp7 .')]}]},
+  {l:'Гармонический минор',lv:[
+    {t:[J('/2 e12 eh13 eh16 ep13 ep12 eh13 eh16 .','|','et20 ep16 et20 ep16 et20 ep16 ep13 ep12')]},
+    {t:[J('e12 eh13 eh16 et20 ep16 ep13 ep12 B15','|','B12 Bh13 Bh15 Bt21 Bp15 Bp13 Bp12 G13')]},
+    {t:[J('e12 eh13 eh16 et20 ep16 ep13 ep12 B15','Bp13 Bp12 Bh13 Bh15 Bt21 Bp15 Bp13 Bp12','|','G13 Gh14 Gh16 Gt21 Gp16 Gp14 Gh16 Gt19','Gp16 Gp14 Gp13 D15 Dp14 Dp12 .:2')]},
+    {t:[J('e12 eh13 eh16 eh17','/6 et20 ep12 eh16 et22 ep12 eh16 et20 ep12 eh16 et19 ep12 eh16','/4 ep13 ep12 B15 Bp13','|','Bp12 Bh13 Bh15 Bh17','/6 Bt21 Bp12 Bh15 Bt22 Bp12 Bh15 Bt21 Bp12 Bh15 Bt18 Bp12 Bh15','/4 Bp13 Bp12 G13 Gh14')]}]}],
+  lvl:['Одна струна, восьмые, техника на такт','Две струны, 16-е','Три струны, стык посреди такта','Тэп секстолями, смена деления']},
+C34:{n:34,name:'Тремоло → чаги → тремоло',goal:'Смена техники правой руки без сбоя сетки.',how:'Тремоло открыто, чаги — палм-мьют. Ладонь ложится и снимается точно в момент смены.',tip:'Сетка не плывёт при смене техники: доля остаётся долей, даже когда на 4-м уровне меняется деление. Проверь по записи.',sub:4,v:[
+  {l:'Одна струна',lv:[
+    {t:[J(R('A7',8),'|','E0m:2 E0m:2 E0m:2 E0m:2','|',R('A8',8))]},
+    {t:[J(R('A7',4),R('A8',4),'|','E0m E0m E0m . E0m E0m E0m .','|',R('A10',4),R('A8',4))]},
+    {t:[J(R('A7',4),R('A8',4),'E0m E0m . E0m . E0m E0m .','|','E0m . E0m E0m',R('A10',4),R('A8',4),R('A7',4))]},
+    {t:[J('/6',R('A7',6),R('A8',6),'/4 E0m E0m E0m . E0m E0m . E0m','|','/6',R('A10',6),R('A11',6),'/4 E0m . E0m E0m','/3 E0m E0m E0m')]}]},
+  {l:'Двойные ноты',lv:[
+    {t:[J(R('A1+E0',8),'|','E0m:2 E0m:2 E0m:2 E0m:2','|',R('A2+E0',8))]},
+    {t:[J(R('A1+E0',8),'|','E0m . E0m E0m . E0m E0m E0m','|',R('A2+E0',8))]},
+    {t:[J(R('A1+E0',8),'E0m . E0m E0m . E0m E0m .','|','E0m E0m . E0m',R('A3+E0',4),R('A2+E0',8))]},
+    {t:[J('/6',R('A1+E0',12),'/4 E0m . E0m E0m . E0m E0m E0m','|','/6',R('A2+E0',6),R('A3+E0',6),'/4 E0m . E0m E0m','/3 E0m E0m E0m')]}]},
+  {l:'Через струну',lv:[
+    {t:[J(R('D9',8),'|','E0m:2 E0m:2 E0m:2 E1m:2','|',R('D10',8))]},
+    {t:[J(R('D9',4),R('D10',4),'|','E0m E0m E0m E1m E0m E0m E0m E3m','|',R('D12',4),R('D10',4))]},
+    {t:[J(R('D9',4),R('D10',4),'E0m E0m E0m E1m . E0m E0m E3m','|','E0m . E0m E0m',R('D12',4),R('D10',4),R('D9',4))]},
+    {t:[J('/6',R('D9',6),R('D10',6),'/4 E0m E0m E1m . E0m E0m E3m .','|','/6',R('D12',6),R('D13',6),'/4 E0m . E1m E0m','/3 E0m E0m E3m')]}]},
+  {l:'Мелодия на B',lv:[
+    {t:[J(R('B5',8),'|','E0m:2 E0m:2 E0m:2 E0m:2','|',R('B6',8))]},
+    {t:[J(R('B5',4),R('B6',4),'|','E0m E0m . E0m E0m . E0m E0m','|',R('B8',4),R('B6',4))]},
+    {t:[J(R('B5',4),R('B6',4),'E0m E0m . E0m E0m . E0m .','|','E0m E0m E0m .',R('B8',4),R('B6',4),R('B5',4))]},
+    {t:[J('/6',R('B5',6),R('B6',6),'/4 E0m E0m . E0m E0m . E0m E1m','|','/6',R('B8',6),R('B9',6),'/4 E0m . E0m E0m','/3 E0m E1m E0m')]}]},
+  {l:'Квинты',lv:[
+    {t:[J(R('D9+A7',8),'|','E0m:2 E0m:2 E0m:2 E0m:2','|',R('D10+A8',8))]},
+    {t:[J(R('D9+A7',4),R('D10+A8',4),'|','E0m E0m E0m . E0m E0m E1m .','|',R('D12+A10',4),R('D10+A8',4))]},
+    {t:[J(R('D9+A7',4),R('D10+A8',4),'E0m E0m E0m . E0m E0m E1m .','|','E0m . E0m E0m',R('D12+A10',4),R('D10+A8',4),R('D9+A7',4))]},
+    {t:[J('/6',R('D9+A7',6),R('D10+A8',6),'/4 E0m E0m E1m . E0m E0m E0m .','|','/6',R('D12+A10',6),R('D13+A11',6),'/4 E0m . E0m E1m','/3 E0m E0m E0m')]}]},
+  {l:'Галоп',lv:[
+    {t:[J(R('D7',8),'|','E0m:2 E0m:2 E0m:2 E0m E0m','|',R('D8',8))]},
+    {t:[J(R('D7',4),R('D8',4),'|','E0m:2 E0m E0m E0m:2 E0m E0m E0m:2 E0m E0m E1m:2 E0m E0m','|',R('D7',4),R('D5',4))]},
+    {t:[J(R('D7',4),R('D8',4),'E0m:2 E0m E0m E0m E0m:2 E0m','|','E0m:2 E0m E0m',R('D10',4),R('D8',4),R('D7',4))]},
+    {t:[J('/6',R('D7',6),R('D8',6),'/4 E0m:2 E0m E0m E0m E0m:2 E0m','|','/3 E0m E0m E0m E1m E0m E0m','/6',R('D10',6),R('D8',6))]}]}],
+  lvl:['Чаги восьмыми, смена по такту','Чаги 16-ми, смена по такту','Смена посреди такта, синкопы','Тремоло секстолями, смена деления']},
 C35:{n:35,name:'Перескок → свип',goal:'Из пикинга в свип и обратно.',how:'Сначала каждая часть отдельно, потом склейка.',tip:'Свип начинается тем же движением, которым закончился перескок. Найди его.',sub:4,v:[
-  {l:'G–e и Am',t:[J('G14 e12 G14 e12 G14 e12 G14 e12','|','G14 B13 e12 eh17 ep12 B13 G14 .')]},
-  {l:'Арпеджио альтернейтом и свип',sub:6,t:[J('A12 A15 G14 G17 e12 e17','|','ep12 B13 G14 D14 A12 .')]},
-  {l:'D–B и Am',t:[J('D14 B13 D14 B13 D14 B13 D14 B13','|','D14 G14 B13 e12 eh17 ep12 B13 G14')]}]},
+  {l:'G–e и Am',lv:[
+    {t:[J('/2 G14 e12 G14 e12 G14 e12 G14 e12','|','/3 G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13')]},
+    {t:[J('G14 e12 G14 e12 G14 e12 G14 e12','|','G14 B13 e12 eh17 ep12 B13 G14 .')]},
+    {t:[J('G14 e12 G14 e12 D14 e12 D14 e12','G14 B13 e12 eh17 ep12 B13 G14 D14','|','A12 G14 A12 G14 A15 e12 A15 e17','ep12 B13 G14 D14 A15 Ap12 .:2')]},
+    {t:[J('A12 e12 A15 e17 D14 e12 D14 e17','/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15','|','/4 E12 G14 E12 B13 E12 e12 E12 e17','/6 ep12 B13 G14 D14 A15 Ap12 Ah15 D14 G14 B13 e12 eh17')]}]},
+  {l:'Арпеджио альтернейтом и свип',sub:6,lv:[
+    {sub:3,t:[J('A12 A15 G14 G17 e12 e17','|','ep12 B13 G14 D14 A12 .')]},
+    {t:[J('A12 A15 G14 G17 e12 e17','|','ep12 B13 G14 D14 A12 .')]},
+    {t:[J('A12 A15 G14 G17 e12 e17','ep12 B13 G14 D14 A15 Ap12','A12 G14 D14 B13 G14 e12','eh17 ep12 B13 G14 D14 A12')]},
+    {t:[J('A12 A15 G14 G17 e12 e17 ep12 B13 G14 D14 A15 Ap12','/4 A12 e12 A15 e17 D14 e12 D14 e17','|','/6 ep12 B13 G14 D14 A15 Ap12 Ah15 D14 G14 B13 e12 eh17','/4 ep12 D14 e12 D14 A15 e12 A12 .')]}]},
+  {l:'D–B и Am',lv:[
+    {t:[J('/2 D14 B13 D14 B13 D14 B13 D14 B13','|','/3 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 .:3')]},
+    {t:[J('D14 B13 D14 B13 D14 B13 D14 B13','|','D14 G14 B13 e12 eh17 ep12 B13 G14')]},
+    {t:[J('D14 B13 D14 B13 D14 e12 D14 e12','D14 G14 B13 e12 eh17 ep12 B13 G14','|','D14 B13 A12 B13 A15 e12 A15 e17','ep12 B13 G14 D14 A15 Ap12 .:2')]},
+    {t:[J('A12 B13 D14 e12 A15 e12 D14 B13','/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15','|','/4 E12 D14 E12 B13 E15 G14 E15 e12','/6 eh17 ep12 B13 G14 D14 A15 Ap12 Ah15 D14 G14 B13 e12')]}]},
+  {l:'Em, D–B и свип',lv:[
+    {t:[J('/2 D9 B8 D9 B8 D9 B8 D9 B8','|','/3 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 .:3')]},
+    {t:[J('D9 B8 D9 B8 G9 e7 G9 e7','|','D9 G9 B8 e7 eh12 ep7 B8 G9')]},
+    {t:[J('D9 B8 D9 B8 G9 e7 G9 e7','D9 G9 B8 e7 eh12 ep7 B8 G9','|','A10 G9 A7 G9 A10 e7 A7 e12','ep7 B8 G9 D9 A10 Ap7 .:2')]},
+    {t:[J('A7 B8 D9 e7 A10 e12 D9 B8','/6 A7 Ah10 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A10','|','/4 E7 D9 E7 B8 E8 G9 E8 e7','/6 eh12 ep7 B8 G9 D9 A10 Ap7 Ah10 D9 G9 B8 e7')]}]},
+  {l:'Уменьшённый',lv:[
+    {t:[J('/2 G13 e10 G13 e10 G13 e13 G13 e10','|','/3 G13 B12 e10 eh13 ep10 B12 G13 B12 e10 eh13 ep10 B12')]},
+    {t:[J('G13 e10 G13 e13 G16 e13 G16 e16','|','G16 B15 e13 eh16 ep13 B15 G16 .')]},
+    {t:[J('G13 e10 G13 e13 G13 e10 G13 e13','G13 B12 e10 eh13 ep10 B12 G13 D12','|','A11 G13 A11 B12 A14 e10 A14 e13','ep10 B12 G13 D12 A14 Ap11 .:2')]},
+    {t:[J('A11 B12 D12 e10 A14 e13 D12 B12','/6 A11 Ah14 D12 G13 B12 e10 eh13 ep10 B12 G13 D12 A14','|','/4 E10 G13 E10 B12 E13 e10 E13 e13','/6 eh16 ep13 B15 G16 D15 A17 Ap14 Ah17 D15 G16 B15 e13')]}]},
+  {l:'Dm, 5 позиция',lv:[
+    {t:[J('/2 D7 B6 D7 B6 D7 B6 D7 B6','|','/3 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 .:3')]},
+    {t:[J('D7 B6 D7 B6 G7 e5 G7 e5','|','D7 G7 B6 e5 eh10 ep5 B6 G7')]},
+    {t:[J('D7 B6 D7 B6 G7 e5 G7 e5','D7 G7 B6 e5 eh10 ep5 B6 G7','|','A8 G7 A5 G7 A8 e5 A5 e10','ep5 B6 G7 D7 A8 Ap5 .:2')]},
+    {t:[J('A5 B6 D7 e5 A8 e10 D7 B6','/6 A5 Ah8 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A8','|','/4 E5 D7 E5 B6 E8 G7 E8 e5','/6 eh10 ep5 B6 G7 D7 A8 Ap5 Ah8 D7 G7 B6 e5')]}]}],
+  lvl:['Перескок восьмыми, свип триолями','16-е, стык на такте','Стык посреди такта, туда и обратно','Широкие перескоки, пятиструнный свип, смена деления']},
 C36:{n:36,name:'Этюд-комплекс',goal:'Четыре техники подряд, как в настоящем риффе.',how:'Четыре фрагмента подряд. Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон на телефон. Слабое место почти всегда на стыке фрагментов.',sub:4,v:[
-  {l:'Этюд 1: тремоло, свип, легато, тэп',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4)),J('/6 G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13'),J('/6 e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12'),J('/3',R('et17 ep8 eh12',3),'A2+E0 .:2')]},
-  {l:'Этюд 2: галоп, арпеджио, dim7, стоп',t:[J('E0:2 E0 E0 E0:2 E0 E0 E1:2 E1 E1 E0:2 E0 E0'),J('/6 A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12'),J('G13 B12 e10 eh13 G16 B15 e13 eh16'),J(R('A1+E0',8),'.:8')]},
-  {l:'Этюд 3: 7/8, легато, тэп, свип',t:[J('/2 E0 E0 A1 E0 E0 E0 A3','|','E0 E0 A1 E0 E0 E0 A3'),J('G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gp13'),J('/6 et17 ep8 eh12 Bt17 Bp10 Bh13'),J('/6 G13 B12 e12 eh16 ep12 B12 /1 E0')],note:'Первый фрагмент в 7/8, остальные в 4/4.'}]}
+  {l:'Этюд 1: тремоло, свип, легато, тэп',lv:[
+    {t:['/2 E0 E0 E1 E1 E0 E0 E3 E3','/3 G14 B13 e12 eh17 ep12 B13','/3 e15 ep13 ep12 B15 Bp13 Bp12',J('/3',R('et17 ep8 eh12',2),'A2+E0 .:2')]},
+    {t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4)),J('/6 G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13'),J('/6 e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12'),J('/3',R('et17 ep8 eh12',3),'A2+E0 .:2')]},
+    {t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4),'|',R('E0',4),R('E1',4),R('E6',4),R('E5',4)),'/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15','/6 e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12 A15 Ap14 Ap12 E15 Ep13 Ep12',J('/3',R('et17 ep8 eh12',2),R('et20 ep8 eh12',2),'A2+E0 .:2')]},
+    {t:[J('/6',R('E0',6),R('E1',6),'/4',R('E0',4),R('E3',4),'E0m E0m E0m E0m','A2+E0 .:3'),'/6 A12 Ah15 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A15 Ap12 Ah15 D14 G14 B13 e12 /4 eh17 ep12 B13 G14','/6 e17 ep15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 /4 Dp12 Dh14 Dh15 Dh17',J('/3',R('et17 ep8 eh12',2),'/6 et20 ep8 eh12 et17 ep8 eh12 et15 ep8 eh12 et17 ep8 eh12','/4 A2+E0 .:3')]}]},
+  {l:'Этюд 2: галоп, арпеджио, dim7, стоп',lv:[
+    {t:['/3 E0:2 E0 E0:2 E0 E1:2 E1 E0:2 E0','/3 A12 A15 G14 G17 e12 e17','/2 G13 B12 e10 eh13 G16 B15 e13 eh16',J(R('A1+E0',4),'.:4')]},
+    {t:[J('E0:2 E0 E0 E0:2 E0 E0 E1:2 E1 E1 E0:2 E0 E0'),J('/6 A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12'),J('G13 B12 e10 eh13 G16 B15 e13 eh16'),J(R('A1+E0',8),'.:8')]},
+    {t:['E0m:2 E0m E0m E0m:2 E0m E0m E1:2 E1m E1m E0m:2 E0m E0m | E0m:2 E0m E0m E0m:2 E0m E0m E3:2 E3m E3m E1:2 E1m E1m','/6 A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12 A12 D14 G14 B13 e12 eh17','G13 B12 e10 eh13 G16 B15 e13 eh16 G19 B18 e16 eh19 ep16 B18 G19 .',J(R('A1+E0',8),'.:4',R('A1+E0',2),'.:2')]},
+    {t:['E0m:2 E0m E0m E0m E0m:2 E0m /3 E0m E0m E0m E1 E1m E1m | /4 E0m:2 E0m E0m E3m E3m:2 E3m /6 E0m E0m E0m E1m E1m E1m /4 E0 .:3','/6 A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12 E12 E15 D14 D17 B13 B17 /4 Bp13 G14 D14 A12','/6 G13 B12 e10 eh13 ep10 B12 G16 B15 e13 eh16 ep13 B15 G19 B18 e16 eh19 ep16 B18 /4 G19 G16 G13 G10',J(R('A1+E0',6),'.:2','/3 A1+E0 A1+E0 A1+E0','/4 .:4')]}]},
+  {l:'Этюд 3: 7/8, легато, тэп, свип',note:'Первый фрагмент в 7/8, остальные в 4/4.',lv:[
+    {t:['/2 E0:2 E0:2 E0:3 | E0:2 E0:2 A3:3','/2 G12 Gh13 Gh15 Gp13','/3 et17 ep8 eh12 Bt17 Bp10 Bh13','/3 G13 B12 e12 eh16 ep12 B12 E0:3']},
+    {t:[J('/2 E0 E0 A1 E0 E0 E0 A3','|','E0 E0 A1 E0 E0 E0 A3'),J('G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gp13'),J('/6 et17 ep8 eh12 Bt17 Bp10 Bh13'),J('/6 G13 B12 e12 eh16 ep12 B12 /1 E0')]},
+    {t:['E0 E0 E0 E0 A1 A1 E0 E0 E0 E0 E0 E0 A3 A3 | E0 E0 E0 E0 A1 A1 E0 E0 E0 E0 E5 E5 A3 A3','G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gh17 Gp15 Gp13 Gp12 D15 Dp14 Dp12 Dh14 Dh15','/6 et17 ep8 eh12 Bt17 Bp10 Bh13 Gt17 Gp9 Gh12 Bt17 Bp10 Bh13','/6 A11 Ah14 D14 G13 B12 e12 eh16 ep12 B12 G13 D14 A14 /4 Ap11 E0:3']},
+    {t:['E0m E0m E0m E0m A1 E0m E0m A1 E0m E0m E0m E0m A3 A2 | E0m E0m A1 E0m E0m A1 E0m E0m E0m A3 E0m A5 A3 A1','/6 G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gh17 Gp15 Gp13 Gp12 Gh13 /4 Gh15 Gh17 Gp15 Gp13 Gp12 D15 Dp14 Dp12','/6 et17 ep8 eh12 et19 ep8 eh12 Bt17 Bp10 Bh13 Bt20 Bp10 Bh13 /4 Gt17 Gp9 Gh12 Gp9','/6 A11 Ah14 D14 G13 B12 e12 eh16 ep12 B12 G13 D14 A14 /4 Ap11 E0m E0m E0m A2+E0:4']}]},
+  {l:'Этюд 4: галоп, флажолет, тремоло квинтами, легато',lv:[
+    {t:['/2 E0m:2 E0m E0m E0m:2 E1 E0m','/2 A3*:2 E0m E0m A2*:2 E0m E0m',J(R('A5',8),R('A6',8)),'/2 B13 Bp12 G14 Gp12 D14 Dp12 A15 Ap12']},
+    {t:['E0m E0m E0m:2 E0m E0m E0m:2 E1 E1m E1m:2 E0m E0m E3:2','A3* .:3 E0m E0m A2* .:3 E0m E0m A1*~:4',J(R('D7+A5',4),R('D8+A6',4),R('D10+A8',4),R('D8+A6',4)),'B13 Bp12 G14 Gp12 Gh14 Gp12 D14 Dp12 Dh14 Dp12 A15 Ap12 Ah15 Ap12 E12:2']},
+    {t:['E0m E0m E0m:2 E0m E0m E0m:2 E1 E1m E1m:2 E0m E0m E3:2 | E0m E0m E0m:2 E0m E0m E0m:2 E5 E5m E5m:2 E6 E6m E5:2','A3* E0m E0m A2* E0m E0m A1*~:2 A5* E0m E0m A3* E0m E0m A1*~:2',J(R('D7+A5',4),R('D8+A6',4),R('D10+A8',4),R('D8+A6',4),'|',R('G7+D5',4),R('G8+D6',4),R('D10+A8',4),R('D8+A6',4)),'B13 Bp12 Bh13 Bh15 G14 Gp12 Gh14 Gh15 D14 Dp12 Dh14 Dh15 A15 Ap12 Ah14 Ah15 E12 Eh13 Ep12 E0:5']},
+    {t:['/6 E0m:2 E0m E0m:2 E0m E1:2 E1m E0m:2 E0m /4 E0m E0m E0m:2 E0m E0m E0m:2','A3* E0m A2* E0m E0m A1* E0m E0m /6 A5*~ E0m E0m A3* E0m E0m /4 A1*~:4',J('/6',R('D7+A5',6),R('D8+A6',6),'/4',R('D10+A8',4),R('D8+A6',4)),'/6 B13 Bp12 Bh13 Bh15 Bp13 Bp12 G14 Gp12 Gh14 Gh15 Gp14 Gp12 D14 Dp12 Dh14 Dh15 Dp14 Dp12 /4 A15 Ap12 E12 E0']}]},
+  {l:'Этюд 5: 5/8, тэп, свип, тремоло квинтами',note:'Первый фрагмент в 5/8, остальные в 4/4.',lv:[
+    {t:['/2 E0m:3 E0m:2 | E0m:2 E1 E0m:2','/2 et15 ep7 eh10 . et13 ep7 eh10 .','/3 G9 B8 e7 eh12 ep7 B8',J(R('A7',8),R('A8',8))]},
+    {t:['/2 E0m E0m E1 E0m E0m | E0m E0m E3 E0m E1',J('/3',R('et15 ep7 eh10',2),R('et13 ep7 eh10',2)),'/6 A7 Ah10 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A10',J(R('D9+A7',4),R('D10+A8',4),R('D9+A7',4),'A2+E0:4')]},
+    {t:['E0m E0m E0m E0m E1 E1 E0m E0m E3 E3 | E0m E0m E0m E0m E1 E1 E0m E0m E5 E6',J('/6',R('et15 ep7 eh10',2),R('et13 ep7 eh10',2),'/3',R('et17 ep7 eh10',2)),'/6 A7 Ah10 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A10 A8 Ah12 D10 G10 B10 e8 eh13 ep8 B10 G10 D10 A12',J(R('D9+A7',4),R('D10+A8',4),R('D12+A10',4),R('D10+A8',4),'|',R('D9+A7',8),'A2+E0:8')]},
+    {t:['E0m E0m E0m E1 E0m E0m E0m E1 E0m E3 | E0m E0m E0m E1 E0m E0m E0m E5 E3 E1','/6 et15 ep7 eh10 et17 ep7 eh10 Bt15 Bp8 Bh12 Bt17 Bp8 Bh12 /4 Bt20 Bp12 Bp8 .','/6 A7 Ah10 D9 G9 B8 e7 eh12 ep7 B8 G9 D9 A10 /4 Ap7 E7 E8 E10 /6 A8 Ah12 D10 G10 B10 e8',J('/6',R('D9+A7',6),R('D10+A8',6),'/4',R('D12+A10',4),'A2+E0:4')]}]},
+  {l:'Этюд 6: легато, галоп в 6/8, свип, тэп',note:'Второй фрагмент в 6/8, остальные в 4/4.',lv:[
+    {t:['/2 G13 Gh14 Gh16 Gp14 B13 Bp12 Bh13 .','/2 E0m E0m E0m E0m E0m E1 | E0m E0m E0m E0m E0m E3','/3 G13 B13 e12 eh16 ep12 B13','/2 et19 ep12 et19 ep12 A12*:4']},
+    {t:['G13 Gh14 Gh16 Gp14 Gp13 Gh14 Gh16 Gh17 B13 Bp12 Bh13 Bh15 Bp13 Bp12 G16 Gp14','E0m:2 E0m E0m E0m:2 E0m:2 E0m E0m E1:2 | E0m:2 E0m E0m E0m:2 E3:2 E1 E1 E0m:2','/6 A12 Ah15 D14 G13 B13 e12 eh16 ep12 B13 G13 D14 A15',J('/3',R('et19 ep12 eh16',3),'A12*~ .:2')]},
+    {t:['G13 Gh14 Gh16 Gp14 Gp13 Gh14 Gh16 Gh17 B13 Bp12 Bh13 Bh15 Bp13 Bp12 G16 Gp14 | D14 Dh15 Dp14 Dp12 G13 Gh14 Gh16 Gp14 B13 Bh15 Bh17 Bp15 e12 eh13 eh16 eh17','E0m:2 E0m E0m E0m:2 E0m:2 E0m E0m E1:2 | E0m:2 E0m E0m E3:2 E0m:2 E0m E0m E5 E3','/6 A12 Ah15 D14 G13 B13 e12 eh16 ep12 B13 G13 D14 A15 Ap12 Ah15 D14 G13 B13 e12 eh17 ep12 B13 G13 D14 A15',J('/3',R('et19 ep12 eh16',2),R('et20 ep12 eh16',2),'A12*~ .:2')]},
+    {t:['/6 G13 Gh14 Gh16 Gp14 Gp13 Gh14 B13 Bp12 Bh13 Bh15 Bp13 Bp12 /4 D14 Dh15 Dh18 Dp15 /3 Dp14 Dp12 Dh14','E0m E0m E0m E0m E1 E0m E0m E0m E0m E0m E1 E0m | E0m E0m E0m E3 E0m E0m E0m E0m E5 E0m E6 E5','/6 A12 Ah15 D14 G13 B13 e12 eh16 ep12 B13 G13 D14 A15 /4 Ap12 E12 E13 E16 /6 E17 A12 Ah15 D14 G13 B13','/6 et19 ep12 eh16 et20 ep12 eh16 et22 ep12 eh16 et19 ep12 eh16 /4 A12*~:4']}]}],
+  lvl:['Восьмые и триоли, короткие фрагменты','Шестнадцатые и секстоли','Фрагменты длиннее, больше струн','Смена деления внутри фрагмента']}
 };
 /* ================= упражнения (EN) ================= */
 const EXEN={
@@ -935,11 +1075,11 @@ L29:{name:'Tapping',goal:'Even tapping under high gain.',how:'Tap with the picki
 L30:{name:'Chord shape changes',goal:'Instant shape changes.',how:'Change shape exactly at the change point, with no gap between chords. Fingers land on the new shape together.',tip:'Picture the next shape in advance; do not look at the neck at the moment of the change.',lvl:['Slow changes','A change every two beats','Changes twice as often','Twice as often, with position jumps'],v:['Octave, tritone, fifth','Same at fret 7','Tremolo with changes','Fifths and a tritone at fret 7','Tritones with an octave','Triads on D-G-B']},
 L31:{name:'Vibrato and bends',goal:'Exact pitch and a living sound in solos.',how:'b is a bend, r a release, ~ vibrato; ~ after a bend is vibrato on the bent note, never dropping below the target pitch. Bend with 2–3 fingers together; the motion comes from the wrist.',tip:'Check the pitch against a reference note. An out-of-tune bend is more obvious than a speed mistake.',lvl:['Narrow: half step','Whole step','Vibrato on a bend','Step and a half, vibrato on a bend'],v:[{l:'Bends to pitch',note:'Play the target note first, then bend up to the same pitch.'},{l:'Vibrato in time',note:'Vibrato in steady eighths, then triplets, then sixteenths with the metronome.'},'Half, whole, one and a half','Bends on the G string','Unison bend','Bend and release in time']},
 L40:{name:'Pull-offs to an open string',goal:'An open-string pedal in legato.',how:'Pick only the first note of each group, then pull off down to the open string. The open string is the pedal the phrase keeps returning to, while the fretting hand shifts to the next position.',tip:'Pull off to the open string slightly toward the floor so it rings just as loud. Mute unused strings with the edge of the picking hand.',lvl:['Triplets','Sixteenths with a hammer-on from the open string','Two strings, sextuplets','String and position changes, sextuplets'],v:['Open e',{l:'Low E',note:'Pick only the first note of each group; the hammer-on from the open string is unpicked too.'},'Two strings','Open A','Open G','Chromatic to the open string']},
-C32:{name:'Sweep → alternate picking',goal:'A seamless change between techniques.',how:'Each part on its own first, then join them. The key spot is the joint: the last note of one technique and the first of the next.',tip:'After a sweep the pick sits in a different place. Find the motion that starts the alternate picking and lock it in.',v:['Am','Alternate picking → sweep','Dm']},
-C33:{name:'Legato → tapping → legato',goal:'One line from three techniques.',how:'Each part on its own first, then join them. Pick only the first note on each string.',tip:'Taps as loud as the legato. If the tap sticks out, hit lighter.',v:['High strings','Middle strings','5th position']},
-C34:{name:'Tremolo → chugs → tremolo',goal:'Switch picking-hand techniques without breaking the grid.',how:'Tremolo open, chugs palm-muted. The palm lands and lifts exactly on the change.',tip:'The sixteenth-note pulse does not change with the technique. Check on a recording.',v:['One string','Double stops','Across a string']},
-C35:{name:'String skipping → sweep',goal:'From picking into a sweep and back.',how:'Each part on its own first, then join them.',tip:'The sweep starts with the motion the skip ended with. Find it.',v:['G–e and Am','Picked arpeggio and sweep','D–B and Am']},
-C36:{name:'Étude',goal:'Four techniques in a row, like a real riff.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always at the joint between fragments.',v:['Étude 1: tremolo, sweep, legato, tap','Étude 2: gallop, arpeggio, dim7, stop',{l:'Étude 3: 7/8, legato, tap, sweep',note:'The first fragment is in 7/8, the rest in 4/4.'}]}
+C32:{name:'Sweep → alternate picking',goal:'A seamless change between techniques.',how:'Each part on its own first, then join them. The key spot is the joint: the last note of one technique and the first of the next.',tip:'After a sweep the pick sits in a different place. Find the motion that starts the alternate picking and lock it in.',v:['Am','Alternate picking → sweep','Dm','Em, downward sweep','Diminished','Sweep → E pedal'],lvl:['One technique per bar, sweep in triplets','Short combo, joint on the bar line','Joint mid-bar, there and back','Long sweeps, /6 ↔ /4 switch']},
+C33:{name:'Legato → tapping → legato',goal:'One line from three techniques.',how:'Each part on its own first, then join them. Pick only the first note on each string.',tip:'Taps as loud as the legato. If the tap sticks out, hit lighter.',v:['High strings','Middle strings','5th position','Phrygian, B and G','Diminished','Harmonic minor'],lvl:['One string, eighths, one technique per bar','Two strings, sixteenths','Three strings, joint mid-bar','Tapping in sextuplets, subdivision switch']},
+C34:{name:'Tremolo → chugs → tremolo',goal:'Switch picking-hand techniques without breaking the grid.',how:'Tremolo open, chugs palm-muted. The palm lands and lifts exactly on the change.',tip:'The grid does not drift when the technique changes: the beat stays the beat, even when the subdivision changes on level 4. Check on a recording.',v:['One string','Double stops','Across a string','Melody on the B string','Fifths','Gallop'],lvl:['Chugs in eighths, change on the bar line','Chugs in sixteenths, change on the bar line','Change mid-bar, syncopation','Sextuplet tremolo, subdivision switch']},
+C35:{name:'String skipping → sweep',goal:'From picking into a sweep and back.',how:'Each part on its own first, then join them.',tip:'The sweep starts with the motion the skip ended with. Find it.',v:['G–e and Am','Picked arpeggio and sweep','D–B and Am','Em, D–B and sweep','Diminished','Dm, 5th position'],lvl:['Skips in eighths, sweep in triplets','Sixteenths, joint on the bar line','Joint mid-bar, there and back','Wide skips, five-string sweep, subdivision switch']},
+C36:{name:'Étude',goal:'Four techniques in a row, like a real riff.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always at the joint between fragments.',v:['Étude 1: tremolo, sweep, legato, tap','Étude 2: gallop, arpeggio, dim7, stop',{l:'Étude 3: 7/8, legato, tap, sweep',note:'The first fragment is in 7/8, the rest in 4/4.'},'Étude 4: gallop, pinch harmonics, tremolo fifths, legato',{l:'Étude 5: 5/8, tap, sweep, tremolo fifths',note:'The first fragment is in 5/8, the rest in 4/4.'},{l:'Étude 6: legato, gallop in 6/8, sweep, tap',note:'The second fragment is in 6/8, the rest in 4/4.'}],lvl:['Eighths and triplets, short fragments','Sixteenths and sextuplets','Longer fragments, more strings','Subdivision changes within a fragment']}
 };
 
 function X(id,f){const en=LANG==='en'&&EXEN[id];return (en&&en[f])||EX[id][f];}
@@ -1476,7 +1616,7 @@ const COACH={
   B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
   B2:{v:{1:{cyc:[{tag:['Начни даунстроком: переход «внутри»','Start on a downstroke: inside change']},{tag:['Начни апстроком: переход «снаружи»','Start on an upstroke: outside change']}]}}},
   L31:{v:{1:{cyc:[{sub:2,tag:['Вибрато восьмыми','Vibrato in 8ths']},{sub:3,tag:['Вибрато триолями','Vibrato in triplets']},{sub:4,tag:['Вибрато 16-ми','Vibrato in 16ths']}]}}},
-  C36:{stages:[['Фрагмент 1 отдельно','Fragment 1 on its own'],['Фрагмент 2 отдельно','Fragment 2 on its own'],['Фрагмент 3 отдельно','Fragment 3 on its own'],['Фрагмент 4 отдельно','Fragment 4 on its own'],['Пара 1+2','Pair 1+2'],['Пара 2+3','Pair 2+3'],['Пара 3+4','Pair 3+4'],['Целиком','The whole étude']],v:{2:{stageMeter:{0:'7/8'}}}}
+  C36:{stages:[['Фрагмент 1 отдельно','Fragment 1 on its own'],['Фрагмент 2 отдельно','Fragment 2 on its own'],['Фрагмент 3 отдельно','Fragment 3 on its own'],['Фрагмент 4 отдельно','Fragment 4 on its own'],['Пара 1+2','Pair 1+2'],['Пара 2+3','Pair 2+3'],['Пара 3+4','Pair 3+4'],['Целиком','The whole étude']],v:{2:{stageMeter:{0:'7/8'}},4:{stageMeter:{0:'5/8'}},5:{stageMeter:{1:'6/8'}}}}
 };
 const rng3=a=>({lo:a[0],hi:a[1],p:a[2]});
 // Подогнать длительности к S секундам шагом 5 с: сначала в пределах диапазонов, потом за счёт подходов. null — не выходит.
