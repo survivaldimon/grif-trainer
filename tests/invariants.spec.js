@@ -57,6 +57,23 @@ test('расписание: суммы, паузы, покрытие упраж�
   expect(res.missing, 'упражнения, ни разу не попавшие в план за 6 циклов').toEqual([]);
 });
 
+test('ротация: упражнения групп R, A, L попадают в план примерно поровну', async ({ page }) => {
+  await openApp(page, 'ru');
+  const errs = await page.evaluate(() => {
+    const G = window.__grif, errs = [];
+    for (const T of G.TIMES) {
+      const cnt = {};
+      for (let i = 0; i < 6 * 28; i++) G.buildSession(i, T).segs.forEach(s => { if (s.id) cnt[s.id] = (cnt[s.id] || 0) + 1; });
+      for (const g of ['R', 'A', 'L']) {
+        const c = G.GROUPS[g].map(id => cnt[id] || 0);
+        if (Math.min(...c) < 0.6 * Math.max(...c)) errs.push(`T=${T}, ${g}: ${c.join(' ')}`);
+      }
+    }
+    return errs;
+  });
+  expect(errs).toEqual([]);
+});
+
 test('EXEN покрывает EX', async ({ page }) => {
   await openApp(page, 'ru');
   const errs = await page.evaluate(() => {
