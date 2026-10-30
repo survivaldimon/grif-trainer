@@ -82,13 +82,16 @@ test('тренер: указания упражнений и неделя ско
       b1: sets(0, { kind: 'base', id: 'B1', min: 8 }).map(x => x.sub + (x.tempo.includes('half') ? 'h' : '')),
       speed: sets(14, { kind: 'focus', id: 'R8', min: 8 }).map(x => x.burst),
       maint: sets(14, { kind: 'maint', id: 'R8', min: 4 }).map(x => x.burst),
-      l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub)
+      l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub),
+      // этюд 3: первый фрагмент в 7/8, пульс — восьмая; на уровне 2 фрагмент восьмыми (/2) → без деления, на уровне 3 шестнадцатыми → деление 2
+      c36: [2, 3].map(lv => [...new Set(G.coachPlan({ kind: 'combo', id: 'C36', variant: 2, min: 20 }, G.dayInfo(0), lv).filter(x => x.type === 'set' && x.meter === '7/8').map(x => x.sub))])
     };
   });
   expect(r.b1.slice(0, 4)).toEqual(['4', '4', '6', '4h']);
   expect(r.speed.slice(0, 5)).toEqual([1, 2, 4, 0, 1]);
   expect(r.maint.every(b => b === 0)).toBe(true);
   expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
+  expect(r.c36).toEqual([[1], [2]]);
 });
 
 test('тренер: метроном включается на подходе и выключается на отдыхе, bpm не меняется', async ({ page }) => {
