@@ -748,6 +748,7 @@ function timeLabel(T){if(T<60)return T+L(' мин',' min');const h=Math.floor(T/
 /* ================= рендер ================= */
 function renderStatic(){
   document.documentElement.lang=LANG;
+  document.title=L('Гриф · Grif','Grif');
   $('logo').innerHTML=L('Гри<b>ф</b>','Gri<b>f</b>');
   document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.dataset.i);});
   $('prevDay').setAttribute('aria-label',t('prevDay'));$('nextDay').setAttribute('aria-label',t('nextDay'));
