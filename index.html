@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Гриф · Grif</title>
+<meta name="description" content="Гриф — ежедневная тренировка на электрогитаре для техничного дэт-метала. Одна программа для всех, подстройка под время от 15 минут до 5 часов.">
+<meta property="og:title" content="Гриф · Grif">
+<meta property="og:description" content="Daily technical death metal guitar workout · Ежедневная тренировка техничного дэт-метала">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0e1115">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230e1115'/%3E%3Cg stroke='%2386c3e6' stroke-width='3'%3E%3Cpath d='M22 10v44M42 10v44'/%3E%3C/g%3E%3Cg stroke='%23e8e4da' stroke-width='2'%3E%3Cpath d='M6 16h52M6 23h52M6 30h52M6 37h52M6 44h52M6 51h52'/%3E%3C/g%3E%3C/svg%3E">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Sofia+Sans+Extra+Condensed:wght@700;800&display=swap">
+<style>
+/* Layout: шапка дня (дата, фаза, фокус) и выбор времени → две колонки: «Сейчас» (таймер, протокол, таб, метроном) и план сессии; на телефоне «Сейчас» сверху */
+:root{
+  --bg:#0e1115; --surface:#161a20; --surface-2:#1d222a; --line:#2a313b;
+  --fg:#e8e4da; --muted:#8e96a2; --accent:#86c3e6; --accent-ink:#0b0e12;
+  --k-warm:#d9a07e; --k-base:#86c3e6; --k-focus:#e2b45a; --k-maint:#a3adbb;
+  --k-combo:#c39cf0; --k-music:#7fcc9c; --k-pause:#6b7482; --k-test:#ee7b66;
+  --danger:#ee7b66;
+  --f-display:"Sofia Sans Extra Condensed","Arial Narrow",Impact,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eeede9; --surface:#ffffff; --surface-2:#f6f5f1; --line:#d7d4cc;
+    --fg:#15181d; --muted:#5b616b; --accent:#1c6890; --accent-ink:#ffffff;
+    --k-warm:#9b5a35; --k-base:#1c6890; --k-focus:#946508; --k-maint:#5d6979;
+    --k-combo:#7748b4; --k-music:#2b7c4d; --k-pause:#878e99; --k-test:#b5412c;
+    --danger:#b5412c; color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#eeede9; --surface:#ffffff; --surface-2:#f6f5f1; --line:#d7d4cc;
+  --fg:#15181d; --muted:#5b616b; --accent:#1c6890; --accent-ink:#ffffff;
+  --k-warm:#9b5a35; --k-base:#1c6890; --k-focus:#946508; --k-maint:#5d6979;
+  --k-combo:#7748b4; --k-music:#2b7c4d; --k-pause:#878e99; --k-test:#b5412c;
+  --danger:#b5412c; color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px;display:flex;flex-direction:column;gap:20px}
+
+.hd{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(52px,9vw,84px);line-height:.82;letter-spacing:.02em;text-transform:uppercase}
+.logo b{color:var(--accent);font-weight:800}
+.tag{color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.daynav{display:flex;align-items:center;gap:6px}
+.daynav button{background:var(--surface);border:1px solid var(--line);border-radius:6px;height:36px;min-width:36px;padding:0 10px}
+.daynav button:hover{border-color:var(--muted)}
+#dateLabel{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.02em;min-width:9ch;text-align:center;text-transform:uppercase}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;height:36px}
+.lang button{border:0;background:var(--surface);padding:0 10px;font-family:var(--f-mono);font-size:13px}
+.lang button[aria-pressed="true"]{background:var(--fg);color:var(--bg);font-weight:600}
+
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.chip span{color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.notice{border:1px dashed var(--accent);border-radius:8px;padding:10px 14px;font-size:14px;max-width:80ch}
+
+.timebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchips button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums}
+.tchips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+
+.cal{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:12px}
+.strip{display:grid;gap:4px}
+.week{grid-template-columns:repeat(7,minmax(0,1fr))}
+.cycle{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cell{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);min-width:0}
+.cell .d{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cycle .v{white-space:normal}
+.cell .short{display:none}
+.cell.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cell.t .v{color:var(--k-test)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.now{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:14px}
+.nowhd{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.kind{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.kind::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--kc,var(--muted))}
+h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,40px);line-height:.95;margin:0;text-wrap:balance;letter-spacing:.01em}
+.clockrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.clock{font-family:var(--f-mono);font-weight:600;font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.bar{flex:1;min-width:120px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--kc,var(--accent))}
+.ctrls{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:8px 14px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;min-width:96px}
+.total{font-size:12px;color:var(--muted);font-family:var(--f-mono);margin-left:auto;align-self:center}
+
+.sect h4{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sect p{margin:0 0 6px;max-width:68ch}
+.sect ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;max-width:68ch}
+.goal{font-weight:600}
+.note{border-left:2px solid var(--kc,var(--accent));padding-left:10px}
+.tip{color:var(--muted)}
+.tabbox{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tabhd{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.tabbox pre{margin:0;padding:10px 12px;overflow-x:auto;font-family:var(--f-mono);font-size:13px;line-height:1.35}
+.legend{font-size:12px;color:var(--muted)}
+
+.tests{display:flex;flex-direction:column;gap:12px}
+.test{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.test .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.test input{width:90px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono)}
+.test .hist{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+
+.metro{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.mtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mstate{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.06em;min-height:26px}
+.mstate.play{color:var(--k-music)}
+.mstate.rest{color:var(--k-test)}
+.mbpm{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mbpm button{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;height:38px;min-width:42px;font-family:var(--f-mono)}
+.mbpm input{width:96px;height:38px;text-align:center;font-family:var(--f-mono);font-size:22px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);border-radius:6px}
+.mbpm .u{color:var(--muted);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.dots{display:flex;gap:6px;flex-wrap:wrap;min-height:18px}
+.dots i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2)}
+.dots i.g{border-color:var(--muted)}
+.dots i.on{background:var(--accent);border-color:var(--accent)}
+.dots i.on.r{background:var(--k-test);border-color:var(--k-test)}
+.mopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.mopts label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mopts select{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--fg)}
+.mopts .chk{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--fg)}
+.mact{display:flex;gap:8px}
+
+.plan{display:flex;flex-direction:column;gap:14px}
+.planhd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.planhd h3,.riff h3,.about h3{font-family:var(--f-display);font-weight:800;font-size:28px;margin:0;letter-spacing:.02em;text-transform:uppercase}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.plist li{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:4px}
+.plist li:hover{background:var(--surface-2)}
+.plist li.cur{background:var(--surface-2);box-shadow:inset 3px 0 0 var(--kc)}
+.plist li.done{opacity:.55}
+.plist .tm{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.plist .nm{min-width:0}
+.plist .nm b{display:block;font-weight:500}
+.plist .mn{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.plist li.pause .nm b{color:var(--muted);font-weight:400}
+
+.riff{border:1px solid var(--k-music);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.riff dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;margin:0}
+.riff dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.riff dd{margin:0}
+
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.about .panel li{max-width:65ch}
+.about ul{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.safety{border-color:var(--danger)}
+.safety h3{color:var(--danger)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;z-index:20}
+textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-family:var(--f-mono);font-size:12px;color:var(--fg);padding:8px}
+
+@media (max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .now{position:static}
+  .cal{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:520px){
+  .plist li{grid-template-columns:74px minmax(0,1fr) auto;gap:8px}
+  .clock{font-size:40px}
+  .week .cell{padding:5px 4px}
+  .week .cell .v{font-size:12px;text-overflow:clip}
+  .cell .full{display:none}
+  .cell .short{display:inline}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hd">
+    <div class="brand">
+      <div class="logo" id="logo">Гри<b>ф</b></div>
+      <div class="tag" data-i="tag"></div>
+    </div>
+    <div class="hdr">
+      <div class="daynav">
+        <button id="prevDay">‹</button>
+        <div id="dateLabel"></div>
+        <button id="nextDay">›</button>
+        <button id="todayBtn" data-i="today"></button>
+      </div>
+      <div class="lang" role="group" aria-label="Language">
+        <button data-lang="ru">RU</button><button data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="meta" id="meta"></div>
+  <div id="notice" hidden class="notice"></div>
+
+  <section class="timebar">
+    <span class="lbl" data-i="timeLabel"></span>
+    <div class="tchips" id="timeChips"></div>
+  </section>
+
+  <section class="cal">
+    <div>
+      <div class="lbl" style="margin-bottom:6px" data-i="weekLabel"></div>
+      <div class="strip week" id="weekStrip"></div>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px" data-i="cycleLabel"></div>
+      <div class="strip cycle" id="cycleStrip"></div>
+    </div>
+  </section>
+
+  <main class="grid">
+    <section class="panel now" id="now" aria-live="polite">
+      <div class="nowhd"><span class="kind" id="nowKind"></span><span id="nowPos"></span></div>
+      <h2 class="title" id="nowTitle"></h2>
+      <div class="clockrow">
+        <div class="clock" id="clock">00:00</div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+      <div class="ctrls">
+        <button class="btn" id="prevSeg" data-i="back"></button>
+        <button class="btn primary" id="playBtn"></button>
+        <button class="btn" id="nextSeg" data-i="next"></button>
+        <span class="total" id="totalLeft"></span>
+      </div>
+      <div id="nowBody" style="display:flex;flex-direction:column;gap:14px"></div>
+
+      <div class="metro">
+        <div class="mtop"><span class="lbl" data-i="metro"></span><span class="mstate" id="mState"></span></div>
+        <div class="mbpm">
+          <button data-d="-4">−4</button><button data-d="-1">−1</button>
+          <input id="bpm" type="number" min="30" max="320" inputmode="numeric" aria-label="bpm">
+          <button data-d="1">+1</button><button data-d="4">+4</button>
+          <span class="u">bpm</span>
+        </div>
+        <input id="bpmRange" type="range" min="30" max="320" aria-label="bpm">
+        <div class="dots" id="dots"></div>
+        <div class="mopts">
+          <label><span data-i="meter"></span><select id="mMeter"></select></label>
+          <label><span data-i="subdiv"></span><select id="mSub"></select></label>
+          <label><span data-i="bursts"></span><select id="mBurst"></select></label>
+          <label class="chk"><input type="checkbox" id="mLadder"> <span data-i="ladder"></span></label>
+        </div>
+        <div class="mact">
+          <button class="btn primary" id="mToggle"></button>
+          <button class="btn" id="mTap" data-i="tap"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="plan">
+      <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+        <div class="planhd"><h3 data-i="plan"></h3><button class="btn" id="shareBtn" data-i="copy"></button></div>
+        <ol class="plist" id="planList"></ol>
+        <div id="shareBox" hidden></div>
+      </div>
+      <div class="riff" id="riffCard"></div>
+    </section>
+  </main>
+
+  <section class="about">
+    <div class="panel"><h3 data-i="aboutT"></h3><ul id="aboutL"></ul></div>
+    <div class="panel safety"><h3 data-i="safeT"></h3><ul id="safeL"></ul></div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ================= утилиты ================= */
+const DAY=86400000, ANCHOR=Date.UTC(2026,10,2); // пн, 2 ноября 2026
+const mod=(n,m)=>((n%m)+m)%m;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rot=(a,k)=>{const n=a.length;if(!n)return[];k=mod(k,n);return a.slice(k).concat(a.slice(0,k));};
+const R=(t,n)=>Array(n).fill(t).join(' ');
+const J=(...a)=>a.join(' ');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const pickIdx=(r,n)=>Math.floor(r()*n);
+function lsGet(k,d){try{const v=localStorage.getItem('grif.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem('grif.'+k,JSON.stringify(v));}catch(e){}}
+function dayIndexOf(d){return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-ANCHOR)/DAY);}
+function dateOfIndex(i){const u=new Date(ANCHOR+i*DAY);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate());}
+function splitInt(total,weights){
+  const s=weights.reduce((a,b)=>a+b,0)||1;
+  const raw=weights.map(w=>total*w/s), out=raw.map(Math.floor);
+  let rest=total-out.reduce((a,b)=>a+b,0);
+  raw.map((v,i)=>[v-Math.floor(v),i]).sort((a,b)=>b[0]-a[0]).forEach(([f,i])=>{if(rest>0){out[i]++;rest--;}});
+  return out;
+}
+
+/* ================= язык ================= */
+let LANG=(function(){const h=(location.hash||'').slice(1);if(h==='en'||h==='ru')return h;const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return /^ru|^uk|^be|^kk/i.test(navigator.language||'')?'ru':'en';})();
+const L=(ru,en)=>LANG==='en'?en:ru;
+const UI={
+  ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день'},
+  en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day'}
+};
+const t=k=>UI[LANG][k];
+const ABOUT={
+  ru:['Программа одна для всех. Тренировка определяется датой: у всех, кто открыл «Гриф» в этот день, она одинаковая.','Единственная настройка — время. Чем его меньше, тем раньше выпадают блоки с конца списка: сначала музыка, затем поддержка. Фокус дня остаётся всегда.','Темп у каждого свой. <b>Чистый темп</b> — самый быстрый, на котором ты играешь без ошибок и без зажима. <b>Рабочий</b> — на 10% ниже. Протокол недели говорит, что с ними делать.','Неделя: ритм, арпеджио, левая рука — каждый фокус дважды, в воскресенье связки техник. База (альтернейт и синхронизация) — каждый день.','Цикл 4 недели: объём → наращивание → скорость → разгрузка с тестами в последнее воскресенье. Каждый цикл меняется лад и набор вариантов упражнений.'],
+  en:['One program for everyone. The workout is set by the date: everyone who opens Grif on a given day gets the same one.','The only setting is time. The less you have, the earlier blocks drop from the end of the list: music first, then maintenance. The day’s focus always stays.','Tempo is personal. <b>Clean tempo</b> is the fastest you can play with no mistakes and no tension. <b>Working tempo</b> is 10% below it. The week protocol tells you what to do with them.','Week: rhythm, arpeggios and left hand, each focus twice, with technique combinations on Sunday. Base (alternate picking and hand sync) runs every day.','4-week cycle: volume → build → speed → deload, with tests on the last Sunday. Each cycle brings a new scale and a new set of exercise variants.']
+};
+const SAFETY={
+  ru:['Боль, жжение или онемение в кисти, предплечье, локте — сразу стоп. На сегодня с этой техникой всё.','Паузы в плане обязательные. Отложи гитару, встань, расслабь плечи.','Растяжки не через силу. Не получается — сдвинь упражнение выше по грифу.','Зажим хуже ошибки. Если рука каменеет, сбрось темп, даже если ноты чистые.','Тендинит лечится месяцами. Лишний день отдыха стоит дешевле.'],
+  en:['Pain, burning or numbness in the hand, forearm or elbow: stop right away. That technique is done for today.','Breaks in the plan are mandatory. Put the guitar down, stand up, relax your shoulders.','Never force a stretch. If it does not work, move the exercise higher up the neck.','Tension is worse than a mistake. If the hand locks up, drop the tempo even if the notes are clean.','Tendinitis takes months to heal. An extra rest day is cheaper.']
+};
+const DOWN={ru:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']};
+const MONTHS={ru:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
+function dateText(d){const w=DOWN[LANG][mod(d.getDay()-1,7)];return LANG==='en'?w+', '+MONTHS.en[d.getMonth()]+' '+d.getDate():w+', '+d.getDate()+' '+MONTHS.ru[d.getMonth()];}
+
+/* ================= таб ================= */
+const STR=['e','B','G','D','A','E'];
+function renderSystem(src){
+  const lines={};STR.forEach(s=>lines[s]=s+'|-');
+  src.trim().split(/\s+/).forEach(tok=>{
+    if(tok==='|'){STR.forEach(s=>lines[s]+='|-');return;}
+    const cell={};
+    if(tok!=='.'){tok.split('+').forEach(p=>{cell[p[0]]=p.slice(1);});}
+    const w=Math.max(1,...Object.values(cell).map(v=>v.length));
+    STR.forEach(s=>{lines[s]+=(cell[s]||'').padEnd(w,'-')+'-';});
+  });
+  return STR.map(s=>lines[s]+'|').join('\n');
+}
+const renderTab=systems=>systems.map(renderSystem).join('\n\n');
+
+/* ================= лады ================= */
+const OPEN={E:40,A:45,D:50,G:55,B:59,e:64};
+const LOW_TO_HIGH=['E','A','D','G','B','e'];
+const MATERIALS=[
+  {ru:'E фригийский',en:'E Phrygian',pcs:[4,5,7,9,11,0,2]},
+  {ru:'E гармонический минор',en:'E harmonic minor',pcs:[4,6,7,9,11,0,3]},
+  {ru:'E уменьшённая (полутон–тон)',en:'E diminished (half–whole)',pcs:[4,5,7,8,10,11,1,2]},
+  {ru:'E локрийский',en:'E Locrian',pcs:[4,5,7,9,10,0,2]},
+  {ru:'E фригийский доминант',en:'E Phrygian dominant',pcs:[4,5,8,9,11,0,2]},
+  {ru:'E целотонная',en:'E whole tone',pcs:[4,6,8,10,0,2]}
+];
+const matName=m=>m[LANG];
+const PHRYG=MATERIALS[0];
+function scaleNotesFrom(pcs,start,count){const out=[];for(let m=start;out.length<count;m++){if(pcs.includes(mod(m,12)))out.push(m);}return out;}
+function threeNps(mat){
+  const cands=[];
+  for(let m=45;m<=57;m++){
+    if(!mat.pcs.includes(mod(m,12)))continue;
+    const notes=scaleNotesFrom(mat.pcs,m,18);
+    const frets=notes.map((n,k)=>n-OPEN[LOW_TO_HIGH[Math.floor(k/3)]]);
+    cands.push({m,frets,max:Math.max(...frets),min:Math.min(...frets)});
+  }
+  const ok=cands.filter(c=>c.max<=19&&c.min>=4);
+  const pool=ok.length?ok:cands;
+  pool.sort((a,b)=>((mod(b.m,12)===4)-(mod(a.m,12)===4))||(a.max-b.max));
+  return pool[0].frets.map((f,k)=>({s:LOW_TO_HIGH[Math.floor(k/3)],f,j:k%3}));
+}
+function npsTokens(mat,mode){
+  const up=threeNps(mat), down=up.slice().reverse();
+  const tk=(n,dir)=>{if(mode!=='legato'||n.j===(dir==='up'?0:2))return n.s+n.f;return n.s+(dir==='up'?'h':'p')+n.f;};
+  return [up.map(n=>tk(n,'up')).join(' '),down.map(n=>tk(n,'down')).join(' ')];
+}
+function oneStringSeq(mat){
+  const fr=[];for(let f=0;f<=19;f++){if(mat.pcs.includes(mod(64+f,12)))fr.push(f);}
+  const groups=[];for(let g=0;g+2<fr.length&&groups.length<8;g++)groups.push([fr[g],fr[g+1],fr[g+2]]);
+  return [groups.map(g=>g.map(f=>'e'+f).join(' ')).join(' '),groups.slice().reverse().map(g=>g.slice().reverse().map(f=>'e'+f).join(' ')).join(' ')];
+}
+const PERMS=(function(){const r=[];const p=(a,c)=>{if(!a.length){r.push(c);return;}a.forEach((x,i)=>p(a.filter((_,j)=>j!==i),c.concat(x)));};p([1,2,3,4],[]);return r;})();
+const PAIRS=[[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]];
+
+/* ================= упражнения (RU) ================= */
+const EX={
+/* ---- разминка ---- */
+W0:{name:'Разминка',goal:'Разогреть руки и включить слух.',how:'Без гитары минуту: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке медленная хроматика по всем струнам.',tip:'Только мягкие движения. Растяжка до боли на холодные руки вредна.',sub:4,v:[{l:'Хроматика',t:[J('E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8 B5 B6 B7 B8 e5 e6 e7 e8')]}]},
+W1:{name:'Мобилизация без гитары',goal:'Разогнать кровь в кистях и предплечьях.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
+W2:{name:'Медленная хроматика',goal:'Включить синхронизацию рук без нагрузки.',how:'Чистый звук, темп заведомо низкий. 1-2-3-4 по всем струнам вверх и вниз, затем сдвиг на лад выше и снова.',tip:'Слушай, чтобы каждая нота звучала полную длительность.',sub:4,v:[{l:'Хроматика',t:[J('E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8 B5 B6 B7 B8 e5 e6 e7 e8')]}]},
+W3:{name:'Медленные свипы и трели',goal:'Подготовить обе руки к быстрой работе.',how:'Чистый звук. Свип Am на трёх струнах и трели парами пальцев. Темп — половина рабочего.',tip:'Цель — тёплые руки, а не скорость.',sub:6,v:[{l:'Свип и трели',t:[J('G14 B13 e12 eh17 ep12 B13','|','G12 Gh13 Gp12 Gh14 Gp12 Gh15 Gp12 .')]}]},
+
+/* ---- база ---- */
+B1:{n:1,name:'Тремоло на одной струне',goal:'Скорость и ровность альтернейта.',how:'Строго вниз-вверх, шестнадцатые. Каждый третий подход — секстоли, затем тридцать вторые на половине темпа.',tip:'Движение от запястья, медиатор входит в струну неглубоко. Громкость вниз и вверх одинаковая.',sub:4,v:[
+  {l:'Открытая струна',t:[R('E0',16)]},
+  {l:'С движением по ладам',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4),'|',R('E0',4),R('E5',4),R('E3',4),R('E1',4))]},
+  {l:'Струна A',t:[J(R('A7',4),R('A8',4),R('A10',4),R('A8',4))]}]},
+B2:{n:2,name:'Альтернейт со сменой струн',goal:'Чистые переходы медиатора между струнами.',how:'Строгий альтернейт, шестнадцатые. Нечётное число нот на струне заставляет чередовать переходы «внутри» и «снаружи».',tip:'Медиатор делает минимальную дугу при переходе. Если цепляешь соседнюю струну — сбрось темп.',sub:4,v:[
+  {l:'3 ноты на струну, две струны',t:[J('G12 G14 G16 B13 B15 B17 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 B17 B15 B13 G16 G14 G12')]},
+  {l:'Внутри и снаружи',t:[R('G14 B15',8)],note:'Половину подходов начинай даунстроком на G — это переход «внутри», медиатор между струнами. Вторую половину начинай апстроком — переход «снаружи».'},
+  {l:'Три струны',t:[J('D12 D14 D15 G12 G14 G16 B13 B15 B17','|','B17 B15 B13 G16 G14 G12 D15 D14 D12')]}]},
+B3:{n:3,name:'Перескок через струну',goal:'Точность правой руки на больших дистанциях.',how:'Строгий альтернейт, пропущенная струна не звучит. Шестнадцатые.',tip:'Поднимай медиатор ровно настолько, чтобы перелететь через струну.',sub:4,v:[
+  {l:'G и e',t:[R('G14 e12',8)]},
+  {l:'По две ноты',t:[J(R('G12 G14 e12 e15',2),'|',R('e15 e12 G14 G12',2))]},
+  {l:'D и B',t:[R('D14 B13',8)]}]},
+B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальца и медиатора.',how:'Альтернейт, шестнадцатые. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. Вниз по струнам — на лад выше.',tip:'Палец ставится на лад чуть раньше удара медиатора, а не одновременно.',sub:4,gen:true},
+B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз. Точка в табе — пауза. Ребро правой ладони глушит басы, свободные пальцы левой лежат на неиграющих струнах.',tip:'Проверка: остановись на любой паузе — должно быть тихо, без гула и свиста.',sub:2,v:[
+  {l:'Палм-мьют и открытые ноты',t:[J('E0 E0 D7 . E0 E0 G7 .','|','E0 E0 D7 . E0 G9 D7 .')],note:'E — палм-мьют, верхние ноты открыто.'},
+  {l:'Перескоки под перегрузом',t:[J('A7 . G9 . A7 . e7 .','|','A5 . G7 . A5 . e5 .')]},
+  {l:'Аккорд и тишина',t:[J('A2+E0 . . . A2+E0 A2+E0 . .','|','A3+E1 . A3+E1 . . . A5+E3 .')]}]},
+
+/* ---- ритм ---- */
+R6:{n:6,name:'Даунпикинг',goal:'Скорость и выносливость даунстроков.',how:'Только даунстроки, восьмые. Найди темп, который держишь 60 секунд подряд, и применяй к нему протокол недели.',tip:'Сила не нужна. Короткое движение, медиатор отскакивает от струны. Плечо и шея расслаблены.',sub:2,v:[
+  {l:'Чаги с движением',t:[J(R('E0',6),'E1 E1','|',R('E0',6),'E3 E3')]},
+  {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),'|',R('A5+E3',4),R('A3+E1',4))]},
+  {l:'Через струны',t:[J('E0 E0 A2 E0 E0 A3 E0 A5','|','E0 E0 A2 E0 E0 A3 A2 E0')]}]},
+R7:{n:7,name:'Галопы',goal:'Чёткий рисунок галопа на любом темпе.',how:'Деление 16-е. Выбери аппликатуру (альтернейт или вниз-вниз-вверх) и держи её весь подход.',tip:'Длинная нота галопа не «проваливается»: она такая же громкая, как короткие.',sub:4,v:[
+  {l:'Прямой галоп',t:[J(R('E0',12),'|',R('E1',3),R('E0',3),R('E3',3),R('E0',3))],note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).'},
+  {l:'Обратный галоп',t:[J(R('E0',12),'|',R('E1',3),R('E0',3),R('E3',3),R('E0',3))],note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).'},
+  {l:'Галоп аккордами',t:[J(R('A2+E0',3),R('A3+E1',3),R('A2+E0',3),R('A5+E3',3))],note:'Чередуй прямой и обратный галоп каждый такт.'}]},
+R8:{n:8,name:'Тремоло двойными нотами',goal:'Ровное тремоло по нескольким струнам.',how:'Альтернейт шестнадцатыми. Медиатор цепляет все струны созвучия одинаково вниз и вверх.',tip:'Неиграющие струны глуши левой рукой: на тремоло созвучием любой лишний призвук слышен сразу.',sub:4,v:[
+  {l:'Тритон',t:[J(R('A1+E0',8),'|',R('A2+E0',8))]},
+  {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),R('A5+E3',4),R('A3+E1',4))]},
+  {l:'Малая секунда',t:[J(R('G4+D8',8),'|',R('G3+D7',8))]}]},
+R9:{n:9,name:'Палм-мьют и открытые ноты',goal:'Мгновенное переключение окраски звука.',how:'Шестнадцатые. Ладонь ложится и снимается точно в момент смены, ритм не меняется.',tip:'Громкость открытых нот не должна прыгать. Сравни по записи.',sub:4,v:[
+  {l:'Чаг и открытые ноты',t:[J(R('E0',6),'A7 A8','|',R('E0',6),'A10 A8')],note:'E — палм-мьют, ноты на A — открыто.'},
+  {l:'Чаг и аккорд',t:[J('E0 E0 E0 D9+A7 E0 E0 D10+A8 .')],note:'Аккорд звучит открыто и полную длительность.'},
+  {l:'Одна нота, две окраски',t:[R('E0',16)],note:'Первая доля — с ладонью, вторая — открыто, и так далее.'}]},
+R10:{n:10,name:'Стоп-старт',goal:'Резкие обрывы и точные вступления.',how:'Шестнадцатые. Точка в табе — пауза: обе руки глушат струны, тишина ровно до следующей ноты.',tip:'Обрыв так же важен, как удар. Без хвостов и шипения.',sub:4,v:[
+  {l:'Обрывы на долю',t:[J('E0 E0 E0 E0 . . . . E0 E0 . . E0 . E0 .')]},
+  {l:'Аккордовые стопы',t:[J('A2+E0 . A2+E0 . . . A3+E1 A3+E1','|','. . . . A5+E3 . . .')]},
+  {l:'Группы 3+3+2',t:[J('E0 E0 E0 . E0 E0 E0 . E0 E0 . E0 E0 . E0 .')]}]},
+R11:{n:11,name:'Ритмические группировки',goal:'Точное деление доли на 3, 4, 5, 6, 7.',how:'Метроном щёлкает четвертями без деления, ты делишь долю сам. Каждый такт таба — одна доля метронома.',tip:'Считай слогами вслух. Акцент на первой ноте каждой доли.',sub:1,v:[
+  {l:'От 3 до 7',t:[J(R('E0',3),'|',R('E0',4),'|',R('E0',5),'|',R('E0',6),'|',R('E0',7))]},
+  {l:'16-е и секстоли',t:[J(R('E0',4),'|',R('E0',6),'|',R('E0',4),'|',R('E0',6))]},
+  {l:'Квинтоли и септоли',t:[J(R('E0',5),'|',R('E0',7),'|',R('E0',5),'|',R('E0',7))]}]},
+R12:{n:12,name:'Нечётные размеры',goal:'Чувство группировки в неровном такте.',how:'Восьмые. Метроном сам переключится на нужный размер: щелчок — восьмая, акценты — начала групп.',tip:'Сначала простучи группировку ладонью по колену, потом играй.',sub:1,v:[
+  {l:'7/8 (2+2+3)',meter:'7/8',t:[J('E0 E0 A1 E0 E0 E0 A3','|','E0 E0 A1 E0 E0 A3 A1')]},
+  {l:'5/8 (3+2)',meter:'5/8',t:[J('E0 E0 E0 A2 A3','|','E0 E0 E0 A5 A3')]},
+  {l:'11/8 (3+3+3+2)',meter:'11/8',t:[J('E0 E0 A1 E0 E0 A3 E0 E0 A1 A5 A3')]}]},
+R13:{n:13,name:'Полиритмия',goal:'Держать фигуру поверх чужой сетки.',how:'Шестнадцатые в 4/4, метроном с акцентом на первую долю. Фигура идёт своим кругом и не подстраивается под такт.',tip:'Считай вслух доли (1-2-3-4), а не ноты фигуры.',sub:4,v:[
+  {l:'Фигура из 5 нот',t:[R('E0 E0 A1 E0 A3',4)],note:'Фигура снова совпадёт с первой долей через 5 тактов.'},
+  {l:'3 против 4',t:[R('E0 E0 A2',6)],note:'Акцент на первой ноте каждой тройки. Сходится с тактом через 3 такта.'},
+  {l:'Фигура из 7 нот',t:[R('E0 E0 A1 E0 A3 E0 A1',3)],note:'Сходится через 7 тактов.'}]},
+R14:{n:14,name:'Синкопы',goal:'Удары между долями без сдвига сетки.',how:'Шестнадцатые. Чаги на E — палм-мьют, аккорды — открыто с акцентом, после аккорда короткая пауза.',tip:'Метроном держит сильные доли, аккорды попадают между ними. Не дай им съехать на долю.',sub:4,v:[
+  {l:'Акцент на «а»',t:[J('E0 E0 E0 A2+E0 . E0 E0 E0 E0 A2+E0 . E0 E0 E0 A3+E1 .')]},
+  {l:'Акцент на «и»',t:[J('E0 A2+E0 . E0 E0 E0 A2+E0 . E0 E0 A3+E1 . E0 E0 E0 E0')]},
+  {l:'С паузы',t:[J('. E0 E0 A2+E0 . E0 E0 A3+E1 . E0 E0 A5+E3 . E0 A3+E1 .')]}]},
+R15:{n:15,name:'Флажолеты медиатором',goal:'Визг с первой попытки.',how:'* — флажолет медиатором: подушечка большого пальца касается струны сразу после медиатора. Ищи точку над звукоснимателем, где флажолет громче всего.',tip:'Добавь широкое вибрато на каждый флажолет.',sub:2,v:[
+  {l:'Одна позиция',t:[J('G7* . G7* . G9* . G7* .')]},
+  {l:'Разные струны',t:[J('D7* . G7* . D9* . G9* .')]},
+  {l:'В риффе',t:[J('E0 E0 E0 G7* E0 E0 G9* .')]}]},
+
+/* ---- арпеджио ---- */
+A16:{n:16,name:'Свип на 3 струнах',goal:'Чистое разделение нот в свипе.',how:'Секстоли: одна нота на щелчок деления. Вверх — одно движение вниз через струны, вниз — одно движение вверх. Верхние ноты — хаммер и пулл-офф.',tip:'Палец снимается с лада сразу после ноты. Если звучит аккорд, это ещё не свип.',sub:6,v:[
+  {l:'Am',t:[J('G14 B13 e12 eh17 ep12 B13','|','G14 B13 e12 eh17 ep12 B13')]},
+  {l:'Am – F – G – Em',t:[J('G14 B13 e12 eh17 ep12 B13','|','G10 B10 e8 eh13 ep8 B10'),J('G12 B12 e10 eh15 ep10 B12','|','G9 B8 e7 eh12 ep7 B8')]},
+  {l:'Am – E',t:[J('G14 B13 e12 eh17 ep12 B13','|','G13 B12 e12 eh16 ep12 B12')]}]},
+A17:{n:17,name:'Свип на 5–6 струнах',goal:'Длинный свип одним движением.',how:'12 нот = две секстоли. Играй по кругу без остановки.',tip:'Ребро правой ладони идёт за медиатором и глушит пройденные басовые струны.',sub:6,v:[
+  {l:'Am, 5 струн',t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15')],note:'В начале следующего круга сними 15 лад пулл-оффом на 12.'},
+  {l:'Dm, 5 струн',t:[J('A5 D7 G7 B6 e5 eh10 ep5 B6 G7 D7 A5 Ah8')],note:'В начале следующего круга сними 8 лад пулл-оффом на 5.'},
+  {l:'Am, 6 струн',t:[J('E5 A7 D7 G5 B5 e5 eh8 ep5 B5 G5 D7 A7')],note:'На 5 ладу три струны подряд — перекат одним пальцем.'}]},
+A18:{n:18,name:'Уменьшённые и m7b5',goal:'Неоклассические арпеджио жанра.',how:'Уменьшённый септаккорд симметричен: та же форма повторяется каждые 3 лада.',tip:'Сначала сыграй форму аккордом и послушай. Потом свип, медленно, по одной ноте.',sub:4,v:[
+  {l:'dim7 вверх по малым терциям',t:[J('G7 B6 e4 eh7','|','G10 B9 e7 eh10','|','G13 B12 e10 eh13')]},
+  {l:'Bm7b5 – E – Am',sub:6,t:[J('G16 B15 e13 eh17 ep13 B15','|','G13 B12 e12 eh16 ep12 B12','|','G14 B13 e12 eh17 ep12 B13')]},
+  {l:'dim7 на 4 струнах',t:[J('D12 G10 B9 e7 eh10 ep7 B9 G10','|','D15 G13 B12 e10 eh13 ep10 B12 G13')]}]},
+A19:{n:19,name:'Свип с теппингом и легато',goal:'Расширить арпеджио за пределы позиции.',how:'t — тэп пальцем правой руки, h — хаммер, p — пулл-офф. Медиатор зажат, тэп средним пальцем.',tip:'Стык свипа и тэпа — слабое место. Гоняй его отдельно: последняя нота свипа, тэп, пулл-офф.',sub:6,v:[
+  {l:'Am, 5 струн',t:[J('A12 Ah15 D14 G14 B13 e12 et17 ep12 B13 G14 D14 A15')]},
+  {l:'Am7, 3 струны',sub:4,t:[J('G14 B13 e12 eh15 et20 ep15 ep12 B13')]},
+  {l:'Dm, 5 струн',t:[J('A5 Ah8 D7 G7 B6 e5 et10 ep5 B6 G7 D7 A8')]}]},
+A20:{n:20,name:'Перекат пальца',goal:'Ноты одного лада на соседних струнах без звона.',how:'Один палец на двух-трёх струнах: перекатывай подушечку так, чтобы звучала только играемая нота.',tip:'Проверь на чистом звуке: аккорд не должен звенеть.',sub:4,v:[
+  {l:'Две струны',t:[R('B12 e12',8)]},
+  {l:'Три струны',t:[R('G12 B12 e12 B12',4)]},
+  {l:'Перекат в свипе',sub:6,t:[J('G12 B12 e10 eh15 ep10 B12','|','G12 B12 e10 eh15 ep10 B12')]}]},
+A21:{n:21,name:'Экономный пикинг',goal:'Гамма по 3 ноты на струну экономно.',how:'На новой струне медиатор продолжает движение в ту же сторону. Вверх по гамме: вниз-вверх-вниз, переход на новую струну — снова вниз.',tip:'Это не свип: каждая нота звучит отдельно и ровно.',sub:6,gen:true},
+A22:{n:22,name:'Арпеджио альтернейтом',goal:'Широкие интервалы строгим пикингом.',how:'Две ноты на струну с перескоком через струну, строгий альтернейт. Звучит как арпеджио, играется пикингом.',tip:'Перескок — минимальная дуга, медиатор едва поднимается над пропущенной струной.',sub:6,v:[
+  {l:'Am',t:[J('A12 A15 G14 G17 e12 e17','|','e17 e12 G17 G14 A15 A12')]},
+  {l:'Em',t:[J('A7 A10 G9 G12 e7 e12','|','e12 e7 G12 G9 A10 A7')]},
+  {l:'Dm',t:[J('A5 A8 G7 G10 e5 e10','|','e10 e5 G10 G7 A8 A5')]}]},
+A23:{n:23,name:'Гибридный пикинг',goal:'Медиатор и пальцы вместе.',how:'Нижняя нота — медиатором, верхние — средним и безымянным пальцами. Положение руки не меняется.',tip:'Пальцы цепляют струну подушечкой. Громкость пальцев и медиатора одинаковая.',sub:3,v:[
+  {l:'Am',t:[R('D14 G14 B13',6)]},
+  {l:'Am через струну',t:[R('A12 G14 e12',6)]},
+  {l:'Em с открытой',sub:4,t:[R('E0 G9 B8 G9',4)]}]},
+
+/* ---- левая рука ---- */
+L24:{n:24,name:'Легато',goal:'Ровные хаммеры и пулл-оффы.',how:'Первая система — трель пары пальцев дня. Вторая — гамма цикла по 3 ноты на струну: медиатором только первая нота на струне.',tip:'Громкость хаммера и пулл-оффа как у ноты медиатором. Пулл-офф — чуть вниз, а не просто снять палец.',sub:6,gen:true},
+L25:{n:25,name:'Удар пальцем без медиатора',goal:'Сила и точность каждого пальца.',how:'Правая рука не играет: каждая нота — хаммер, включая первую на новой струне.',tip:'Первая нота на струне должна звучать так же громко, как остальные.',sub:3,v:[
+  {l:'Вниз по струнам',t:[J('eh12 eh15 eh17 Bh13 Bh15 Bh17 Gh12 Gh14 Gh16')]},
+  {l:'Вверх по струнам',t:[J('Gh12 Gh14 Gh16 Bh13 Bh15 Bh17 eh12 eh13 eh15')]},
+  {l:'Трели без медиатора',sub:4,t:[J('eh12 eh15 ep12 eh15 Bh13 Bh15 Bp13 Bh15 Gh12 Gh14 Gp12 Gh14')]}]},
+L26:{n:26,name:'Растяжки',goal:'Широкая позиция без зажима.',how:'Пальцы 1-2-4 или 1-3-4. Большой палец за грифом опускается ниже, локоть ближе к корпусу.',tip:'Тянет или больно — сдвинь упражнение выше по грифу. Растяжка не силовое упражнение.',sub:4,v:[
+  {l:'5 ладов (12–16)',t:[J('e12 eh14 eh16 ep14 ep12 eh14 eh16 ep14','|','B12 Bh14 Bh16 Bp14 Bp12 Bh14 Bh16 Bp14','|','G12 Gh14 Gh16 Gp14 Gp12 Gh14 Gh16 Gp14')]},
+  {l:'6 ладов (12–17)',t:[J('e12 eh14 eh17 ep14 ep12 eh14 eh17 ep14','|','B12 Bh14 Bh17 Bp14 Bp12 Bh14 Bh17 Bp14','|','G12 Gh14 Gh17 Gp14 Gp12 Gh14 Gh17 Gp14')]},
+  {l:'7 ладов (12–18)',t:[J('e12 eh15 eh18 ep15 ep12 eh15 eh18 ep15','|','B12 Bh15 Bh18 Bp15 Bp12 Bh15 Bh18 Bp15','|','G12 Gh15 Gh18 Gp15 Gp12 Gh15 Gh18 Gp15')]}]},
+L27:{n:27,name:'Независимость пальцев',goal:'Каждый палец двигается отдельно.',how:'Каждый палец закреплён за своим ладом. Двигается только тот палец, чья нота следующая.',tip:'Неиграющие пальцы висят низко над струнами. Чем ниже, тем быстрее.',sub:4,v:[
+  {l:'Паук',t:[J('E9 A10 E11 A12','|','A9 D10 A11 D12','|','D9 G10 D11 G12','|','G9 B10 G11 B12','|','B9 e10 B11 e12')]},
+  {l:'Паук 1-3 / 2-4',t:[J('E9 A11 E10 A12','|','A9 D11 A10 D12','|','D9 G11 D10 G12','|','G9 B11 G10 B12','|','B9 e11 B10 e12')]},
+  {l:'Мизинец отдельно',t:[R('G14 Gh15 Gp14 Gh15',4)],note:'Пальцы 1 и 2 всё время прижаты на 12 и 13 ладу. Трель играют только 3 и 4.'}]},
+L28:{n:28,name:'Смена позиций',goal:'Передвижение по грифу без пауз.',how:'Секвенция по 3 ноты на одной струне в ладу цикла. Каждая группа начинается на следующей ступени: рука смещается без разрыва звука.',tip:'Смотри на точку назначения до сдвига, а не во время.',sub:3,gen:true},
+L29:{n:29,name:'Теппинг',goal:'Ровный теппинг под перегрузом.',how:'Тэп средним пальцем правой руки, медиатор зажат в ладони. Пулл-офф с тэпа — чуть вниз к полу.',tip:'Левая рука глушит неиграющие струны, иначе под перегрузом всё гудит.',sub:3,v:[
+  {l:'Am – F – G – E',t:[J(R('et17 ep8 eh12',2),'|',R('et13 ep5 eh8',2),'|',R('et15 ep7 eh10',2),'|',R('et16 ep7 eh12',2))]},
+  {l:'Два тэпающих пальца',sub:6,t:[R('e8 eh12 et17 et20 ep17 ep12',2)],note:'17 лад — средний палец, 20 лад — безымянный.'},
+  {l:'Две струны',sub:6,t:[R('et17 ep8 eh12 Bt17 Bp10 Bh13',2)]}]},
+L30:{n:30,name:'Смена аккордовых форм',goal:'Мгновенная перестановка формы.',how:'Меняй форму точно на долю, без паузы между аккордами. Пальцы ставятся на новую форму одновременно.',tip:'Представь следующую форму заранее, не смотри на гриф в момент смены.',sub:1,v:[
+  {l:'Октава, тритон, квинта',t:[J('D2+A2+E0 D2+A2+E0 A2+E1 A2+E1 G5+D5+A3 G5+D5+A3 D3+A1 D3+A1')]},
+  {l:'То же на 7 ладу',t:[J('D9+A9+E7 D9+A9+E7 A9+E8 A9+E8 G12+D12+A10 G12+D12+A10 D10+A8 D10+A8')]},
+  {l:'Тремоло со сменой',sub:4,t:[J(R('D2+A2+E0',4),R('A2+E1',4),R('G5+D5+A3',4),R('D3+A1',4))]}]},
+L31:{n:31,name:'Вибрато и бенды',goal:'Точная высота и живой звук в соло.',how:'b — бенд, r — возврат, ~ — вибрато. Бенд тянут 2–3 пальца вместе, движение идёт от кисти.',tip:'Сверяй высоту с эталонной нотой. Бенд мимо ноты слышен сильнее, чем ошибка в скорости.',sub:1,v:[
+  {l:'Бенды в ноту',t:[J('B17 . B15b17 . B15b17r15 .')],note:'Сначала сыграй целевую ноту (17 лад), потом подтяни 15 лад до той же высоты.'},
+  {l:'Вибрато в ритм',sub:2,t:[J('G14~ . . . G14~ . . .')],note:'Вибрато ровно восьмыми, затем триолями, затем шестнадцатыми под метроном.'},
+  {l:'Полтона, тон, полтора',t:[J('B14 B13b14 . B15 B13b15 . B16 B13b16 .')]}]},
+
+/* ---- связки ---- */
+C32:{n:32,name:'Свип → альтернейт',goal:'Переход между техниками без шва.',how:'Сначала каждая часть отдельно, потом склейка. Главное место — стык: последняя нота одной техники и первая другой.',tip:'После свипа медиатор оказывается в другом положении. Найди, каким движением начинается альтернейт, и закрепи его.',sub:4,v:[
+  {l:'Am',t:[J('G14 B13 e12 eh17','|','e15 e13 e12 B15 B13 B12 G14 G12')]},
+  {l:'Альтернейт → свип',t:[J('G12 G14 G16 B13 B15 B17','|','e17 ep12 B13 G14')]},
+  {l:'Dm',t:[J('G7 B6 e5 eh10','|','e8 e6 e5 B8 B6 B5 G7 G5')]}]},
+C33:{n:33,name:'Легато → теппинг → легато',goal:'Одна линия из трёх техник.',how:'Сначала каждая часть отдельно, потом склейка. Медиатором — только первая нота на струне.',tip:'Громкость тэпа равна громкости легато. Если тэп выпирает, бей легче.',sub:4,v:[
+  {l:'Высокие струны',t:[J('e12 eh13 eh15 et20 ep15 ep13 ep12 B15','|','B13 Bh15 Bh17 Bt20 Bp17 Bp15 Bp13 G14')]},
+  {l:'Средние струны',t:[J('G12 Gh14 Gh16 Gt19 Gp16 Gp14 Gp12 D15','|','D12 Dh14 Dh15 Dt19 Dp15 Dp14 Dp12 .')]},
+  {l:'5 позиция',t:[J('e5 eh7 eh8 et12 ep8 ep7 ep5 B8','|','B5 Bh6 Bh8 Bt13 Bp8 Bp6 Bp5 G7')]}]},
+C34:{n:34,name:'Тремоло → чаги → тремоло',goal:'Смена техники правой руки без сбоя сетки.',how:'Тремоло открыто, чаги — палм-мьют. Ладонь ложится и снимается точно в момент смены.',tip:'Темп шестнадцатых не меняется при смене техники. Проверь по записи.',sub:4,v:[
+  {l:'Одна струна',t:[J(R('A7',4),R('A8',4),'|','E0 E0 E0 . E0 E0 E0 .','|',R('A10',4),R('A8',4))]},
+  {l:'Двойные ноты',t:[J(R('A1+E0',8),'|','E0 . E0 E0 . E0 E0 E0','|',R('A2+E0',8))]},
+  {l:'Через струну',t:[J(R('D9',4),R('D10',4),'|','E0 E0 E0 E1 E0 E0 E0 E3','|',R('D12',4),R('D10',4))]}]},
+C35:{n:35,name:'Перескок → свип',goal:'Из пикинга в свип и обратно.',how:'Сначала каждая часть отдельно, потом склейка.',tip:'Свип начинается тем же движением, которым закончился перескок. Найди его.',sub:4,v:[
+  {l:'G–e и Am',t:[J('G14 e12 G14 e12 G14 e12 G14 e12','|','G14 B13 e12 eh17 ep12 B13 G14 .')]},
+  {l:'Арпеджио альтернейтом и свип',sub:6,t:[J('A12 A15 G14 G17 e12 e17','|','ep12 B13 G14 D14 A12 .')]},
+  {l:'D–B и Am',t:[J('D14 B13 D14 B13 D14 B13 D14 B13','|','D14 G14 B13 e12 eh17 ep12 B13 G14')]}]},
+C36:{n:36,name:'Этюд-комплекс',goal:'Четыре техники подряд, как в настоящем риффе.',how:'Четыре фрагмента подряд. Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон на телефон. Слабое место почти всегда на стыке фрагментов.',sub:4,v:[
+  {l:'Этюд 1: тремоло, свип, легато, тэп',t:[J(R('E0',4),R('E1',4),R('E0',4),R('E3',4)),J('G14 B13 e12 eh17 ep12 B13 G14 B13 e12 eh17 ep12 B13'),J('e15 ep13 ep12 B15 Bp13 Bp12 G16 Gp14 Gp12 D15 Dp14 Dp12'),J(R('et17 ep8 eh12',3),'A2+E0 . .')]},
+  {l:'Этюд 2: галоп, арпеджио, dim7, стоп',t:[J('E0 E0 E0 E0 E0 E0 E1 E1 E1 E0 E0 E0'),J('A12 A15 G14 G17 e12 e17 e17 e12 G17 G14 A15 A12'),J('G13 B12 e10 eh13 G16 B15 e13 eh16'),J(R('A1+E0',8),'. . . .')]},
+  {l:'Этюд 3: 7/8, легато, тэп, свип',t:[J('E0 E0 A1 E0 E0 E0 A3'),J('G12 Gh13 Gh15 Gp13 Gp12 Gh13 Gh15 Gp13'),J('et17 ep8 eh12 Bt17 Bp10 Bh13'),J('G13 B12 e12 eh16 ep12 B12 E0')],note:'Первый фрагмент в 7/8, остальные в 4/4.'}]}
+};
+/* ================= упражнения (EN) ================= */
+const EXEN={
+W0:{name:'Warm-up',goal:'Warm up the hands and wake up the ears.',how:'One minute without the guitar: rub your palms until warm, slow wrist and shoulder circles, open and close your fists 20 times. Then slow chromatics across all strings on a clean tone.',tip:'Gentle movement only. Stretching cold hands into pain does harm.',v:['Chromatics']},
+W1:{name:'Mobility without the guitar',goal:'Get blood flowing in the hands and forearms.',how:'Rub your palms until warm. Wrist circles both ways, 10 each. Shoulders up, back, down. Open and close your fists 20 times. Shake out relaxed hands.',tip:'No stretching into pain: only warmth and mobility.'},
+W2:{name:'Slow chromatics',goal:'Switch on hand sync without load.',how:'Clean tone, deliberately slow tempo. 1-2-3-4 across all strings up and down, then shift one fret up and repeat.',tip:'Listen for every note ringing its full length.',v:['Chromatics']},
+W3:{name:'Slow sweeps and trills',goal:'Prepare both hands for fast work.',how:'Clean tone. Three-string Am sweep and finger-pair trills at half your working tempo.',tip:'The goal is warm hands, not speed.',v:['Sweep and trills']},
+B1:{name:'Single-string tremolo',goal:'Speed and evenness of alternate picking.',how:'Strict down-up, sixteenth notes. Every third set as sextuplets, then thirty-seconds at half tempo.',tip:'Move from the wrist and keep the pick shallow in the string. Downstrokes and upstrokes equally loud.',v:['Open string','Moving across frets','A string']},
+B2:{name:'Alternate picking across strings',goal:'Clean pick transitions between strings.',how:'Strict alternate picking, sixteenths. An odd number of notes per string makes you alternate inside and outside string changes.',tip:'Use the smallest possible arc between strings. If you catch the neighbouring string, drop the tempo.',v:['3 notes per string, two strings',{l:'Inside and outside',note:'Start half of your sets with a downstroke on G: that is an inside change, with the pick between the strings. Start the other half with an upstroke: an outside change.'},'Three strings']},
+B3:{name:'String skipping',goal:'Picking-hand accuracy over larger distances.',how:'Strict alternate picking, the skipped string stays silent. Sixteenths.',tip:'Lift the pick just enough to clear the string.',v:['G and e','Two notes each','D and B']},
+B4:{name:'Sync: chromatics',goal:'Finger and pick land together.',how:'Alternate picking, sixteenths. The finger order changes every day; today’s is shown in the variant. On the way back down, shift one fret up.',tip:'The finger lands on the fret slightly before the pick hits, not at the same moment.'},
+B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'High gain. A dot in the tab is a rest. The edge of the picking hand mutes the low strings, free fretting-hand fingers rest on unused strings.',tip:'Test: stop on any rest. It should be silent, with no hum or squeal.',v:[{l:'Palm mute and open notes',note:'E palm-muted, upper notes open.'},'Skips under high gain','Chord and silence']},
+R6:{name:'Downpicking',goal:'Downstroke speed and endurance.',how:'Downstrokes only, eighth notes. Find the tempo you can hold for 60 seconds straight and apply the week protocol to it.',tip:'No force needed. Short motion, the pick bounces off the string. Shoulder and neck stay relaxed.',v:['Moving chugs','Power chords','Across strings']},
+R7:{name:'Gallops',goal:'A crisp gallop at any tempo.',how:'Sixteenth subdivision. Choose one picking pattern (alternate or down-down-up) and keep it for the whole set.',tip:'The long note of the gallop does not drop out: it is as loud as the short ones.',v:[{l:'Forward gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop',note:'Each group of three: two sixteenths, then one eighth.'},{l:'Chord gallops',note:'Alternate forward and reverse gallops every bar.'}]},
+R8:{name:'Double-stop tremolo',goal:'Even tremolo across several strings.',how:'Alternate sixteenths. The pick catches every string of the interval equally on downstrokes and upstrokes.',tip:'Mute unused strings with the fretting hand: any stray noise is obvious in interval tremolo.',v:['Tritone','Power chords','Minor second']},
+R9:{name:'Palm mute vs open notes',goal:'Instant switch of tone colour.',how:'Sixteenths. The palm lands and lifts exactly on the change, the rhythm stays put.',tip:'Open notes should not jump in volume. Compare on a recording.',v:[{l:'Chug and open notes',note:'E palm-muted, notes on A open.'},{l:'Chug and chord',note:'The chord rings open for its full length.'},{l:'One note, two colours',note:'First beat with the palm, second open, and so on.'}]},
+R10:{name:'Stop-start',goal:'Sharp cut-offs and precise entries.',how:'Sixteenths. A dot in the tab is a rest: both hands mute the strings, silence until the next note.',tip:'The cut-off matters as much as the hit. No tails, no hiss.',v:['Cuts on the beat','Chord stops','3+3+2 groups']},
+R11:{name:'Rhythmic groupings',goal:'Exact division of the beat into 3, 4, 5, 6, 7.',how:'The metronome clicks quarter notes with no subdivision; you divide the beat yourself. Each bar of the tab is one metronome beat.',tip:'Count syllables out loud. Accent the first note of every beat.',v:['3 to 7','Sixteenths and sextuplets','Quintuplets and septuplets']},
+R12:{name:'Odd meters',goal:'Feel the grouping in an uneven bar.',how:'Eighth notes. The metronome switches to the right meter: a click is an eighth, accents mark the start of each group.',tip:'Tap the grouping on your knee first, then play.',v:['7/8 (2+2+3)','5/8 (3+2)','11/8 (3+3+3+2)']},
+R13:{name:'Polyrhythm',goal:'Hold a figure over a foreign grid.',how:'Sixteenths in 4/4 with the accent on beat one. The figure runs its own cycle and does not adjust to the bar.',tip:'Count the beats out loud (1-2-3-4), not the notes of the figure.',v:[{l:'5-note figure',note:'The figure lines up with beat one again after 5 bars.'},{l:'3 against 4',note:'Accent the first note of each group of three. It realigns after 3 bars.'},{l:'7-note figure',note:'Realigns after 7 bars.'}]},
+R14:{name:'Syncopation',goal:'Hits between the beats without shifting the grid.',how:'Sixteenths. E chugs palm-muted, chords open with an accent, a short rest after each chord.',tip:'The metronome holds the strong beats and the chords land between them. Do not let them drift onto the beat.',v:['Accent on the “a”','Accent on the “and”','Starting from a rest']},
+R15:{name:'Pinch harmonics',goal:'A squeal on the first try.',how:'* is a pinch harmonic: the side of the thumb touches the string right after the pick. Find the spot over the pickup where it rings loudest.',tip:'Add wide vibrato to every harmonic.',v:['One position','Different strings','Inside a riff']},
+A16:{name:'Three-string sweep',goal:'Clear note separation in a sweep.',how:'Sextuplets: one note per subdivision click. Going up is one downward motion across the strings, going down is one upward motion. Top notes are hammer-on and pull-off.',tip:'Lift each finger right after its note. If it rings like a chord, it is not a sweep yet.',v:['Am','Am – F – G – Em','Am – E']},
+A17:{name:'5–6 string sweep',goal:'A long sweep in one motion.',how:'12 notes = two sextuplets. Loop it without stopping.',tip:'The edge of the picking hand follows the pick and mutes the bass strings behind it.',v:[{l:'Am, 5 strings',note:'At the start of the next loop, pull off from fret 15 to 12.'},{l:'Dm, 5 strings',note:'At the start of the next loop, pull off from fret 8 to 5.'},{l:'Am, 6 strings',note:'Three adjacent strings at fret 5: roll one finger.'}]},
+A18:{name:'Diminished and m7b5',goal:'The neoclassical arpeggios of the genre.',how:'The diminished seventh is symmetrical: the same shape repeats every 3 frets.',tip:'Play the shape as a chord first and listen. Then sweep it slowly, one note at a time.',v:['dim7 up in minor thirds','Bm7b5 – E – Am','dim7 on 4 strings']},
+A19:{name:'Sweep with tapping and legato',goal:'Extend the arpeggio beyond one position.',how:'t is a picking-hand tap, h a hammer-on, p a pull-off. Keep the pick in your hand and tap with the middle finger.',tip:'The joint between sweep and tap is the weak spot. Drill it on its own: last sweep note, tap, pull-off.',v:['Am, 5 strings','Am7, 3 strings','Dm, 5 strings']},
+A20:{name:'Finger roll',goal:'Same-fret notes on adjacent strings without ringing.',how:'One finger covers two or three strings: roll the fingertip so only the played note sounds.',tip:'Check on a clean tone: it must not ring like a chord.',v:['Two strings','Three strings','Roll inside a sweep']},
+A21:{name:'Economy picking',goal:'A three-note-per-string scale, economy style.',how:'On a new string the pick keeps moving in the same direction. Going up the scale: down-up-down, and the move to the next string is another down.',tip:'This is not a sweep: every note sounds separately and evenly.'},
+A22:{name:'Arpeggios with alternate picking',goal:'Wide intervals with strict picking.',how:'Two notes per string, skipping a string, strict alternate picking. It sounds like an arpeggio but is played as a picking line.',tip:'Skip with the smallest arc: the pick barely clears the skipped string.',v:['Am','Em','Dm']},
+A23:{name:'Hybrid picking',goal:'Pick and fingers together.',how:'Lowest note with the pick, upper notes with the middle and ring fingers. The hand position does not change.',tip:'Pluck with the fingertip pad. Fingers and pick equally loud.',v:['Am','Am across strings','Em with open string']},
+L24:{name:'Legato',goal:'Even hammer-ons and pull-offs.',how:'First system: a trill with today’s finger pair. Second: the cycle scale, three notes per string, picking only the first note on each string.',tip:'Hammer-ons and pull-offs as loud as picked notes. Pull slightly downward instead of just lifting the finger.'},
+L25:{name:'Hammer-on from nowhere',goal:'Strength and accuracy of every finger.',how:'The picking hand rests: every note is a hammer-on, including the first one on a new string.',tip:'The first note on a string should be as loud as the rest.',v:['Down the strings','Up the strings','Trills without the pick']},
+L26:{name:'Stretches',goal:'A wide position without tension.',how:'Fingers 1-2-4 or 1-3-4. Thumb lower behind the neck, elbow closer to the body.',tip:'If it pulls or hurts, move the exercise higher up the neck. Stretching is not a strength exercise.',v:['5 frets (12–16)','6 frets (12–17)','7 frets (12–18)']},
+L27:{name:'Finger independence',goal:'Each finger moves on its own.',how:'Each finger owns its fret. Only the finger whose note is next moves.',tip:'Idle fingers hover low over the strings. The lower, the faster.',v:['Spider','Spider 1-3 / 2-4',{l:'Pinky alone',note:'Fingers 1 and 2 stay pressed on frets 12 and 13 the whole time. Only 3 and 4 play the trill.'}]},
+L28:{name:'Position shifts',goal:'Moving along the neck without gaps.',how:'A three-note sequence on one string in the cycle scale. Each group starts one step higher: the hand shifts without breaking the sound.',tip:'Look at the target before the shift, not during it.'},
+L29:{name:'Tapping',goal:'Even tapping under high gain.',how:'Tap with the picking-hand middle finger, pick tucked into the palm. Pull off from the tap slightly toward the floor.',tip:'The fretting hand mutes unused strings, otherwise everything hums under gain.',v:['Am – F – G – E',{l:'Two tapping fingers',note:'Fret 17 with the middle finger, fret 20 with the ring finger.'},'Two strings']},
+L30:{name:'Chord shape changes',goal:'Instant shape changes.',how:'Change shape exactly on the beat, with no gap between chords. Fingers land on the new shape together.',tip:'Picture the next shape in advance; do not look at the neck at the moment of the change.',v:['Octave, tritone, fifth','Same at fret 7','Tremolo with changes']},
+L31:{name:'Vibrato and bends',goal:'Exact pitch and a living sound in solos.',how:'b is a bend, r a release, ~ vibrato. Bend with 2–3 fingers together; the motion comes from the wrist.',tip:'Check the pitch against a reference note. An out-of-tune bend is more obvious than a speed mistake.',v:[{l:'Bends to pitch',note:'Play the target note first (fret 17), then bend fret 15 up to the same pitch.'},{l:'Vibrato in time',note:'Vibrato in steady eighths, then triplets, then sixteenths with the metronome.'},'Half, whole, one and a half']},
+C32:{name:'Sweep → alternate picking',goal:'A seamless change between techniques.',how:'Each part on its own first, then join them. The key spot is the joint: the last note of one technique and the first of the next.',tip:'After a sweep the pick sits in a different place. Find the motion that starts the alternate picking and lock it in.',v:['Am','Alternate picking → sweep','Dm']},
+C33:{name:'Legato → tapping → legato',goal:'One line from three techniques.',how:'Each part on its own first, then join them. Pick only the first note on each string.',tip:'Taps as loud as the legato. If the tap sticks out, hit lighter.',v:['High strings','Middle strings','5th position']},
+C34:{name:'Tremolo → chugs → tremolo',goal:'Switch picking-hand techniques without breaking the grid.',how:'Tremolo open, chugs palm-muted. The palm lands and lifts exactly on the change.',tip:'The sixteenth-note pulse does not change with the technique. Check on a recording.',v:['One string','Double stops','Across a string']},
+C35:{name:'String skipping → sweep',goal:'From picking into a sweep and back.',how:'Each part on its own first, then join them.',tip:'The sweep starts with the motion the skip ended with. Find it.',v:['G–e and Am','Picked arpeggio and sweep','D–B and Am']},
+C36:{name:'Étude',goal:'Four techniques in a row, like a real riff.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always at the joint between fragments.',v:['Étude 1: tremolo, sweep, legato, tap','Étude 2: gallop, arpeggio, dim7, stop',{l:'Étude 3: 7/8, legato, tap, sweep',note:'The first fragment is in 7/8, the rest in 4/4.'}]}
+};
+
+function X(id,f){const en=LANG==='en'&&EXEN[id];return (en&&en[f])||EX[id][f];}
+function VX(id,idx,f){
+  const v=EX[id].v[idx];
+  if(LANG==='en'&&EXEN[id]&&EXEN[id].v){const ev=EXEN[id].v[idx];if(typeof ev==='string')return f==='l'?ev:undefined;if(ev)return ev[f];}
+  return v[f];
+}
+
+const GROUPS={R:['R6','R7','R8','R9','R10','R11','R12','R13','R14','R15'],A:['A16','A17','A18','A19','A20','A21','A22','A23'],L:['L24','L25','L26','L27','L28','L29','L30','L31'],C:['C32','C33','C34','C35','C36']};
+const GNAMES={ru:{R:'Ритм',A:'Арпеджио',L:'Левая рука',C:'Связки'},en:{R:'Rhythm',A:'Arpeggios',L:'Left hand',C:'Combos'}};
+const GSHORTS={ru:{R:'Ритм',A:'Арп.',L:'Л. рука',C:'Связки'},en:{R:'Rhythm',A:'Arp.',L:'L. hand',C:'Combo'}};
+const GN=g=>GNAMES[LANG][g];
+const FOCUS_BY_DOW=['R','A','L','R','A','L','C'];
+
+const TESTS=[
+  {id:'T1',ru:['Тремоло шестнадцатыми','Открытая E, держать 30 секунд без сбоя.'],en:['Sixteenth-note tremolo','Open E, hold 30 seconds without a slip.'],sub:4,t:[R('E0',16)]},
+  {id:'T2',ru:['Альтернейт по гамме','E фригийский по 3 ноты на струну, вверх и вниз два круга, секстоли.'],en:['Alternate-picked scale','E Phrygian, three notes per string, up and down twice, sextuplets.'],sub:6,t:npsTokens(PHRYG,'pick')},
+  {id:'T3',ru:['Даунпикинг восьмыми','Открытая E, только даунстроки, держать 60 секунд.'],en:['Eighth-note downpicking','Open E, downstrokes only, hold 60 seconds.'],sub:2,t:[R('E0',8)]},
+  {id:'T4',ru:['Свип Am, 5 струн','4 круга подряд, каждая нота отдельно, секстоли.'],en:['Am sweep, 5 strings','4 loops in a row, every note separate, sextuplets.'],sub:6,t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15')]},
+  {id:'T5',ru:['Легато по гамме','E фригийский по 3 ноты на струну, вверх и вниз два круга, секстоли.'],en:['Legato scale','E Phrygian, three notes per string, up and down twice, sextuplets.'],sub:6,t:npsTokens(PHRYG,'legato')}
+];
+
+/* ================= протоколы ================= */
+const PHASES=[
+  {ru:{name:'Объём',steps:['Найди чистый темп: начни медленно и поднимай по 4 bpm, пока игра чистая, а рука мягкая.','Сбрось 20% — это рабочий темп этой недели.','Подходы по 60–90 секунд, между ними 20–30 секунд отдыха.','Цель недели — ровная атака и расслабленные руки, а не скорость.']},
+   en:{name:'Volume',steps:['Find your clean tempo: start slow and add 4 bpm while the playing stays clean and the hand stays soft.','Drop 20%: that is this week’s working tempo.','Sets of 60–90 seconds with 20–30 seconds of rest in between.','The goal this week is an even attack and relaxed hands, not speed.']}},
+  {ru:{name:'Наращивание',steps:['Начни на 10% ниже вчерашнего чистого темпа.','После каждого чистого подхода (40–60 секунд) прибавляй 4 bpm.','Ошибка или зажим — минус 8 bpm и снова вверх.','Закончи тремя подходами на самом высоком чистом темпе.']},
+   en:{name:'Build',steps:['Start 10% below yesterday’s clean tempo.','After every clean set (40–60 seconds), add 4 bpm.','A mistake or tension: minus 8 bpm, then climb again.','Finish with three sets at your highest clean tempo.']}},
+  {ru:{name:'Скорость',steps:['Поставь метроном на 10–15% выше чистого темпа и включи «Рывки».','Играй 1 долю, 1 долю отдыхай. Потом 2 через 2, потом 4 через 4.','Каждые 3–4 минуты — минута на рабочем темпе без рывков, чтобы скорость перенеслась на удобный темп.','Рывок с ошибками не считается. Ноты должны быть чистыми даже на короткой дистанции.']},
+   en:{name:'Speed',steps:['Set the metronome 10–15% above your clean tempo and turn on Bursts.','Play 1 beat, rest 1 beat. Then 2 and 2, then 4 and 4.','Every 3–4 minutes, play one minute at working tempo without bursts so the speed carries over to a comfortable tempo.','A burst with mistakes does not count. Notes stay clean even over a short distance.']}},
+  {ru:{name:'Разгрузка',steps:['Темп на 20% ниже чистого.','Короткие подходы по 30–45 секунд, отдых столько же.','Хотя бы один подход сыграй чистым звуком без перегруза: так слышна любая грязь.','Без рывков и рекордов.']},
+   en:{name:'Deload',steps:['Tempo 20% below clean.','Short sets of 30–45 seconds with equal rest.','Play at least one set on a clean tone with no gain: every bit of noise shows.','No bursts, no records.']}}
+];
+const PH=k=>PHASES[k][LANG];
+const MAINT_STEPS={ru:['Рабочий темп: на 10–15% ниже чистого.','2–3 подхода по минуте.','Без рывков и рекордов: задача — сохранить навык.'],en:['Working tempo: 10–15% below clean.','2–3 one-minute sets.','No bursts, no records: the job is to keep the skill.']};
+const COMBO_STEP={ru:'Связки: сначала каждую технику отдельно, потом стык двух соседних нот на границе, потом всю фразу.',en:'Combos: each technique on its own first, then the two notes at the joint, then the whole phrase.'};
+const TEST_STEPS={ru:['Разогрей руки, если пропустил разминку.','Лестница: начни на комфортном темпе. Каждый чистый проход — плюс 4 bpm.','Первая ошибка или зажим — стоп. Результат — последний чистый темп.','Запиши результат: он хранится только в этом браузере.'],en:['Warm up your hands if you skipped the warm-up.','Ladder: start at a comfortable tempo. Every clean run: plus 4 bpm.','First mistake or tension: stop. Your result is the last clean tempo.','Save the result: it is stored only in this browser.']};
+const PAUSE_STEPS={ru:['Отложи гитару и встань.','Расслабь плечи, потряси кистями, сделай пару глубоких вдохов.','Попей воды.','Никакой растяжки через боль.'],en:['Put the guitar down and stand up.','Relax your shoulders, shake out your hands, take a few deep breaths.','Drink some water.','No stretching into pain.']};
+
+/* ================= расписание ================= */
+const ALLOC={
+  15:{W:2,B:6,F:7,M:0,C:0,Mu:0,pn:0,pl:0},
+  30:{W:3,B:8,F:12,M:7,C:0,Mu:0,pn:0,pl:0},
+  45:{W:4,B:10,F:14,M:7,C:0,Mu:7,pn:1,pl:3},
+  60:{W:5,B:12,F:18,M:9,C:0,Mu:10,pn:2,pl:3},
+  90:{W:5,B:14,F:26,M:13,C:0,Mu:23,pn:3,pl:3},
+  120:{W:7,B:16,F:32,M:15,C:10,Mu:30,pn:1,pl:10},
+  180:{W:10,B:20,F:48,M:22,C:20,Mu:40,pn:2,pl:10},
+  240:{W:10,B:24,F:60,M:28,C:28,Mu:60,pn:3,pl:10},
+  300:{W:12,B:28,F:70,M:32,C:32,Mu:86,pn:4,pl:10}
+};
+const TIMES=[15,30,45,60,90,120,180,240,300];
+
+function dayInfo(i){
+  const cycle=Math.floor(i/28), dic=mod(i,28), week=Math.floor(dic/7), dow=dic%7;
+  return {i,cycle,week,dow,focus:FOCUS_BY_DOW[dow],occ:(dow===6||dow<3)?0:1,gweek:Math.floor(i/7),pool:i<0?0:mod(cycle,3),material:i<0?MATERIALS[0]:MATERIALS[mod(cycle,6)],isTest:week===3&&dow===6,pre:i<0,date:dateOfIndex(i)};
+}
+
+const RIFF_METERS={ru:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 поверх 4/4'],en:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 over 4/4']};
+const RIFF_RULES={
+  ru:['хотя бы одна пауза длиной в целую долю','закончить диссонансом: малая секунда или тритон','только три нижние струны','хотя бы одна квинтоль или септоль','второй раз рифф повторяется с изменённой последней долей','через весь рифф проходит одна нота-педаль','не больше шести разных нот','рифф начинается не с сильной доли','внутри фразы одна смена размера','в риффе есть флажолет медиатором','одно место с тремоло двойными нотами','темп риффа на 20% ниже твоего рабочего, но звучит тяжело'],
+  en:['at least one rest a full beat long','end on a dissonance: a minor second or a tritone','only the three lowest strings','at least one quintuplet or septuplet','the second time through, the last beat changes','one pedal note runs through the whole riff','no more than six different notes','the riff does not start on a strong beat','one meter change inside the phrase','includes a pinch harmonic','one spot with double-stop tremolo','tempo 20% below your working tempo, but it sounds heavy']
+};
+function riffOfDay(d){
+  const r=rng(Math.imul(d.i+7331,2654435761));
+  const list=GROUPS[d.focus];const ti=pickIdx(r,list.length);const mi=pickIdx(r,RIFF_METERS.ru.length);const ri=pickIdx(r,RIFF_RULES.ru.length);
+  return {techId:list[ti],mi,ri,material:d.material};
+}
+function riffText(r){return {meter:RIFF_METERS[LANG][r.mi],material:matName(r.material),tech:X(r.techId,'name'),rule:RIFF_RULES[LANG][r.ri]};}
+
+function seg(kind,min,extra){return Object.assign({kind,min},extra||{});}
+function warmSegs(W){
+  if(W<=0)return[];
+  if(W<=3)return[seg('warm',W,{id:'W0'})];
+  if(W<8)return[seg('warm',2,{id:'W1'}),seg('warm',W-2,{id:'W2'})];
+  const a=splitInt(W-2,[1,1]);
+  return[seg('warm',2,{id:'W1'}),seg('warm',a[0],{id:'W2'}),seg('warm',a[1],{id:'W3'})];
+}
+function listSegs(kind,ids,total,extra){
+  if(total<=0||!ids.length)return[];
+  const mins=splitInt(total,ids.map(()=>1));
+  return ids.map((id,k)=>seg(kind,mins[k],Object.assign({id},extra||{})));
+}
+function buildSession(i,T){
+  const d=dayInfo(i);
+  const a=ALLOC[T];
+  const b={W:a.W,B:a.B,F:a.F,M:a.M,C:a.C,Mu:a.Mu};
+  if(d.week===3&&T>=45){const f=Math.round(b.F*0.6),m=Math.round(b.M*0.6);b.Mu+=(b.F-f)+(b.M-m);b.F=f;b.M=m;}
+  let test=0;
+  if(d.isTest){test=Math.min(15,T-b.W);let need=test;for(const k of['B','F','M','C','Mu']){const x=Math.min(b[k],need);b[k]-=x;need-=x;}}
+  const segs=[];
+  segs.push(...warmSegs(b.W));
+  if(test>0)segs.push(seg('test',test,{id:'TESTS'}));
+  if(b.B>0){const k=clamp(Math.floor(b.B/3),1,5);const ids=['B1'].concat(rot(['B4','B2','B3','B5'],i).slice(0,k-1));segs.push(...listSegs('base',ids,b.B));}
+  if(b.F>0){const list=GROUPS[d.focus],n=list.length,k=clamp(Math.floor(b.F/6),1,n);const ids=rot(list,(d.gweek*2+d.occ)*k).slice(0,k);segs.push(...listSegs(d.focus==='C'?'combo':'focus',ids,b.F,{focus:true}));}
+  if(b.M>0){
+    const gs=d.focus==='C'?['R','A','L']:['R','A','L'].filter(g=>g!==d.focus);
+    const k=clamp(Math.floor(b.M/3.5),1,12);const cnt={};const ids=[];
+    for(let j=0;j<k;j++){const g=gs[j%gs.length];cnt[g]=(cnt[g]||0);const Lg=GROUPS[g];ids.push(Lg[mod(i*2+cnt[g]*3+(g==='R'?0:g==='A'?1:2),Lg.length)]);cnt[g]++;}
+    segs.push(...listSegs('maint',[...new Set(ids)],b.M));
+  }
+  if(b.C>0){
+    if(d.focus==='C'){const k=clamp(Math.floor(b.C/10),1,2);const vs=[mod(d.pool+1,3),mod(d.pool+2,3)].slice(0,k);const mins=splitInt(b.C,vs.map(()=>1));vs.forEach((v,j)=>segs.push(seg('combo',mins[j],{id:'C36',variant:v})));}
+    else{const k=clamp(Math.floor(b.C/10),1,3);segs.push(...listSegs('combo',rot(GROUPS.C,i).slice(0,k),b.C));}
+  }
+  if(b.Mu>0){
+    let items;
+    if(b.Mu<12)items=[['riff',b.Mu]];
+    else if(b.Mu<25)items=[['riff',10],['ear',b.Mu-10]];
+    else if(b.Mu<45)items=[['riff',10],['ear',15],['comp',Math.max(1,b.Mu-25)]];
+    else{const rest=splitInt(b.Mu-12,[30,25,30,15]);items=[['riff',12],['ear',rest[0]],['comp',rest[1]],['rep',rest[2]],['impro',rest[3]]];}
+    items.forEach(x=>{if(x[1]>0)segs.push(seg('music',x[1],{mid:x[0]}));});
+  }
+  const play=segs.reduce((s,x)=>s+x.min,0);
+  if(a.pn>0&&segs.length>1){
+    const bounds=[];let c=0;segs.forEach((s,j)=>{c+=s.min;if(j<segs.length-1)bounds.push({j,c});});
+    const used=new Set();const ins=[];
+    for(let k=1;k<=a.pn;k++){
+      const target=play*k/(a.pn+1);let best=null;
+      bounds.forEach(bd=>{if(used.has(bd.j))return;if(!best||Math.abs(bd.c-target)<Math.abs(best.c-target))best=bd;});
+      if(best){used.add(best.j);ins.push(best.j);}
+    }
+    ins.sort((x,y)=>y-x).forEach(j=>segs.splice(j+1,0,seg('pause',a.pl)));
+  }
+  const tot=segs.reduce((s,x)=>s+x.min,0);
+  if(tot!==T){segs[segs.length-1].min+=T-tot;}
+  let tt=0;segs.forEach(s=>{s.start=tt;tt+=s.min;});
+  return {d,T,segs,riff:riffOfDay(d)};
+}
+
+/* ================= разрешение упражнения ================= */
+function resolveEx(s,d){
+  const ex=EX[s.id];if(!ex)return null;
+  let v=null;
+  if(ex.gen){
+    const mn=matName(d.material);
+    if(s.id==='B4'){const p=PERMS[mod(d.i,24)];const up=[],dn=[];LOW_TO_HIGH.forEach(st=>p.forEach(f=>up.push(st+(8+f))));LOW_TO_HIGH.slice().reverse().forEach(st=>p.forEach(f=>dn.push(st+(9+f))));v={l:L('Порядок пальцев дня: ','Today’s finger order: ')+p.join('-'),t:[up.join(' '),dn.join(' ')]};}
+    else if(s.id==='A21'){v={l:mn+L(', 3 ноты на струну',', 3 notes per string'),t:npsTokens(d.material,'pick')};}
+    else if(s.id==='L24'){const pr=PAIRS[mod(d.i,6)];const a=11+pr[0],b2=11+pr[1];v={l:L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn,t:[J('G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2)].concat(npsTokens(d.material,'legato'))};}
+    else if(s.id==='L28'){v={l:mn+L(' на струне e',' on the e string'),t:oneStringSeq(d.material)};}
+  }else if(ex.v){
+    const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
+    v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:raw.t,sub:raw.sub,meter:raw.meter};
+  }
+  return {ex,id:s.id,v,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
+}
+const KINDS={ru:{warm:'Разминка',test:'Тесты',base:'База',focus:'Фокус',maint:'Поддержка',combo:'Связки',music:'Музыка',pause:'Пауза'},en:{warm:'Warm-up',test:'Tests',base:'Base',focus:'Focus',maint:'Maintenance',combo:'Combos',music:'Music',pause:'Break'}};
+const KIND=k=>KINDS[LANG][k];
+const MUSIC={
+  riff:{ru:'Рифф дня',en:'Riff of the day',how:d=>L('Сочини рифф по условиям дня (карточка «Рифф дня»). Доведи его до чистого исполнения четыре раза подряд и запиши на телефон. Поделись с друзьями: у них те же условия.','Write a riff to today’s conditions (see the Riff of the day card). Get it clean four times in a row and record it on your phone. Share it with friends: they have the same conditions.')},
+  ear:{ru:'Снятие на слух',en:'Transcription',how:d=>L('Выбери любую песню жанра и сними 4–8 тактов без табов. Сначала пропой фрагмент, потом найди ноты на грифе, потом сыграй вместе с записью. Отметь, какой лад или какие аккорды там звучат.','Pick any song in the genre and transcribe 4–8 bars without tabs. Sing the fragment first, then find the notes on the neck, then play along with the recording. Note which scale or chords it uses.')},
+  comp:{ru:'Сочинение',en:'Songwriting',how:d=>L('Разверни рифф дня в часть песни: рифф → вариация → переход → второй рифф. Хотя бы в одном месте используй технику фокуса дня ('+GN(d.focus).toLowerCase()+').','Turn the riff of the day into a song section: riff → variation → transition → second riff. Use today’s focus technique ('+GN(d.focus).toLowerCase()+') at least once.')},
+  rep:{ru:'Репертуар',en:'Repertoire',how:d=>L('Песня или фрагмент на твой выбор. Разбей на куски по 1–2 такта, сложные места отработай на рабочем темпе по протоколу недели, затем склей и сыграй целиком под запись.','A song or fragment of your choice. Split it into 1–2 bar chunks, drill the hard spots at working tempo with this week’s protocol, then join them and play it through to a recording.')},
+  impro:{ru:'Импровизация',en:'Improvisation',how:d=>L('Метроном 4/4, лад цикла: '+matName(d.material)+'. Две минуты только шестнадцатыми, две минуты только триолями, остальное свободно. Цель — фразы с началом и концом, а не гаммы.','Metronome in 4/4, cycle scale: '+matName(d.material)+'. Two minutes of sixteenths only, two minutes of triplets only, then free. Aim for phrases with a beginning and an end, not scales.')}
+};
+function segTitle(s,d){
+  if(s.kind==='pause')return KIND('pause');
+  if(s.kind==='test')return L('Тесты цикла','Cycle tests');
+  if(s.kind==='music')return MUSIC[s.mid][LANG];
+  return X(s.id,'name');
+}
+
+/* ================= состояние ================= */
+const today=dayIndexOf(new Date());
+const st={i:today,T:clamp(lsGet('time',60),15,300),plan:null,cur:0,remain:0,running:false,last:0,done:new Set()};
+if(!ALLOC[st.T])st.T=60;
+const $=id=>document.getElementById(id);
+function fmt(sec){sec=Math.max(0,Math.round(sec));const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function fmtStart(min){const h=Math.floor(min/60),m=min%60;return h+':'+String(m).padStart(2,'0');}
+function timeLabel(T){if(T<60)return T+L(' мин',' min');const h=Math.floor(T/60),m=T%60;return h+L(' ч',' h')+(m?' '+m:'');}
+
+/* ================= рендер ================= */
+function renderStatic(){
+  document.documentElement.lang=LANG;
+  $('logo').innerHTML=L('Гри<b>ф</b>','Gri<b>f</b>');
+  document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.dataset.i);});
+  $('prevDay').setAttribute('aria-label',t('prevDay'));$('nextDay').setAttribute('aria-label',t('nextDay'));
+  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===LANG)));
+  $('aboutL').innerHTML=ABOUT[LANG].map(x=>'<li>'+x+'</li>').join('');
+  $('safeL').innerHTML=SAFETY[LANG].map(x=>'<li>'+esc(x)+'</li>').join('');
+  const sv=$('mSub').value||'1',bv=$('mBurst').value||'0';
+  $('mSub').innerHTML=[[1,L('нет','none')],[2,L('8-е','8ths')],[3,L('триоли','triplets')],[4,L('16-е','16ths')],[6,L('секстоли','sextuplets')]].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
+  $('mBurst').innerHTML=[[0,L('выкл','off')],[1,L('1 доля / 1 пауза','1 beat on / 1 off')],[2,'2 / 2'],[4,'4 / 4']].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
+  $('mSub').value=String(Mt.sub);$('mBurst').value=String(Mt.burst);
+  $('mToggle').textContent=Mt.on?t('mOff'):t('mOn');
+}
+function renderHeader(){
+  const d=st.plan.d;
+  $('dateLabel').textContent=dateText(d.date);
+  $('todayBtn').hidden=(st.i===today);
+  const chips=[
+    [L('Цикл','Cycle'),d.pre?L('вводный','intro'):String(d.cycle+1)],
+    [L('Неделя','Week'),(d.week+1)+' · '+PH(d.week).name],
+    [L('Фокус','Focus'),GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')],
+    [L('Лад цикла','Cycle scale'),matName(d.material)]
+  ];
+  $('meta').innerHTML=chips.map(c=>'<span class="chip"><span>'+esc(c[0])+'</span>'+esc(c[1])+'</span>').join('');
+  const n=$('notice');
+  if(d.pre){n.hidden=false;n.textContent=L('Первый цикл стартует в понедельник, 2 ноября. До старта идёт вводная неделя: в воскресенье, 1 ноября, — тестовый день. Сними исходные замеры, чтобы потом видеть прогресс.','The first cycle starts on Monday, November 2. Until then it is an intro week, and Sunday, November 1 is a test day. Take baseline measurements so you can see your progress later.');}
+  else n.hidden=true;
+  $('timeChips').innerHTML=TIMES.map(T=>'<button data-t="'+T+'" aria-pressed="'+(T===st.T)+'">'+timeLabel(T)+'</button>').join('');
+  const mon=st.i-d.dow;
+  $('weekStrip').innerHTML=DOWN[LANG].map((w,k)=>{const dd=dayInfo(mon+k);const cls=['cell'];if(k===d.dow)cls.push('cur');if(dd.isTest)cls.push('t');const tt=L('Тесты','Tests');return '<div class="'+cls.join(' ')+'"><div class="d">'+w+' '+dd.date.getDate()+'</div><div class="v"><span class="full">'+(dd.isTest?tt:GN(dd.focus))+'</span><span class="short">'+(dd.isTest?tt:GSHORTS[LANG][dd.focus])+'</span></div></div>';}).join('');
+  $('cycleStrip').innerHTML=PHASES.map((p,k)=>'<div class="cell'+(k===d.week?' cur':'')+'"><div class="d">'+L('Нед. ','Wk ')+(k+1)+'</div><div class="v">'+p[LANG].name+'</div></div>').join('');
+}
+function renderPlan(){
+  const {segs,d}=st.plan;
+  $('planList').innerHTML=segs.map((s,k)=>{
+    const cls=[s.kind==='pause'?'pause':''];if(k===st.cur)cls.push('cur');if(st.done.has(k))cls.push('done');
+    const num=(s.id&&EX[s.id]&&EX[s.id].n)?'<span class="legend"> · '+EX[s.id].n+'</span>':'';
+    return '<li class="'+cls.join(' ')+'" data-k="'+k+'" style="--kc:var(--k-'+s.kind+')"><span class="tm">'+fmtStart(s.start)+'–'+fmtStart(s.start+s.min)+'</span><span class="nm"><span class="kind" style="--kc:var(--k-'+s.kind+')">'+KIND(s.kind)+(s.focus?' · '+GN(d.focus):'')+'</span><b>'+esc(segTitle(s,d))+num+'</b></span><span class="mn">'+s.min+'′</span></li>';
+  }).join('');
+  const r=riffText(st.plan.riff);
+  const inPlan=st.plan.segs.some(s=>s.mid==='riff');
+  $('riffCard').innerHTML='<h3>'+L('Рифф дня','Riff of the day')+'</h3><dl><dt>'+L('Размер','Meter')+'</dt><dd>'+esc(r.meter)+'</dd><dt>'+L('Лад','Scale')+'</dt><dd>'+esc(r.material)+'</dd><dt>'+L('Техника','Technique')+'</dt><dd>'+esc(r.tech)+'</dd><dt>'+L('Условие','Rule')+'</dt><dd>'+esc(r.rule)+'</dd></dl><p class="legend" style="margin:0">'+L('Одинаковый для всех в этот день.','The same for everyone today.')+(inPlan?'':L(' В плане на это время его нет — сочини на досуге.',' It is not in the plan at this length: write it in your spare time.'))+'</p>';
+}
+function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
+function tabHtml(label,systems){return '<div class="tabbox"><div class="tabhd"><span>'+esc(label)+'</span><span>'+L('стандартный строй','standard tuning')+'</span></div><pre>'+esc(renderTab(systems))+'</pre></div>';}
+function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, t — тэп, b — бенд, r — возврат, ~ — вибрато, * — флажолет медиатором, столбец без цифры — пауза. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, t tap, b bend, r release, ~ vibrato, * pinch harmonic, a column with no number is a rest. 7–8 strings: play on the top six.'))+'</p>';}
+function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
+
+function renderNow(){
+  const {segs,d}=st.plan;const s=segs[st.cur];
+  const kc='var(--k-'+s.kind+')';
+  $('now').style.setProperty('--kc',kc);
+  $('nowKind').textContent=KIND(s.kind)+(s.focus?' · '+GN(d.focus):'');
+  $('nowKind').style.setProperty('--kc',kc);
+  $('nowPos').textContent=(st.cur+1)+L(' из ',' of ')+segs.length+' · '+s.min+L(' мин',' min');
+  $('nowTitle').textContent=segTitle(s,d);
+  let h='';
+  if(s.kind==='pause'){h=stepsHtml(L('Что делать','What to do'),PAUSE_STEPS[LANG]);}
+  else if(s.kind==='music'){
+    h='<div class="sect"><h4>'+L('Задание','Task')+'</h4><p>'+esc(MUSIC[s.mid].how(d))+'</p></div>';
+    if(s.mid==='riff'||s.mid==='comp'){const r=riffText(st.plan.riff);h+='<div class="sect"><h4>'+L('Условия риффа дня','Riff of the day conditions')+'</h4><p>'+esc(r.meter+' · '+r.material+' · '+L('техника: ','technique: ')+r.tech+' · '+r.rule)+'.</p></div>';}
+  }
+  else if(s.kind==='test'){
+    h=stepsHtml(L('Протокол теста','Test protocol'),TEST_STEPS[LANG]);
+    const hist=lsGet('tests',{});
+    h+='<div class="tests">'+TESTS.map(tt=>{const arr=hist[tt.id]||[];const last=arr[arr.length-1];const best=arr.reduce((m,x)=>Math.max(m,x.bpm),0);const nm=tt[LANG];
+      return '<div class="test"><div><b>'+esc(nm[0])+'</b><div class="legend">'+esc(nm[1])+'</div></div><div class="tabbox"><pre>'+esc(renderTab(tt.t))+'</pre></div><div class="row"><input id="ti-'+tt.id+'" type="number" min="30" max="400" placeholder="bpm" aria-label="'+esc(nm[0])+'"><button class="btn" data-save="'+tt.id+'">'+L('Записать','Save')+'</button><button class="btn" data-sub="'+tt.sub+'">'+L('Метроном: ','Metronome: ')+subName(tt.sub)+'</button><span class="hist">'+(last?L('прошлый: ','last: ')+last.bpm+' ('+esc(last.date)+') · '+L('лучший: ','best: ')+best:L('результатов пока нет','no results yet'))+'</span></div></div>';}).join('')+'</div>';
+  }
+  else{
+    const r=resolveEx(s,d);
+    if(s.kind==='maint')h+=stepsHtml(L('Протокол поддержки','Maintenance protocol'),MAINT_STEPS[LANG]);
+    else if(s.kind!=='warm'){const ph=PH(d.week);h+=stepsHtml(L('Протокол недели ','Week ')+(d.week+1)+L(': ',' protocol: ')+ph.name,ph.steps);if(s.kind==='combo')h+='<div class="sect"><p class="note">'+esc(COMBO_STEP[LANG])+'</p></div>';}
+    h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
+    if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t)+legendHtml();
+  }
+  $('nowBody').innerHTML=h;
+  renderClock();
+}
+function renderClock(){
+  const s=st.plan.segs[st.cur];
+  $('clock').textContent=fmt(st.remain);
+  $('bar').style.width=(100*(1-st.remain/(s.min*60)))+'%';
+  $('playBtn').textContent=st.running?t('pause'):(st.remain<s.min*60?t('resume'):t('start'));
+  const left=st.remain+st.plan.segs.slice(st.cur+1).reduce((a,x)=>a+x.min*60,0);
+  $('totalLeft').textContent=t('totalLeft')+' '+fmt(left);
+}
+function markPlan(){[...$('planList').children].forEach((li,k)=>{li.classList.toggle('cur',k===st.cur);li.classList.toggle('done',st.done.has(k));});}
+
+/* ================= таймер ================= */
+let wake=null;
+function wantWake(){try{if(navigator.wakeLock&&!wake)navigator.wakeLock.request('screen').then(w=>{wake=w;w.addEventListener('release',()=>wake=null);}).catch(()=>{});}catch(e){}}
+function goto(k,keepRun){
+  const segs=st.plan.segs;k=clamp(k,0,segs.length-1);
+  st.cur=k;st.remain=segs[k].min*60;
+  if(!keepRun)st.running=false;
+  st.last=performance.now();
+  metroStop();applyMetroDefaults();renderNow();markPlan();
+}
+function chime(){const c=audio();if(!c)return;const t0=c.currentTime+0.02;[0,0.18,0.36].forEach((dt,k)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=k===2?1320:880;g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(0.4,t0+dt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.16);o.connect(g).connect(c.destination);o.start(t0+dt);o.stop(t0+dt+0.18);});}
+setInterval(()=>{
+  if(!st.running)return;
+  const now=performance.now();st.remain-=(now-st.last)/1000;st.last=now;
+  if(st.remain<=0){
+    chime();st.done.add(st.cur);
+    if(st.cur<st.plan.segs.length-1){goto(st.cur+1,true);}
+    else{st.remain=0;st.running=false;renderClock();markPlan();toast(L('Тренировка дня закончена','Today’s workout is done'));return;}
+  }
+  renderClock();
+},250);
+
+/* ================= метроном ================= */
+const METERS={'4/4':[4],'3/4':[3],'6/8':[3,3],'5/8':[3,2],'7/8':[2,2,3],'9/8':[2,2,2,3],'11/8':[3,3,3,2],'13/16':[4,4,5]};
+const Mt={ctx:null,on:false,bpm:clamp(lsGet('bpm',100),30,320),meter:'4/4',sub:1,burst:0,ladder:false,next:0,pulse:0,subi:0,bar:0,bc:0,timer:null,q:[]};
+function audio(){try{if(!Mt.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;Mt.ctx=new C();}if(Mt.ctx.state==='suspended')Mt.ctx.resume();return Mt.ctx;}catch(e){return null;}}
+function meterPulses(){return METERS[Mt.meter].reduce((a,b)=>a+b,0);}
+function groupStarts(){const s=new Set();let c=0;METERS[Mt.meter].forEach(g=>{s.add(c);c+=g;});return s;}
+function click(tm,level,rest){
+  const c=Mt.ctx,o=c.createOscillator(),g=c.createGain();
+  o.type=level===0?'sine':'triangle';
+  o.frequency.value=[700,1050,1400,1800][level];
+  let v=[0.22,0.5,0.7,0.95][level];if(rest)v*=0.22;
+  g.gain.setValueAtTime(0.0001,tm);g.gain.exponentialRampToValueAtTime(v,tm+0.002);g.gain.exponentialRampToValueAtTime(0.0001,tm+0.045);
+  o.connect(g).connect(c.destination);o.start(tm);o.stop(tm+0.05);
+}
+function schedule(){
+  const c=Mt.ctx;const n=meterPulses(),gs=groupStarts();
+  while(Mt.next<c.currentTime+0.12){
+    const level=Mt.subi>0?0:(Mt.pulse===0?3:(gs.has(Mt.pulse)?2:1));
+    const rest=Mt.burst>0&&Math.floor(Mt.bc/Mt.burst)%2===1;
+    click(Mt.next,level,rest);
+    if(Mt.subi===0)Mt.q.push({t:Mt.next,p:Mt.pulse,rest});
+    Mt.next+=60/Mt.bpm/Mt.sub;Mt.subi++;
+    if(Mt.subi>=Mt.sub){Mt.subi=0;Mt.pulse++;Mt.bc++;if(Mt.pulse>=n){Mt.pulse=0;Mt.bar++;if(Mt.ladder&&Mt.bar%8===0)setBpm(Mt.bpm+4);}}
+  }
+}
+function draw(){
+  if(!Mt.on)return;
+  const c=Mt.ctx;let last=null;
+  while(Mt.q.length&&Mt.q[0].t<=c.currentTime)last=Mt.q.shift();
+  if(last){
+    [...$('dots').children].forEach((el,k)=>{el.classList.toggle('on',k===last.p);el.classList.toggle('r',last.rest);});
+    const ms=$('mState');
+    if(Mt.burst>0){ms.textContent=last.rest?t('rest'):t('play');ms.className='mstate '+(last.rest?'rest':'play');}
+    else{ms.textContent='';ms.className='mstate';}
+  }
+  requestAnimationFrame(draw);
+}
+function renderDots(){const gs=groupStarts();$('dots').innerHTML=Array.from({length:meterPulses()},(_,k)=>'<i class="'+(gs.has(k)?'g':'')+'"></i>').join('');}
+function metroStart(){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
+function metroStop(){Mt.on=false;clearInterval(Mt.timer);Mt.timer=null;$('mToggle').textContent=t('mOn');$('mState').textContent='';$('mState').className='mstate';[...$('dots').children].forEach(el=>el.classList.remove('on','r'));}
+function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?s.id:null;}
+function setBpm(v){
+  Mt.bpm=clamp(Math.round(v)||Mt.bpm,30,320);
+  $('bpm').value=Mt.bpm;$('bpmRange').value=Mt.bpm;
+  lsSet('bpm',Mt.bpm);const k=curExKey();if(k){const m=lsGet('bpmEx',{});m[k]=Mt.bpm;lsSet('bpmEx',m);}
+}
+function setMeter(m){Mt.meter=METERS[m]?m:'4/4';$('mMeter').value=Mt.meter;Mt.pulse=0;Mt.bc=0;renderDots();}
+function setSub(n){Mt.sub=[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=String(Mt.sub);}
+function applyMetroDefaults(){
+  const s=st.plan.segs[st.cur];const d=st.plan.d;
+  if(s.id&&EX[s.id]){const r=resolveEx(s,d);setSub(r.sub);setMeter(r.meter);const m=lsGet('bpmEx',{});if(m[s.id])setBpm(m[s.id]);}
+  else setMeter('4/4');
+  const fast=s.kind==='focus'||s.kind==='base'||s.kind==='combo';
+  if(!(fast&&d.week===2)){Mt.burst=0;$('mBurst').value='0';}
+}
+
+/* ================= события ================= */
+function rebuild(){
+  st.plan=buildSession(st.i,st.T);
+  st.done=new Set();st.running=false;st.cur=0;st.remain=st.plan.segs[0].min*60;
+  metroStop();
+  renderHeader();renderPlan();applyMetroDefaults();renderNow();
+}
+function setLang(l){
+  LANG=l;lsSet('lang',l);
+  try{history.replaceState(null,'','#'+l);}catch(e){try{location.hash=l;}catch(e2){}}
+  renderStatic();renderHeader();renderPlan();renderNow();markPlan();
+}
+let toastT=null;
+function toast(msg){let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);}el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2200);}
+
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if((h==='en'||h==='ru')&&h!==LANG)setLang(h);});
+$('timeChips').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;st.T=+b.dataset.t;lsSet('time',st.T);rebuild();});
+$('prevDay').onclick=()=>{st.i--;rebuild();};
+$('nextDay').onclick=()=>{st.i++;rebuild();};
+$('todayBtn').onclick=()=>{st.i=today;rebuild();};
+$('planList').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;goto(+li.dataset.k);if(window.innerWidth<=900)$('now').scrollIntoView({behavior:'smooth',block:'start'});});
+$('playBtn').onclick=()=>{audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}renderClock();};
+$('nextSeg').onclick=()=>{st.done.add(st.cur);goto(st.cur+1);};
+$('prevSeg').onclick=()=>goto(st.cur-1);
+$('nowBody').addEventListener('click',e=>{
+  const sv=e.target.closest('button[data-save]');
+  if(sv){const id=sv.dataset.save;const inp=$('ti-'+id);const v=Math.round(+inp.value);if(!v||v<20||v>400){toast(L('Введи темп в bpm, например 140','Enter a tempo in bpm, e.g. 140'));return;}
+    const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
+  const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));}
+});
+document.querySelectorAll('.mbpm button[data-d]').forEach(b=>b.onclick=()=>setBpm(Mt.bpm+(+b.dataset.d)));
+$('bpm').addEventListener('change',e=>setBpm(+e.target.value));
+$('bpmRange').addEventListener('input',e=>setBpm(+e.target.value));
+$('mMeter').innerHTML=Object.keys(METERS).map(m=>'<option value="'+m+'">'+m+(METERS[m].length>1?' ('+METERS[m].join('+')+')':'')+'</option>').join('');
+$('mMeter').onchange=e=>setMeter(e.target.value);
+$('mSub').onchange=e=>setSub(e.target.value);
+$('mBurst').onchange=e=>{Mt.burst=+e.target.value;Mt.bc=0;};
+$('mLadder').onchange=e=>{Mt.ladder=e.target.checked;Mt.bar=0;};
+$('mToggle').onclick=()=>{Mt.on?metroStop():metroStart();};
+let taps=[];
+$('mTap').onclick=()=>{const tm=performance.now();taps=taps.filter(x=>tm-x<2500);taps.push(tm);if(taps.length>=2){const iv=[];for(let k=1;k<taps.length;k++)iv.push(taps[k]-taps[k-1]);const avg=iv.slice(-4).reduce((a,b)=>a+b,0)/Math.min(4,iv.length);setBpm(60000/avg);}};
+
+$('shareBtn').onclick=()=>{
+  const {segs,d,T}=st.plan;const r=riffText(st.plan.riff);
+  const lines=[L('Гриф · тренировка дня · ','Grif · daily workout · ')+dateText(d.date),L('Неделя ','Week ')+(d.week+1)+' ('+PH(d.week).name+') · '+L('фокус: ','focus: ')+GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')+' · '+L('лад: ','scale: ')+matName(d.material),L('Время: ','Time: ')+timeLabel(T),''];
+  segs.forEach(s=>lines.push(fmtStart(s.start)+'  '+KIND(s.kind)+': '+segTitle(s,d)+' ('+s.min+L(' мин',' min')+')'));
+  lines.push('',L('Рифф дня: ','Riff of the day: ')+r.meter+', '+r.material+', '+r.tech.toLowerCase()+', '+L('условие: ','rule: ')+r.rule+'.');
+  const text=lines.join('\n');
+  const box=$('shareBox');
+  const fallback=()=>{box.hidden=false;box.innerHTML='<textarea class="share" id="shareText" readonly></textarea>';$('shareText').value=text;$('shareText').select();toast(L('Выдели и скопируй текст','Select and copy the text'));};
+  try{navigator.clipboard.writeText(text).then(()=>{box.hidden=true;toast(L('Тренировка скопирована','Workout copied'));},fallback);}catch(e){fallback();}
+};
+
+renderStatic();
+setBpm(Mt.bpm);
+rebuild();
+window.__grif={buildSession,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,TESTS,setLang,X,VX};
+})();
+</script>
+
+</body>
+</html>
