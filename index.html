@@ -170,6 +170,29 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;z-index:20}
 textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-family:var(--f-mono);font-size:12px;color:var(--fg);padding:8px}
 
+/* тренер: что сейчас (подход/отдых), полоса интервалов, подсказка темпа, что дальше */
+.coach{border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.cohd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cotog{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 12px;font-size:12px;font-family:var(--f-mono);min-width:52px}
+.cotog[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.cost{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.coname{display:flex;flex-direction:column;min-width:0}
+.coname b{font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;letter-spacing:.04em;text-transform:uppercase}
+.coname span{font-size:13px}
+.cost.t-set .coname b{color:var(--k-music)}
+.cost.t-rest .coname b,.cost.t-free .coname b{color:var(--muted)}
+.cost.t-prep .coname b{color:var(--accent)}
+.coclock{font-family:var(--f-mono);font-weight:600;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.costrip{display:flex;gap:2px;height:8px}
+.costrip i{display:block;min-width:2px;border-radius:2px;overflow:hidden;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.costrip i.t-set{box-shadow:inset 0 0 0 1px var(--k-music)}
+.costrip b{display:block;height:100%;width:0;background:var(--muted)}
+.costrip i.t-set b{background:var(--k-music)}
+.cotempo,.conext{margin:0;font-size:14px;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.conext{color:var(--muted);font-size:13px}
+.coact{display:flex;gap:8px;flex-wrap:wrap}
+.test.cur{border-color:var(--k-test);box-shadow:inset 0 0 0 1px var(--k-test)}
+
 @media (max-width:900px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .now{position:static}
@@ -240,6 +263,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
         <button class="btn" id="nextSeg" data-i="next"></button>
         <span class="total" id="totalLeft"></span>
       </div>
+      <div class="coach" id="coach" hidden></div>
       <div id="nowBody" style="display:flex;flex-direction:column;gap:14px"></div>
 
       <div class="metro">
@@ -597,18 +621,24 @@ const TESTS=[
 ];
 
 /* ================= протоколы ================= */
+// co — ведение (тренер): подходы и отдых [от, до, обычно] в секундах, кратно 5; work — минута на рабочем темпе в неделю скорости
 const PHASES=[
-  {ru:{name:'Объём',steps:['Найди чистый темп: начни медленно и поднимай по 4 bpm, пока игра чистая, а рука мягкая.','Сбрось 20% — это рабочий темп этой недели.','Подходы по 60–90 секунд, между ними 20–30 секунд отдыха.','Цель недели — ровная атака и расслабленные руки, а не скорость.']},
+  {co:{set:[60,90,75],rest:[20,30,25]},
+   ru:{name:'Объём',steps:['Найди чистый темп: начни медленно и поднимай по 4 bpm, пока игра чистая, а рука мягкая.','Сбрось 20% — это рабочий темп этой недели.','Подходы по 60–90 секунд, между ними 20–30 секунд отдыха.','Цель недели — ровная атака и расслабленные руки, а не скорость.']},
    en:{name:'Volume',steps:['Find your clean tempo: start slow and add 4 bpm while the playing stays clean and the hand stays soft.','Drop 20%: that is this week’s working tempo.','Sets of 60–90 seconds with 20–30 seconds of rest in between.','The goal this week is an even attack and relaxed hands, not speed.']}},
-  {ru:{name:'Наращивание',steps:['Начни на 10% ниже вчерашнего чистого темпа.','После каждого чистого подхода (40–60 секунд) прибавляй 4 bpm.','Ошибка или зажим — минус 8 bpm и снова вверх.','Закончи тремя подходами на самом высоком чистом темпе.']},
+  {co:{set:[40,60,50],rest:[20,30,25]},
+   ru:{name:'Наращивание',steps:['Начни на 10% ниже вчерашнего чистого темпа.','После каждого чистого подхода (40–60 секунд) прибавляй 4 bpm.','Ошибка или зажим — минус 8 bpm и снова вверх.','Закончи тремя подходами на самом высоком чистом темпе.']},
    en:{name:'Build',steps:['Start 10% below yesterday’s clean tempo.','After every clean set (40–60 seconds), add 4 bpm.','A mistake or tension: minus 8 bpm, then climb again.','Finish with three sets at your highest clean tempo.']}},
-  {ru:{name:'Скорость',steps:['Поставь метроном на 10–15% выше чистого темпа и включи «Рывки».','Играй 1 долю, 1 долю отдыхай. Потом 2 через 2, потом 4 через 4.','Каждые 3–4 минуты — минута на рабочем темпе без рывков, чтобы скорость перенеслась на удобный темп.','Рывок с ошибками не считается. Ноты должны быть чистыми даже на короткой дистанции.']},
+  {co:{set:[30,60,40],rest:[15,30,20],work:[50,70,60]},
+   ru:{name:'Скорость',steps:['Поставь метроном на 10–15% выше чистого темпа и включи «Рывки».','Играй 1 долю, 1 долю отдыхай. Потом 2 через 2, потом 4 через 4.','Каждые 3–4 минуты — минута на рабочем темпе без рывков, чтобы скорость перенеслась на удобный темп.','Рывок с ошибками не считается. Ноты должны быть чистыми даже на короткой дистанции.']},
    en:{name:'Speed',steps:['Set the metronome 10–15% above your clean tempo and turn on Bursts.','Play 1 beat, rest 1 beat. Then 2 and 2, then 4 and 4.','Every 3–4 minutes, play one minute at working tempo without bursts so the speed carries over to a comfortable tempo.','A burst with mistakes does not count. Notes stay clean even over a short distance.']}},
-  {ru:{name:'Разгрузка',steps:['Темп на 20% ниже чистого.','Короткие подходы по 30–45 секунд, отдых столько же.','Хотя бы один подход сыграй чистым звуком без перегруза: так слышна любая грязь.','Без рывков и рекордов.']},
+  {co:{set:[30,45,40],rest:[30,45,40]},
+   ru:{name:'Разгрузка',steps:['Темп на 20% ниже чистого.','Короткие подходы по 30–45 секунд, отдых столько же.','Хотя бы один подход сыграй чистым звуком без перегруза: так слышна любая грязь.','Без рывков и рекордов.']},
    en:{name:'Deload',steps:['Tempo 20% below clean.','Short sets of 30–45 seconds with equal rest.','Play at least one set on a clean tone with no gain: every bit of noise shows.','No bursts, no records.']}}
 ];
 const PH=k=>PHASES[k][LANG];
 const MAINT_STEPS={ru:['Рабочий темп: на 10–15% ниже чистого.','2–3 подхода по минуте.','Без рывков и рекордов: задача — сохранить навык.'],en:['Working tempo: 10–15% below clean.','2–3 one-minute sets.','No bursts, no records: the job is to keep the skill.']};
+const MAINT_CO={set:[50,75,60],rest:[15,30,25],n:[2,3]};
 const COMBO_STEP={ru:'Связки: сначала каждую технику отдельно, потом стык двух соседних нот на границе, потом всю фразу.',en:'Combos: each technique on its own first, then the two notes at the joint, then the whole phrase.'};
 const TEST_STEPS={ru:['Разогрей руки, если пропустил разминку.','Лестница: начни на комфортном темпе. Каждый чистый проход — плюс 4 bpm.','Первая ошибка или зажим — стоп. Результат — последний чистый темп.','Запиши результат: он хранится только в этом браузере.'],en:['Warm up your hands if you skipped the warm-up.','Ladder: start at a comfortable tempo. Every clean run: plus 4 bpm.','First mistake or tension: stop. Your result is the last clean tempo.','Save the result: it is stored only in this browser.']};
 const PAUSE_STEPS={ru:['Отложи гитару и встань.','Расслабь плечи, потряси кистями, сделай пару глубоких вдохов.','Попей воды.','Никакой растяжки через боль.'],en:['Put the guitar down and stand up.','Relax your shoulders, shake out your hands, take a few deep breaths.','Drink some water.','No stretching into pain.']};
@@ -825,6 +855,7 @@ function renderNow(){
   }
   $('nowBody').innerHTML=h;
   renderClock();
+  renderCoach();
 }
 function renderClock(){
   const s=st.plan.segs[st.cur];
@@ -853,10 +884,11 @@ setInterval(()=>{
   if(st.remain<=0){
     chime();st.done.add(st.cur);
     if(st.cur<st.plan.segs.length-1){goto(st.cur+1,true);}
-    else{st.remain=0;st.running=false;renderClock();markPlan();toast(L('Тренировка дня закончена','Today’s workout is done'));return;}
+    else{st.remain=0;st.running=false;coachRun();renderClock();markPlan();toast(L('Тренировка дня закончена','Today’s workout is done'));return;}
   }
   renderClock();
-},250);
+  coachTick();
+},100);
 
 /* ================= метроном ================= */
 const METERS={'4/4':[4],'3/4':[3],'6/8':[3,3],'5/8':[3,2],'7/8':[2,2,3],'9/8':[2,2,2,3],'11/8':[3,3,3,2],'13/16':[4,4,5]};
@@ -914,6 +946,191 @@ function applyMetroDefaults(){
   if(!(fast&&d.week===2)){Mt.burst=0;$('mBurst').value='0';}
 }
 
+/* ================= тренер ================= */
+// Ведение внутри сегмента: подготовка → подходы и отдых по протоколу недели (PHASES[].co) или поддержки (MAINT_CO),
+// плюс указания упражнений из COACH. Длительности кратны 5 с, их сумма равна минутам сегмента.
+// Тренер сам включает метроном, деление, размер и рывки, но bpm не меняет: только подсказывает.
+const CO_PREP=10;
+const WARM_CO={set:[40,120,60],rest:[10,20,15],n:[2,3]};
+const TEST_CO={set:{T1:[30,30,30],T3:[60,60,60]},def:[15,30,20],rest:[20,30,20]};
+const TEMPO={
+  find:['Найди чистый темп: начни медленно, после каждого чистого прохода +4 bpm.','Find your clean tempo: start slow and add 4 bpm after every clean run.'],
+  vol:['Рабочий темп: на 20% ниже найденного чистого.','Working tempo: 20% below the clean tempo you found.'],
+  build0:['Начни на 10% ниже вчерашнего чистого темпа.','Start 10% below yesterday’s clean tempo.'],
+  build:['Прошлый подход чистый — прибавь 4 bpm. Была ошибка или зажим — убавь 8 bpm.','Last set clean: add 4 bpm. A mistake or tension: take off 8 bpm.'],
+  top:['Самый высокий чистый темп, без прибавки.','Your highest clean tempo, no more adding.'],
+  burst:['На 10–15% выше чистого темпа.','10–15% above your clean tempo.'],
+  same:['Темп тот же.','Same tempo.'],
+  work:['Рабочий темп: на 10% ниже чистого.','Working tempo: 10% below clean.'],
+  deload:['На 20% ниже чистого темпа.','20% below your clean tempo.'],
+  maint:['Рабочий темп: на 10–15% ниже чистого.','Working tempo: 10–15% below clean.'],
+  half:['Половина темпа: 32-е, по две ноты на щелчок.','Half tempo: 32nds, two notes per click.'],
+  back:['Верни прежний темп.','Go back to your previous tempo.'],
+  warm:['Половина рабочего темпа.','Half your working tempo.'],
+  ladder0:['Начни на комфортном темпе.','Start at a comfortable tempo.'],
+  ladder:['Прошлый проход чистый — прибавь 4 bpm. Ошибка или зажим — стоп: результат — последний чистый темп, запиши его.','Last run clean: add 4 bpm. A mistake or tension: stop. Your result is the last clean tempo, save it.']
+};
+const COMBO_STAGES=[['Каждая техника отдельно','Each technique on its own'],['Стык: две ноты на границе техник','The joint: the two notes where techniques meet'],['Вся фраза','The whole phrase']];
+// Указания упражнений: cyc — по кругу на подходы, v — только для варианта с этим индексом, stages — этапы от первого подхода к последнему.
+const COACH={
+  W0:{free:60},
+  B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
+  B2:{v:{1:{cyc:[{tag:['Начни даунстроком: переход «внутри»','Start on a downstroke: inside change']},{tag:['Начни апстроком: переход «снаружи»','Start on an upstroke: outside change']}]}}},
+  L31:{v:{1:{cyc:[{sub:2,tag:['Вибрато восьмыми','Vibrato in 8ths']},{sub:3,tag:['Вибрато триолями','Vibrato in triplets']},{sub:4,tag:['Вибрато 16-ми','Vibrato in 16ths']}]}}},
+  C36:{stages:[['Фрагмент 1 отдельно','Fragment 1 on its own'],['Фрагмент 2 отдельно','Fragment 2 on its own'],['Фрагмент 3 отдельно','Fragment 3 on its own'],['Фрагмент 4 отдельно','Fragment 4 on its own'],['Пара 1+2','Pair 1+2'],['Пара 2+3','Pair 2+3'],['Пара 3+4','Pair 3+4'],['Целиком','The whole étude']],v:{2:{stageMeter:{0:'7/8'}}}}
+};
+const rng3=a=>({lo:a[0],hi:a[1],p:a[2]});
+// Подогнать длительности к S секундам шагом 5 с: сначала в пределах диапазонов, потом за счёт подходов. null — не выходит.
+function coFit(items,S){
+  const d=items.map(x=>x.p);let D=S-d.reduce((a,b)=>a+b,0);
+  const sweep=ok=>{let moved=true;while(D&&moved){moved=false;items.forEach((x,k)=>{const s=D>0?5:-5;if(D&&ok(x,d[k]+s)){d[k]+=s;D-=s;moved=true;}});}};
+  sweep((x,v)=>v>=x.lo&&v<=x.hi);
+  sweep((x,v)=>x.flex&&v>=10);
+  return D?null:d;
+}
+// Перебрать число подходов и отдых в конце; взять раскладку, ближе всего к «обычно» и без выхода за диапазоны.
+function coLayout(S,head,setAt,rest,nPref){
+  let best=null;
+  const nMax=Math.min(40,Math.floor(S/20)+1);
+  for(let n=1;n<=nMax;n++)for(const trail of[0,1]){
+    const items=head.map(x=>Object.assign({},x));
+    for(let k=0;k<n;k++){items.push(Object.assign({type:'set',flex:true,k,n},setAt(k,n)));if(k<n-1||trail)items.push(Object.assign({type:'rest'},rest(k,n)));}
+    const d=coFit(items,S);if(!d)continue;
+    let dev=0,out=0;items.forEach((x,j)=>{dev+=Math.abs(d[j]-x.p)/x.p;out+=Math.max(0,x.lo-d[j],d[j]-x.hi);});
+    let c=dev/items.length+out/20+(trail?0.25:0);
+    if(nPref)c+=0.5*Math.max(0,nPref[0]-n,n-nPref[1]);
+    if(!best||c<best.c-1e-9)best={c,items,d};
+  }
+  return best.items.map((x,j)=>{const o=Object.assign({},x,{sec:best.d[j]});delete o.lo;delete o.hi;delete o.p;delete o.flex;return o;});
+}
+const fixed=(type,sec,extra)=>Object.assign({type,lo:sec,hi:sec,p:sec},extra||{});
+function coachPlan(s,d){
+  const S=s.min*60;
+  if(s.kind==='test'){
+    const mins=splitInt(s.min,TESTS.map(()=>1));const out=[];
+    TESTS.forEach((tt,j)=>{
+      if(!mins[j])return;
+      const base={blk:j,test:tt.id,tag:[[tt.ru[0],tt.en[0]]],sub:tt.sub,meter:'4/4',burst:0};
+      const sr=rng3(TEST_CO.set[tt.id]||TEST_CO.def);
+      out.push(...coLayout(mins[j]*60,[fixed('prep',CO_PREP,base)],k=>Object.assign({},base,sr,{tempo:[k?'ladder':'ladder0']}),()=>Object.assign({blk:j},rng3(TEST_CO.rest)),null));
+    });
+    return out;
+  }
+  const lead=s.kind==='warm'?s.id!=='W1':['base','focus','maint','combo'].includes(s.kind);
+  if(!lead)return null;
+  const r=resolveEx(s,d);const c=COACH[s.id]||{};
+  const vi=(EX[s.id].v&&EX[s.id].v.length)?mod(s.variant!=null?s.variant:d.pool,EX[s.id].v.length):-1;
+  const cv=(c.v&&c.v[vi])||{};const cyc=cv.cyc||c.cyc;const stages=cv.stages||c.stages||(s.kind==='combo'?COMBO_STAGES:null);
+  const head=[];if(c.free)head.push(fixed('free',c.free));head.push(fixed('prep',CO_PREP));
+  let co,nPref=null;
+  if(s.kind==='warm'){co=WARM_CO;nPref=WARM_CO.n;}
+  else if(s.kind==='maint'){co=MAINT_CO;nPref=MAINT_CO.n;}
+  else co=PHASES[d.week].co;
+  const speed=d.week===2&&s.kind!=='warm'&&s.kind!=='maint';
+  const setAt=(k,n)=>{
+    const x=Object.assign(rng3(co.set),{sub:r.sub,meter:r.meter,burst:0,tag:[],tempo:[]});
+    if(s.kind==='warm')x.tempo=['warm'];
+    else if(s.kind==='maint')x.tempo=['maint'];
+    else if(d.week===0)x.tempo=[n>1&&k===0?'find':'vol'];
+    else if(d.week===1)x.tempo=[k===0?'build0':(n>=5&&k>=n-3?'top':'build')];
+    else if(d.week===2){
+      if(k%4===3){Object.assign(x,rng3(co.work));x.tag.push(['Минута на рабочем темпе, без рывков','A minute at working tempo, no bursts']);x.tempo=['work'];}
+      else{const b=[1,2,4][(k-Math.floor((k+1)/4))%3];x.burst=b;x.tag.push(['Рывки '+b+'/'+b,'Bursts '+b+'/'+b]);x.tempo=[k%4===0?'burst':'same'];}
+    }
+    else{x.tempo=['deload'];if(n>=2&&k===Math.floor(n/2))x.tag.push(['Чистым звуком, без перегруза','Clean tone, no gain']);}
+    if(stages){const g=n===1?stages.length-1:Math.round(k*(stages.length-1)/(n-1));x.tag.unshift(stages[g]);if(cv.stageMeter&&cv.stageMeter[g])x.meter=cv.stageMeter[g];}
+    if(cyc){const o=cyc[k%cyc.length];if(o.sub)x.sub=o.sub;if(o.tag)x.tag.push(o.tag);if(o.half){x.burst=0;x.tempo=['half'];}
+      if(k>0&&cyc[(k-1)%cyc.length].half)x.tempo.unshift('back');}
+    return x;
+  };
+  const rest=()=>rng3(co.rest);
+  return coLayout(S,head,setAt,rest,nPref);
+}
+
+const co={on:true,key:'',iv:null,idx:-1,beep:0};
+const coActive=()=>co.on&&!!co.iv;
+function coSync(){
+  const key=st.i+'|'+st.T+'|'+st.cur;
+  if(co.key!==key){co.key=key;co.iv=coachPlan(st.plan.segs[st.cur],st.plan.d);co.idx=-1;co.beep=0;}
+}
+// Где мы внутри сегмента: индекс интервала и сколько секунд до его конца.
+function coPos(){
+  const el=st.plan.segs[st.cur].min*60-st.remain;let c=0;
+  for(let k=0;k<co.iv.length;k++){c+=co.iv[k].sec;if(el<c-1e-6)return{k,left:c-el};}
+  return{k:co.iv.length-1,left:0};
+}
+function cue(kind){
+  const c=audio();if(!c)return;const t0=c.currentTime+0.01;
+  (kind==='tick'?[0]:[0,0.16]).forEach(dt=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=kind==='tick'?660:440;
+    g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(0.35,t0+dt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.12);o.connect(g).connect(c.destination);o.start(t0+dt);o.stop(t0+dt+0.14);});
+}
+function coApply(x,prev){
+  if(x.type==='set'){
+    setSub(x.sub);setMeter(x.meter);Mt.burst=x.burst;Mt.bc=0;$('mBurst').value=String(x.burst);
+    if(Mt.on)metroStop();metroStart();
+  }else{
+    if(Mt.on)metroStop();
+    if(prev&&prev.type==='set')cue('end');
+  }
+}
+function coachTick(){
+  coSync();if(!coActive())return;
+  const p=coPos(),x=co.iv[p.k];
+  if(p.k!==co.idx){const prev=co.idx>=0?co.iv[co.idx]:null;co.idx=p.k;co.beep=0;coApply(x,prev);renderCoach();}
+  const nx=co.iv[p.k+1];
+  if(x.type!=='set'&&nx&&nx.type==='set'){const n=Math.ceil(p.left);if(n>=1&&n<=3&&n!==co.beep){co.beep=n;cue('tick');}}
+  renderCoachClock(p);
+}
+// Пауза таймера останавливает метроном; после «Продолжить» текущий интервал применяется заново.
+function coachRun(){if(!coActive())return;if(st.running)co.idx=-1;else metroStop();}
+function coSkipTo(sec){
+  st.remain=Math.max(0,sec);
+  if(st.remain<=0.001){st.done.add(st.cur);if(st.cur<st.plan.segs.length-1){goto(st.cur+1,st.running);return;}st.remain=0;}
+  if(!st.running)co.idx=-1;
+  renderClock();
+  if(st.running)coachTick();else renderCoach();
+}
+function coName(x){
+  if(x.type==='prep')return L('Приготовься','Get ready');
+  if(x.type==='free')return L('Без гитары','No guitar');
+  if(x.type==='rest')return L('Отдых','Rest');
+  return(x.test?L('Проход ','Run '):L('Подход ','Set '))+(x.k+1)+L(' из ',' of ')+x.n;
+}
+const coTag=x=>(x.tag||[]).map(p=>L(p[0],p[1])).join(' · ');
+const coTempo=x=>(x.tempo||[]).map(k=>L(TEMPO[k][0],TEMPO[k][1])).join(' ');
+function renderCoach(){
+  coSync();const box=$('coach');
+  if(!co.iv){box.hidden=true;box.innerHTML='';return;}
+  box.hidden=false;
+  let h='<div class="cohd"><span class="lbl">'+L('Ведение по подходам','Set-by-set coaching')+'</span><button class="cotog" id="coToggle" aria-pressed="'+co.on+'">'+(co.on?L('Вкл','On'):L('Выкл','Off'))+'</button></div>';
+  if(!co.on){box.innerHTML=h+'<p class="legend" style="margin:0">'+L('Ведение выключено: таймер считает только минуты блока, метроном включаешь сам.','Coaching is off: the timer only counts the block’s minutes, and you run the metronome yourself.')+'</p>';return;}
+  const p=coPos(),x=co.iv[p.k];
+  const nextSet=x.type==='set'?x:co.iv.slice(p.k+1).find(y=>y.type==='set');
+  const after=co.iv.slice(p.k+1,p.k+3);
+  h+='<div class="cost t-'+x.type+'"><div class="coname"><b>'+esc(coName(x))+'</b>'+(coTag(x)?'<span>'+esc(coTag(x))+'</span>':'')+'</div><div class="coclock" id="coClock">'+fmt(p.left)+'</div></div>';
+  h+='<div class="costrip" id="coStrip">'+co.iv.map((y,k)=>'<i class="t-'+y.type+'" style="flex-grow:'+y.sec+'"><b style="width:'+(k<p.k?100:0)+'%"></b></i>').join('')+'</div>';
+  if(nextSet&&coTempo(nextSet))h+='<p class="cotempo"><span class="lbl">'+(x.type==='set'?L('Темп','Tempo'):L('Темп к подходу','Tempo for the set'))+'</span>'+esc(coTempo(nextSet))+'</p>';
+  h+='<p class="conext"><span class="lbl">'+L('Дальше','Next')+'</span>'+(after.length?after.map(y=>esc(coName(y)+(y.type==='set'&&coTag(y)?' · '+coTag(y):''))+' '+fmt(y.sec)).join(' → '):esc(L('конец блока','end of block')))+'</p>';
+  const skip=x.type==='set'?L('Пропустить подход','Skip set'):x.type==='rest'?L('Пропустить отдых','Skip rest'):L('Сразу к подходу','Start the set now');
+  h+='<div class="coact"><button class="btn" id="coSkip">'+skip+'</button>';
+  if(x.blk!=null&&co.iv.some(y=>y.blk>x.blk))h+='<button class="btn" id="coSkipBlk">'+L('Следующий тест','Next test')+'</button>';
+  h+='</div>';
+  box.innerHTML=h;
+  document.querySelectorAll('#nowBody .test').forEach((el,j)=>el.classList.toggle('cur',j===x.blk));
+}
+function renderCoachClock(p){
+  const c=$('coClock');if(!c)return;
+  c.textContent=fmt(p.left);
+  const cell=$('coStrip').children[p.k];if(cell)cell.firstChild.style.width=(100*(1-p.left/co.iv[p.k].sec))+'%';
+}
+$('coach').addEventListener('click',e=>{
+  if(e.target.closest('#coToggle')){co.on=!co.on;co.idx=-1;if(co.on&&st.running)coachTick();renderCoach();return;}
+  if(!coActive())return;
+  const p=coPos();
+  if(e.target.closest('#coSkip'))coSkipTo(st.remain-p.left);
+  else if(e.target.closest('#coSkipBlk')){const b=co.iv[p.k].blk;let el=0,c=0;co.iv.forEach(y=>{c+=y.sec;if(y.blk<=b)el=c;});coSkipTo(st.plan.segs[st.cur].min*60-el);}
+});
+
 /* ================= события ================= */
 function rebuild(){
   st.plan=buildSession(st.i,st.T);
@@ -936,7 +1153,7 @@ $('prevDay').onclick=()=>{st.i--;rebuild();};
 $('nextDay').onclick=()=>{st.i++;rebuild();};
 $('todayBtn').onclick=()=>{st.i=today;rebuild();};
 $('planList').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;goto(+li.dataset.k);if(window.innerWidth<=900)$('now').scrollIntoView({behavior:'smooth',block:'start'});});
-$('playBtn').onclick=()=>{audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}renderClock();};
+$('playBtn').onclick=()=>{audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}coachRun();renderClock();};
 $('nextSeg').onclick=()=>{st.done.add(st.cur);goto(st.cur+1);};
 $('prevSeg').onclick=()=>goto(st.cur-1);
 $('nowBody').addEventListener('click',e=>{
@@ -971,7 +1188,7 @@ $('shareBtn').onclick=()=>{
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={buildSession,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,TESTS,setLang,X,VX};
+window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,TESTS,setLang,X,VX};
 })();
 </script>
 
