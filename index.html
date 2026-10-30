@@ -582,26 +582,161 @@ B5:{n:5,name:'Глушение',goal:'Тишина везде, где не иг�
   {l:'Аккорд и тишина',t:[J('A2+E0 . . . A2+E0 A2+E0 . .','|','A3+E1 . A3+E1 . . . A5+E3 .')]}]},
 
 /* ---- ритм ---- */
-R6:{n:6,name:'Даунпикинг',goal:'Скорость и выносливость даунстроков.',how:'Только даунстроки, восьмые. Найди темп, который держишь 60 секунд подряд, и применяй к нему протокол недели.',tip:'Сила не нужна. Короткое движение, медиатор отскакивает от струны. Плечо и шея расслаблены.',sub:2,v:[
-  {l:'Чаги с движением',t:[J(R('E0',6),'E1 E1','|',R('E0',6),'E3 E3')]},
-  {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),'|',R('A5+E3',4),R('A3+E1',4))]},
-  {l:'Через струны',t:[J('E0 E0 A2 E0 E0 A3 E0 A5','|','E0 E0 A2 E0 E0 A3 A2 E0')]}]},
-R7:{n:7,name:'Галопы',goal:'Чёткий рисунок галопа на любом темпе.',how:'Деление 16-е. Выбери аппликатуру (альтернейт или вниз-вниз-вверх) и держи её весь подход.',tip:'Длинная нота галопа не «проваливается»: она такая же громкая, как короткие.',sub:4,v:[
-  {l:'Прямой галоп',t:[J(R('E0:2 E0 E0',4),'|','E1:2 E1 E1 E0:2 E0 E0 E3:2 E3 E3 E0:2 E0 E0')],note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).'},
-  {l:'Обратный галоп',t:[J(R('E0 E0 E0:2',4),'|','E1 E1 E1:2 E0 E0 E0:2 E3 E3 E3:2 E0 E0 E0:2')],note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).'},
-  {l:'Галоп аккордами',t:[J('A2+E0:2 A2+E0 A2+E0 A3+E1:2 A3+E1 A3+E1 A2+E0:2 A2+E0 A2+E0 A5+E3:2 A5+E3 A5+E3','|','A2+E0 A2+E0 A2+E0:2 A3+E1 A3+E1 A3+E1:2 A2+E0 A2+E0 A2+E0:2 A5+E3 A5+E3 A5+E3:2')],note:'Чередуй прямой и обратный галоп каждый такт.'}]},
-R8:{n:8,name:'Тремоло двойными нотами',goal:'Ровное тремоло по нескольким струнам.',how:'Альтернейт шестнадцатыми. Медиатор цепляет все струны созвучия одинаково вниз и вверх.',tip:'Неиграющие струны глуши левой рукой: на тремоло созвучием любой лишний призвук слышен сразу.',sub:4,v:[
-  {l:'Тритон',t:[J(R('A1+E0',8),'|',R('A2+E0',8))]},
-  {l:'Пауэр-аккорды',t:[J(R('A2+E0',4),R('A3+E1',4),R('A5+E3',4),R('A3+E1',4))]},
-  {l:'Малая секунда',t:[J(R('G4+D8',8),'|',R('G3+D7',8))]}]},
-R9:{n:9,name:'Палм-мьют и открытые ноты',goal:'Мгновенное переключение окраски звука.',how:'Шестнадцатые. Ладонь ложится и снимается точно в момент смены, ритм не меняется.',tip:'Громкость открытых нот не должна прыгать. Сравни по записи.',sub:4,v:[
-  {l:'Чаг и открытые ноты',t:[J(R('E0m',6),'A7 A8','|',R('E0m',6),'A10 A8')],note:'E — палм-мьют, ноты на A — открыто.'},
-  {l:'Чаг и аккорд',t:[J('E0m E0m E0m D9+A7 E0m E0m D10+A8 .')],note:'Аккорд звучит открыто и полную длительность.'},
-  {l:'Одна нота, две окраски',t:[J(R('E0m',4),R('E0',4),R('E0m',4),R('E0',4))],note:'Первая доля — с ладонью, вторая — открыто, и так далее.'}]},
-R10:{n:10,name:'Стоп-старт',goal:'Резкие обрывы и точные вступления.',how:'Шестнадцатые. Точка в табе — пауза: обе руки глушат струны, тишина ровно до следующей ноты.',tip:'Обрыв так же важен, как удар. Без хвостов и шипения.',sub:4,v:[
-  {l:'Обрывы на долю',t:[J('E0 E0 E0 E0 .:4 E0 E0 .:2 E0 . E0 .')]},
-  {l:'Аккордовые стопы',t:[J('A2+E0 . A2+E0 .:3 A3+E1 A3+E1','|','.:4 A5+E3 .:3')]},
-  {l:'Группы 3+3+2',t:[R('E0 E0 . E0 E0 . E0 .',2)]}]},
+R6:{n:6,name:'Даунпикинг',goal:'Скорость и выносливость даунстроков.',how:'Только даунстроки. Восьмые, на четвёртом уровне — триоли. Найди темп, который держишь 60 секунд подряд, и применяй к нему протокол недели.',tip:'Сила не нужна. Короткое движение, медиатор отскакивает от струны. Плечо и шея расслаблены.',sub:2,lvl:['Ровные восьмые, редкая смена нот','Смена нот и аккордов','Синкопы и паузы','Даунпикинг триолями'],v:[
+  {l:'Чаги с движением',lv:[
+    {t:[J(R('E0',6),'E1:2','|',R('E0',6),'E3:2')]},
+    {t:[J(R('E0',6),'E1 E1','|',R('E0',6),'E3 E3')]},
+    {t:[J('E0 E0 E1 . E0 E0 E6 .','|','E0 E0 E1 E0 E5 . E6:2')]},
+    {t:[J('/3',R('E0',6),'E1 E0 E0 E3 E0 E0','|','/2',R('E0',4),'/3 E0 E0 E1 E0 E0 E6')]}]},
+  {l:'Пауэр-аккорды',lv:[
+    {t:[J(R('A2+E0',8),'|',R('A3+E1',4),R('A5+E3',4))]},
+    {t:[J(R('A2+E0',4),R('A3+E1',4),'|',R('A5+E3',4),R('A3+E1',4))]},
+    {t:[J('A2+E0 E0m E0m A3+E1 E0m E0m A5+E3 .','|','A2+E0 E0m E0m A8+E6 E0m E0m A7+E5 .')]},
+    {t:[J('/3',R('A2+E0',3),R('A3+E1',3),R('A2+E0',3),R('A7+E5',3),'|','/2','A8+E6 A8+E6 A7+E5 A7+E5','/3',R('E0m',3),'A3+E1 A3+E1 A2+E0')]}]},
+  {l:'Через струны',lv:[
+    {t:[J('E0 E0 E0 A2 E0 E0 E0 A3','|','E0 E0 E0 A5 E0 E0 E0 A3')]},
+    {t:[J('E0 E0 A2 E0 E0 A3 E0 A5','|','E0 E0 A2 E0 E0 A3 A2 E0')]},
+    {t:[J('E0 A2 E0 D2 E0 A3 . D3','|','E0 A2 E0 D4 E0 A5 D2:2')]},
+    {t:[J('/3','E0 E0 A2 E0 E0 A3 E0 E0 D2 E0 E0 A1','|','E0 A2 D2 E0 A3 D3 E0 A1 D1','/2','E0 .')]}]},
+  {l:'Педаль и ноты на D',lv:[
+    {t:[J(R('E0',6),'D3 D3','|',R('E0',6),'D5 D5')]},
+    {t:[J('E0 E0 D3 E0 E0 D5 E0 D3','|','E0 E0 D3 E0 E0 D7 D5 D3')]},
+    {t:[J('E0 E0 D3 . E0 D5 E0 D3','|','E0 . D3 E0 D8 . D7:2')]},
+    {t:[J('/3','E0 E0 D3 E0 E0 D5 E0 E0 D3 E0 D8 D7','|','/2','E0 E0 D3 D5','/3','E0 D8 D7 E0 D5 D3')]}]},
+  {l:'Хроматические аккорды',lv:[
+    {t:[J(R('A2+E0',4),R('A3+E1',4),'|',R('A4+E2',4),R('A3+E1',4))]},
+    {t:[J('A2+E0 A2+E0 A3+E1 A3+E1 A4+E2 A4+E2 A3+E1 A3+E1','|','A2+E0 A2+E0 A3+E1 A2+E0 A7+E5 A6+E4 A5+E3 A4+E2')]},
+    {t:[J('A2+E0 E0m E0m A3+E1 E0m A4+E2 E0m .','|','A2+E0 . A3+E1 E0m A8+E6 A7+E5 A6+E4 .')]},
+    {t:[J('/3','A2+E0 E0m E0m A3+E1 E0m E0m A4+E2 E0m E0m A3+E1 E0m E0m','|','/2','A8+E6 A8+E6 A7+E5 .','/3','E0m E0m A6+E4 E0m E0m A5+E3')]}]},
+  {l:'Октавы',note:'Струна A между нотами октавы не звучит: её касанием глушит палец левой руки.',lv:[
+    {t:[J(R('D2+E0',4),R('D3+E1',4),'|',R('D5+E3',4),R('D3+E1',4))]},
+    {t:[J('D2+E0 D2+E0 D3+E1 D2+E0 D5+E3 D3+E1 D2+E0 D2+E0','|','D2+E0 D2+E0 D3+E1 D2+E0 D8+E6 D7+E5 D5+E3 D3+E1')]},
+    {t:[J('D2+E0 . D3+E1 D2+E0 . D5+E3 D3+E1 .','|','E0m E0m D8+E6 E0m E0m D7+E5 D5+E3:2')]},
+    {t:[J('/3','E0m E0m D2+E0 E0m E0m D3+E1 E0m E0m D5+E3 E0m D8+E6 D7+E5','|','/2','D2+E0 . D3+E1 D2+E0','/3','E0m E0m D8+E6 D7+E5 D5+E3 D3+E1')]}]}]},
+R7:{n:7,name:'Галопы',goal:'Чёткий рисунок галопа на любом темпе.',how:'Деление 16-е. Выбери аппликатуру (альтернейт или вниз-вниз-вверх) и держи её весь подход.',tip:'Длинная нота галопа не «проваливается»: она такая же громкая, как короткие.',sub:4,lvl:['Почти без смены нот','Смена нот','Галоп вперемешку с 16-ми и паузами','Перескоки струн и аккорды'],v:[
+  {l:'Прямой галоп',note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).',lv:[
+    {t:[J(R('E0:2 E0 E0',4),'|',R('E0:2 E0 E0',3),'E0:4')]},
+    {t:[J(R('E0:2 E0 E0',4),'|','E1:2 E1 E1 E0:2 E0 E0 E3:2 E3 E3 E0:2 E0 E0')]},
+    {t:[J('E0:2 E0 E0 E0 E0 E0 E0 E1:2 E1 E1 .:4','|','E0:2 E0 E0 E6:2 E6 E6 E0 E0 E0 E0 E5:2 E5 E5')]},
+    {t:[J('E0:2 E0 E0 G4:2 E0 E0 E0:2 E0 E0 G5:2 E0 E0','|','E0:2 E0 E0 D9+A7:2 E0 E0 E0:2 E0 E0 D8+A6:2 E0 E0')]}]},
+  {l:'Обратный галоп',note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).',lv:[
+    {t:[J(R('E0 E0 E0:2',4),'|',R('E0 E0 E0:2',3),'E0:4')]},
+    {t:[J(R('E0 E0 E0:2',4),'|','E1 E1 E1:2 E0 E0 E0:2 E3 E3 E3:2 E0 E0 E0:2')]},
+    {t:[J('E0 E0 E0:2 E0 E0 E0 E0 E1 E1 E1:2 .:4','|','E0 E0 E0:2 E6 E6 E6:2 E0 E0 E0 E0 E5 E5 E5:2')]},
+    {t:[J('E0 E0 G4:2 E0 E0 G5:2 E0 E0 G4:2 E0 E0 G7:2','|','E0 E0 D9+A7:2 E0 E0 D8+A6:2 E0 E0 D9+A7:2 E0 E0 D10+A8:2')]}]},
+  {l:'Галоп аккордами',note:'Чередуй прямой и обратный галоп каждый такт.',lv:[
+    {t:[J(R('A2+E0:2 A2+E0 A2+E0',4),'|',R('A2+E0 A2+E0 A2+E0:2',4))]},
+    {t:[J('A2+E0:2 A2+E0 A2+E0 A3+E1:2 A3+E1 A3+E1 A2+E0:2 A2+E0 A2+E0 A5+E3:2 A5+E3 A5+E3','|','A2+E0 A2+E0 A2+E0:2 A3+E1 A3+E1 A3+E1:2 A2+E0 A2+E0 A2+E0:2 A5+E3 A5+E3 A5+E3:2')]},
+    {t:[J('A2+E0:2 A2+E0 A2+E0 A3+E1:2 A3+E1 A3+E1 .:4 A2+E0:2 A2+E0 A2+E0','|','A2+E0 A2+E0 A2+E0:2 E0m E0m E0m E0m A8+E6 A8+E6 A8+E6:2 A7+E5 A7+E5 A7+E5:2')]},
+    {t:[J('A2+E0:2 E0m E0m D9+A7:2 E0m E0m A3+E1:2 E0m E0m D8+A6:2 E0m E0m','|','E0m E0m A2+E0:2 E0m E0m D9+A7:2 E0m E0m A8+E6:2 E0m E0m A7+E5:2')]}]},
+  {l:'Хроматический галоп',note:'Каждая тройка: восьмая и две шестнадцатые (та-ти-ки).',lv:[
+    {t:[J(R('E0:2 E0 E0',3),'E1:2 E1 E1','|',R('E0:2 E0 E0',3),'E1:2 E1 E1')]},
+    {t:[J('E0:2 E0 E0 E1:2 E1 E1 E2:2 E2 E2 E3:2 E3 E3','|','E0:2 E0 E0 E3:2 E3 E3 E2:2 E2 E2 E1:2 E1 E1')]},
+    {t:[J('E0:2 E0 E0 E1:2 E1 E1 E0 E0 E0 E0 E2:2 E2 E2','|','E3:2 E3 E3 .:2 E6:2 E0:2 E0 E0 E5 E5 E5 E5')]},
+    {t:[J('E0:2 E0 E0 A1:2 E0 E0 E0:2 E0 E0 A2:2 E0 E0','|','E0:2 E0 E0 D3+A1:2 E0 E0 E0:2 E0 E0 D2+A0:2 E0 E0')]}]},
+  {l:'Обратный галоп с тритоном',note:'Каждая тройка: две шестнадцатые и восьмая (ти-ки-та).',lv:[
+    {t:[J(R('E0 E0 E0:2',3),'E6 E6 E6:2','|',R('E0 E0 E0:2',3),'E6 E6 E6:2')]},
+    {t:[J('E0 E0 E0:2 E6 E6 E6:2 E0 E0 E0:2 E5 E5 E5:2','|','E0 E0 E0:2 E6 E6 E6:2 E5 E5 E5:2 E1 E1 E1:2')]},
+    {t:[J('E0 E0 E0:2 E6 E6 E6:2 E0 E0 E0 E0 .:4','|','E0 E0 E0:2 E0 E0 E6:2 E0 E0 E5:2 E1 E1 E1:2')]},
+    {t:[J('E0m E0m A1+E0:2 E0m E0m D8+A6:2 E0m E0m A1+E0:2 E0m E0m D7+A5:2','|','E0m E0m A8+E6:2 E0m E0m A7+E5:2 E0m E0m D3+A1:2 E0m E0m D2+A0:2')]}]},
+  {l:'Галоп в 3/4',meter:'3/4',lv:[
+    {t:[J(R('E0:2 E0 E0',3),'|',R('E0:2 E0 E0',2),'E1:4')]},
+    {t:[J('E0:2 E0 E0 E0:2 E0 E0 E1:2 E1 E1','|','E0:2 E0 E0 E0:2 E0 E0 E3:2 E3 E3')]},
+    {t:[J('E0:2 E0 E0 E0 E0 E1:2 .:4','|','E0:2 E0 E0 E0 E0 E0 E0 E6 E6 E6:2')]},
+    {t:[J('E0:2 E0 E0 G4:2 E0 E0 G5:2 E0 E0','|','E0 E0 D9+A7:2 E0 E0 D8+A6:2 A1+E0:4')]}]}]},
+R8:{n:8,name:'Тремоло двойными нотами',goal:'Ровное тремоло по нескольким струнам.',how:'Альтернейт шестнадцатыми, на четвёртом уровне — и секстолями. Медиатор цепляет все струны созвучия одинаково вниз и вверх.',tip:'Неиграющие струны глуши левой рукой: на тремоло созвучием любой лишний призвук слышен сразу.',sub:4,lvl:['Редкая смена созвучий','Смена каждые 1–2 доли','Синкопы и паузы','Секстоли и смена струн'],v:[
+  {l:'Тритон',lv:[
+    {t:[J(R('A1+E0',16),'|',R('A2+E0',16))]},
+    {t:[J(R('A1+E0',8),'|',R('A2+E0',8))]},
+    {t:[J(R('A1+E0',6),'.:2',R('A2+E0',4),R('A1+E0',4),'|',R('D2+A1',6),'.:2',R('D3+A2',8))]},
+    {t:[J('/6',R('A1+E0',6),R('A2+E0',6),R('D2+A1',6),R('D3+A2',6),'|','/4',R('A1+E0',4),'.:2','A2+E0 A2+E0','/6',R('D2+A1',6),R('D1+A0',6))]}]},
+  {l:'Пауэр-аккорды',lv:[
+    {t:[J(R('A2+E0',8),R('A3+E1',8),'|',R('A5+E3',8),R('A3+E1',8))]},
+    {t:[J(R('A2+E0',4),R('A3+E1',4),R('A5+E3',4),R('A3+E1',4))]},
+    {t:[J(R('A2+E0',3),R('A3+E1',5),R('A2+E0',4),'.:2','A5+E3 A5+E3','|',R('A8+E6',6),R('A7+E5',6),'.:4')]},
+    {t:[J('/6',R('A2+E0',6),R('A3+E1',6),R('A2+E0',3),R('A8+E6',3),R('A7+E5',6),'|','/4',R('D9+A7',4),R('D8+A6',4),'/6',R('A3+E1',3),R('A2+E0',3),R('A1+E0',6))]}]},
+  {l:'Малая секунда',lv:[
+    {t:[J(R('G4+D8',16),'|',R('G3+D7',16))]},
+    {t:[J(R('G4+D8',8),'|',R('G3+D7',8))]},
+    {t:[J(R('G4+D8',6),'.:2',R('G3+D7',6),'.:2','|',R('G4+D8',4),R('G5+D9',4),R('G3+D7',3),'.',R('G4+D8',4))]},
+    {t:[J('/6',R('G4+D8',6),R('G5+D9',6),R('G3+D7',6),R('G4+D8',6),'|','/4',R('B6+G9',4),R('B7+G10',4),'/6',R('G4+D8',6),R('G3+D7',6))]}]},
+  {l:'Кварты',note:'Обе ноты кварты — одним пальцем, плоским барре на двух струнах.',lv:[
+    {t:[J(R('D7+A7',16),'|',R('D8+A8',16))]},
+    {t:[J(R('D7+A7',8),R('D8+A8',8),'|',R('D10+A10',8),R('D8+A8',8))]},
+    {t:[J(R('D7+A7',3),R('D8+A8',5),R('D7+A7',4),'.:4','|',R('D10+A10',6),R('D8+A8',6),R('D7+A7',2),'.:2')]},
+    {t:[J('/6',R('D7+A7',6),R('D8+A8',6),R('D7+A7',3),R('D13+A13',3),R('D12+A12',6),'|','/4',R('D10+A10',4),R('D8+A8',4),'/6',R('D7+A7',6),R('G7+D7',6))]}]},
+  {l:'Октавы',note:'Средняя струна между нотами октавы не звучит: её касанием глушит палец левой руки.',lv:[
+    {t:[J(R('D9+E7',16),'|',R('D10+E8',16))]},
+    {t:[J(R('D9+E7',8),R('D10+E8',8),'|',R('D12+E10',8),R('D10+E8',8))]},
+    {t:[J(R('D9+E7',6),'.:2',R('D10+E8',4),R('D9+E7',4),'|',R('D8+E6',3),R('D9+E7',5),R('D12+E10',6),'.:2')]},
+    {t:[J('/6',R('D9+E7',6),R('D10+E8',6),R('G9+A7',6),R('G10+A8',6),'|','/4',R('G12+A10',4),R('G10+A8',4),'/6',R('D10+E8',6),R('D9+E7',6))]}]},
+  {l:'Квинты на D и G',lv:[
+    {t:[J(R('G9+D7',16),'|',R('G10+D8',16))]},
+    {t:[J(R('G9+D7',4),R('G10+D8',4),R('G12+D10',4),R('G10+D8',4),'|',R('G9+D7',4),R('G10+D8',4),R('G13+D11',8))]},
+    {t:[J(R('G9+D7',3),R('G10+D8',3),R('G9+D7',2),'.:2',R('G12+D10',6),'|',R('G13+D11',6),'.:2',R('G10+D8',4),R('G9+D7',4))]},
+    {t:[J('/6',R('G9+D7',6),R('G10+D8',3),R('G9+D7',3),R('D9+A7',6),R('D10+A8',6),'|','/4',R('G13+D11',4),R('G12+D10',4),'/6',R('G10+D8',6),R('G9+D7',6))]}]}]},
+R9:{n:9,name:'Палм-мьют и открытые ноты',goal:'Мгновенное переключение окраски звука.',how:'Шестнадцатые, на четвёртом уровне — и секстоли. Ладонь ложится и снимается точно в момент смены, ритм не меняется.',tip:'Громкость открытых нот не должна прыгать. Сравни по записи.',sub:4,lvl:['Редкая смена, длинные открытые ноты','Смена окраски по долям','Смена на слабых шестнадцатых','Секстоли и быстрая смена'],v:[
+  {l:'Чаг и открытые ноты',note:'E — палм-мьют, ноты на A — открыто.',lv:[
+    {t:[J(R('E0m',4),'A7:4',R('E0m',4),'A8:4','|',R('E0m',4),'A10:4',R('E0m',4),'A8:4')]},
+    {t:[J(R('E0m',6),'A7 A8','|',R('E0m',6),'A10 A8')]},
+    {t:[J('E0m E0m E0m A7 E0m E0m A8 E0m E0m A7 E0m E0m A10:2 A8:2','|','E0m E0m A7 E0m E0m A8 E0m A7 E0m E0m E0m A13 A12 A10 A8 A7')]},
+    {t:[J('/6',R('E0m',3),'A7 A8 A10',R('E0m',3),'A8 A7 A8','E0m E0m A7 E0m E0m A8',R('E0m',3),'A10 A12 A13','|','/4',R('E0m',3),'A7 E0m E0m A8 E0m','/6','E0m A13 A12 E0m A10 A8 E0m E0m A7 A8:3')]}]},
+  {l:'Чаг и аккорд',note:'Аккорд звучит открыто и полную длительность.',lv:[
+    {t:[J(R('E0m',4),'D9+A7:4',R('E0m',4),'D10+A8:4')]},
+    {t:[J('E0m E0m E0m D9+A7 E0m E0m D10+A8 .')]},
+    {t:[J('E0m E0m E0m D9+A7:2 E0m E0m D10+A8:3 E0m D9+A7 E0m E0m D12+A10:2','|','E0m E0m D14+A12:2 E0m D12+A10:2 E0m E0m D10+A8 E0m E0m D9+A7:4')]},
+    {t:[J('/6',R('E0m',3),'D9+A7:3',R('E0m',2),'D10+A8 E0m D9+A7:2',R('E0m',3),'D12+A10:3 E0m E0m D10+A8 E0m D9+A7:2','|','/4','E0m E0m D9+A7 E0m E0m D10+A8:3','/6',R('E0m',3),'D3+A1:3 E0m D2+A0:2 D3+A1:3')]}]},
+  {l:'Одна нота, две окраски',note:'Нота одна, меняется только ладонь.',lv:[
+    {t:[J(R('E0m',8),R('E0',8),'|',R('E0m',8),R('E0',8))]},
+    {t:[J(R('E0m',4),R('E0',4),R('E0m',4),R('E0',4))]},
+    {t:[J(R('E0m',3),R('E0',3),R('E0m',2),R('E0',3),R('E0m',3),R('E0',2),'|','E0m E0 E0m E0m E0 E0 E0m E0 E0m E0m E0m E0 E0m E0 E0 E0')]},
+    {t:[J('/6',R('E0m',3),R('E0',3),R('E0m',2),R('E0',2),R('E0m',2),'E0m E0 E0m E0 E0m E0',R('E0m',4),R('E0',2),'|','/4',R('E0m',2),R('E0',2),'E0m E0 E0m E0','/6',R('E0m',5),'E0',R('E0m',3),R('E0',3))]}]},
+  {l:'Чаг и тритон',note:'E — палм-мьют, тритоны — открыто.',lv:[
+    {t:[J(R('E0m',4),'D2+A1:4',R('E0m',4),'D3+A2:4')]},
+    {t:[J(R('E0m',3),'D2+A1',R('E0m',2),'D2+A1:2',R('E0m',3),'D3+A2',R('E0m',2),'D3+A2:2')]},
+    {t:[J('E0m E0m D2+A1 E0m E0m D3+A2 E0m D2+A1:2 E0m E0m D1+A0 E0m D2+A1:3','|','E0m D3+A2 E0m E0m D2+A1 E0m E0m E0m D8+A7:2 D7+A6:2 E0m E0m D2+A1:2')]},
+    {t:[J('/6',R('E0m',3),'D2+A1 D3+A2 D2+A1',R('E0m',3),'D1+A0:3','E0m E0m D2+A1 E0m E0m D3+A2',R('E0m',4),'D2+A1:2','|','/4','E0m E0m D8+A7 E0m E0m D7+A6 E0m E0m','/6','D2+A1:2 E0m D3+A2:2 E0m',R('E0m',3),'D2+A1:3')]}]},
+  {l:'Аккорд с ладонью и без',note:'Ладонь ложится на весь аккорд, открытый аккорд звенит полную длительность.',lv:[
+    {t:[J(R('A2+E0m',8),'A2+E0:8','|',R('A3+E1m',8),'A3+E1:8')]},
+    {t:[J(R('A2+E0m',4),'A2+E0:4',R('A3+E1m',4),'A3+E1:4','|',R('A5+E3m',4),'A5+E3:4',R('A3+E1m',4),'A3+E1:4')]},
+    {t:[J(R('A2+E0m',3),'A2+E0:3',R('A2+E0m',2),R('A3+E1m',3),'A3+E1:3','A1+E0:2','|',R('A2+E0m',2),'A8+E6:2',R('A2+E0m',2),'A7+E5:2','A2+E0m A2+E0m A3+E1:2 A2+E0m A2+E0m A2+E0:2')]},
+    {t:[J('/6',R('A2+E0m',3),'A2+E0:3',R('A3+E1m',3),'A3+E1:3',R('A2+E0m',2),'A8+E6:2 A7+E5:2',R('A2+E0m',3),'A1+E0:3','|','/4',R('A2+E0m',3),'A3+E1:2',R('A2+E0m',3),'/6','A5+E3:2 A5+E3m A5+E3m A3+E1:2 A3+E1m A3+E1m A2+E0:4')]}]},
+  {l:'Чаг и высокие ноты',note:'E — палм-мьют, ноты на G — открыто.',lv:[
+    {t:[J(R('E0m',4),'G9:4',R('E0m',4),'G10:4')]},
+    {t:[J(R('E0m',3),'G9',R('E0m',3),'G10',R('E0m',2),'G12:2 G10:2 G9:2')]},
+    {t:[J('E0m E0m G9 E0m E0m G10 E0m G12:2 E0m E0m G15 E0m G14 G12:2','|','E0m G9 E0m E0m G10 E0m E0m E0m G9:2 G10 G9 E0m E0m G15:2')]},
+    {t:[J('/6',R('E0m',3),'G9 G10 G12','E0m E0m G15 E0m G14 G12',R('E0m',3),'G10:3','E0m G9 E0m G10 E0m G12','|','/4','E0m E0m G9 E0m G10 E0m E0m G12','/6',R('E0m',3),'G15 G14 G12','G10 G9 E0m E0m G9:2')]}]}]},
+R10:{n:10,name:'Стоп-старт',goal:'Резкие обрывы и точные вступления.',how:'Шестнадцатые, на четвёртом уровне — с триолями и секстолями. Точка в табе — пауза: обе руки глушат струны, тишина ровно до следующей ноты.',tip:'Обрыв так же важен, как удар. Без хвостов и шипения.',sub:4,lvl:['Стопы по долям, длинные паузы','Стопы по шестнадцатым','Синкопы и сдвинутые вступления','Триоли, секстоли и сложные стопы'],v:[
+  {l:'Обрывы на долю',lv:[
+    {t:[J('E0 E0 E0 E0 .:4 E0 E0 E0 E0 .:4','|','E0:2 .:2 E0:2 .:2 E0 E0 E0 E0 .:4')]},
+    {t:[J('E0 E0 E0 E0 .:4 E0 E0 .:2 E0 . E0 .')]},
+    {t:[J('E0 E0 E0 .:3 E0 E0 E0 E1 .:3 E0 .:2','|','.:2 E0 E0 E1 . E0 .:3 E6 E5 E0 .:3')]},
+    {t:[J('/6','E0 E0 E0 .:3 E0 E0 E1 .:3','/4','.:2 E0 E0 E0 . E0 .','|','/3','E0 E0 . E0 . E1','/4','E6 E5 E0 .','/6','E0 E0 E0 E1 .:2')]}]},
+  {l:'Аккордовые стопы',lv:[
+    {t:[J('A2+E0:2 .:2 A2+E0:2 .:2 A3+E1:2 .:2 A3+E1:2 .:2','|','A5+E3:2 .:2 A5+E3:2 .:2 A3+E1:4 .:4')]},
+    {t:[J('A2+E0 . A2+E0 .:3 A3+E1 A3+E1','|','.:4 A5+E3 .:3')]},
+    {t:[J('A2+E0 . A2+E0 .:2 A3+E1 . A3+E1:2 .:2 A1+E0 . A2+E0 .:2','|','.:3 A8+E6 . A7+E5 .:2 A2+E0 A2+E0 . A3+E1:2 .:3')]},
+    {t:[J('/6','A2+E0 . A2+E0 .:3 A3+E1 A3+E1 .:2 A1+E0:2','/4','.:2 A2+E0 . A8+E6 A7+E5 .:2','|','/3','A2+E0 . A3+E1 . A2+E0 .','/4','.:3 A5+E3 A3+E1 . A2+E0:2')]}]},
+  {l:'Группы 3+3+2',lv:[
+    {t:[J('E0:2 E0:2 .:2 E0:2 E0:2 .:2 E0:2 .:2','|','E0:2 E0:2 .:2 E0:2 E0:2 .:2 E0:2 .:2')]},
+    {t:[R('E0 E0 . E0 E0 . E0 .',2)]},
+    {t:[J('E0 E0 . A2+E0 E0 . E0 . E0 E0 . A3+E1 E0 . A1+E0 .','|','. E0 E0 . E0 E0 . E0 . E6 E5 . E0 E0 E0 .')]},
+    {t:[J('/6',R('E0 E0 . E0 E0 . E0 .',3),'|','/4','A2+E0 A2+E0 . A3+E1 A3+E1 . A1+E0 . A2+E0 A2+E0 . A8+E6 A8+E6 . A7+E5 .')]}]},
+  {l:'Тритонные стопы',lv:[
+    {t:[J('A1+E0:2 .:2 A1+E0:2 .:2 D2+A1:4 .:4','|','A1+E0:2 .:2 A1+E0:2 .:2 D3+A2:4 .:4')]},
+    {t:[J('A1+E0 . A1+E0 . D2+A1 .:3 A1+E0 A1+E0 . D3+A2 .:4','|','E0 E0 A1+E0 . E0 E0 D2+A1 .:2 E0 D3+A2 .:5')]},
+    {t:[J('. A1+E0 A1+E0 . E0 D2+A1 .:3 E0 E0 D3+A2 .:2 A1+E0 .','|','E0 . E0 D2+A1 .:3 E0 E0 D1+A0 . E0 D2+A1:2 .:2')]},
+    {t:[J('/6','A1+E0 A1+E0 . D2+A1 D2+A1 . E0 E0 E0 D3+A2 .:2','/4','.:2 A1+E0 . E0 E0 D2+A1 .','|','/3','D2+A1 . D3+A2 . A1+E0 .','/4','E0 E0 . D8+A7 .:2 D7+A6 .')]}]},
+  {l:'Стопы в 7/8',sub:2,meter:'7/8',note:'Считай 2+2+3 восьмых.',lv:[
+    {t:['E0:2 .:2 E0:2 .:2 E0:2 E0:2 .:2','A2+E0:2 .:2 A3+E1:2 .:2 A2+E0:2 A2+E0:2 .:2']},
+    {t:['E0 E0 .:2 E0 E0 .:2 E0 E0 E0 E1 .:2','A2+E0 A2+E0 .:2 A3+E1 A3+E1 .:2 A2+E0 E0 E0 A1+E0 .:2']},
+    {t:['E0 . E0 E0 .:2 E0 E0 . E1 E0 E0 .:2','. A2+E0 A2+E0 . A3+E1 .:2 E0 A1+E0 .:2 E0 E0 E0']},
+    {t:['/3 E0 E0 E0 E0 . E0 /2 E0 E0 E1 . /3 E0 E0 E0 E6 E5 . /2 E0 .','/2 A2+E0 . A2+E0 A2+E0 . A3+E1 /3 A1+E0 . . A2+E0 E0 E0 /2 A8+E6 A7+E5 .:2']}]},
+  {l:'Стопы и хроматика',lv:[
+    {t:[J('E0:2 .:2 E1:2 .:2 E2:2 .:2 E3:2 .:2','|','E0:2 .:2 E3:2 .:2 E2:2 .:2 E1:4')]},
+    {t:[J('E0 E1 .:2 E2 E3 .:2 E0 E1 E2 E3 .:4','|','E0 E3 .:2 E2 E1 .:2 E0 . E6 E5 E4 E3 .:2')]},
+    {t:[J('. E0 E1 . E2 E3 .:2 E0 . E6 E5 . E4 E3 .','|','E0 E1 E0 . E2 E1 E0 .:3 A1 A2 A3 . E0 .')]},
+    {t:[J('/6','E0 E1 E2 E3 .:2 E0 E3 E2 E1 .:2','/4','E0 . E6 E5 . E4 E3 .','|','/3','A1 A2 A3 . E0 .','/4','E0 E1 .:2','/6','E3 E2 E1 E0 .:2')]}]}]},
 R11:{n:11,name:'Ритмические группировки',goal:'Точное деление доли на 3, 4, 5, 6, 7.',how:'Метроном щёлкает четвертями без деления, ты делишь долю сам. Каждый такт таба — одна доля метронома.',tip:'Считай слогами вслух. Акцент на первой ноте каждой доли.',sub:1,v:[
   {l:'От 3 до 7',t:[J('/3',R('E0',3),'| /4',R('E0',4),'| /5',R('E0',5),'| /6',R('E0',6),'| /7',R('E0',7))]},
   {l:'16-е и секстоли',t:[J('/4',R('E0',4),'| /6',R('E0',6),'| /4',R('E0',4),'| /6',R('E0',6))]},
@@ -731,11 +866,11 @@ B2:{name:'Alternate picking across strings',goal:'Clean pick transitions between
 B3:{name:'String skipping',goal:'Picking-hand accuracy over larger distances.',how:'Strict alternate picking, the skipped string stays silent. Sixteenths.',tip:'Lift the pick just enough to clear the string.',v:['G and e','Two notes each','D and B']},
 B4:{name:'Sync: chromatics',goal:'Finger and pick land together.',how:'Alternate picking, sixteenths. The finger order changes every day; today’s is shown in the variant. On the way back, the position is one fret higher.',tip:'The finger lands on the fret slightly before the pick hits, not at the same moment.',lvl:['Three strings','Six strings','Shift one fret on every string','String skipping']},
 B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'High gain. A dot in the tab is a rest. The edge of the picking hand mutes the low strings, free fretting-hand fingers rest on unused strings.',tip:'Test: stop on any rest. It should be silent, with no hum or squeal.',v:[{l:'Palm mute and open notes',note:'E palm-muted, upper notes open.'},'Skips under high gain','Chord and silence']},
-R6:{name:'Downpicking',goal:'Downstroke speed and endurance.',how:'Downstrokes only, eighth notes. Find the tempo you can hold for 60 seconds straight and apply the week protocol to it.',tip:'No force needed. Short motion, the pick bounces off the string. Shoulder and neck stay relaxed.',v:['Moving chugs','Power chords','Across strings']},
-R7:{name:'Gallops',goal:'A crisp gallop at any tempo.',how:'Sixteenth subdivision. Choose one picking pattern (alternate or down-down-up) and keep it for the whole set.',tip:'The long note of the gallop does not drop out: it is as loud as the short ones.',v:[{l:'Forward gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop',note:'Each group of three: two sixteenths, then one eighth.'},{l:'Chord gallops',note:'Alternate forward and reverse gallops every bar.'}]},
-R8:{name:'Double-stop tremolo',goal:'Even tremolo across several strings.',how:'Alternate sixteenths. The pick catches every string of the interval equally on downstrokes and upstrokes.',tip:'Mute unused strings with the fretting hand: any stray noise is obvious in interval tremolo.',v:['Tritone','Power chords','Minor second']},
-R9:{name:'Palm mute vs open notes',goal:'Instant switch of tone colour.',how:'Sixteenths. The palm lands and lifts exactly on the change, the rhythm stays put.',tip:'Open notes should not jump in volume. Compare on a recording.',v:[{l:'Chug and open notes',note:'E palm-muted, notes on A open.'},{l:'Chug and chord',note:'The chord rings open for its full length.'},{l:'One note, two colours',note:'First beat with the palm, second open, and so on.'}]},
-R10:{name:'Stop-start',goal:'Sharp cut-offs and precise entries.',how:'Sixteenths. A dot in the tab is a rest: both hands mute the strings, silence until the next note.',tip:'The cut-off matters as much as the hit. No tails, no hiss.',v:['Cuts on the beat','Chord stops','3+3+2 groups']},
+R6:{name:'Downpicking',goal:'Downstroke speed and endurance.',how:'Downstrokes only. Eighth notes, triplets on level 4. Find the tempo you can hold for 60 seconds straight and apply the week protocol to it.',tip:'No force needed. Short motion, the pick bounces off the string. Shoulder and neck stay relaxed.',lvl:['Even eighths, few note changes','Note and chord changes','Syncopation and rests','Downpicked triplets'],v:['Moving chugs','Power chords','Across strings','Pedal and notes on D','Chromatic chords',{l:'Octaves',note:'The A string between the octave notes stays silent: a fretting finger touches it lightly.'}]},
+R7:{name:'Gallops',goal:'A crisp gallop at any tempo.',how:'Sixteenth subdivision. Choose one picking pattern (alternate or down-down-up) and keep it for the whole set.',tip:'The long note of the gallop does not drop out: it is as loud as the short ones.',lvl:['Hardly any note changes','Note changes','Mixed with sixteenths and rests','String skips and chords'],v:[{l:'Forward gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop',note:'Each group of three: two sixteenths, then one eighth.'},{l:'Chord gallops',note:'Alternate forward and reverse gallops every bar.'},{l:'Chromatic gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop with a tritone',note:'Each group of three: two sixteenths, then one eighth.'},'Gallop in 3/4']},
+R8:{name:'Double-stop tremolo',goal:'Even tremolo across several strings.',how:'Alternate sixteenths, plus sextuplets on level 4. The pick catches every string of the interval equally on downstrokes and upstrokes.',tip:'Mute unused strings with the fretting hand: any stray noise is obvious in interval tremolo.',lvl:['Rare changes','A change every 1–2 beats','Syncopation and rests','Sextuplets and string shifts'],v:['Tritone','Power chords','Minor second',{l:'Fourths',note:'Both notes of the fourth with one finger, a flat barre across two strings.'},{l:'Octaves',note:'The string between the octave notes stays silent: a fretting finger touches it lightly.'},'Fifths on D and G']},
+R9:{name:'Palm mute vs open notes',goal:'Instant switch of tone colour.',how:'Sixteenths, plus sextuplets on level 4. The palm lands and lifts exactly on the change, the rhythm stays put.',tip:'Open notes should not jump in volume. Compare on a recording.',lvl:['Rare switches, long open notes','A switch every beat or so','Switches on off-beat sixteenths','Sextuplets and rapid switches'],v:[{l:'Chug and open notes',note:'E palm-muted, notes on A open.'},{l:'Chug and chord',note:'The chord rings open for its full length.'},{l:'One note, two colours',note:'One note throughout, only the palm changes.'},{l:'Chug and tritone',note:'E palm-muted, tritones open.'},{l:'Chord with and without the palm',note:'The palm covers the whole chord; the open chord rings for its full length.'},{l:'Chug and high notes',note:'E palm-muted, notes on G open.'}]},
+R10:{name:'Stop-start',goal:'Sharp cut-offs and precise entries.',how:'Sixteenths, with triplets and sextuplets on level 4. A dot in the tab is a rest: both hands mute the strings, silence until the next note.',tip:'The cut-off matters as much as the hit. No tails, no hiss.',lvl:['Stops on the beat, long rests','Sixteenth-note stops','Syncopation and displaced entries','Triplets, sextuplets and tricky stops'],v:['Cuts on the beat','Chord stops','3+3+2 groups','Tritone stops',{l:'Stops in 7/8',note:'Count 2+2+3 eighths.'},'Stops and chromatics']},
 R11:{name:'Rhythmic groupings',goal:'Exact division of the beat into 3, 4, 5, 6, 7.',how:'The metronome clicks quarter notes with no subdivision; you divide the beat yourself. Each bar of the tab is one metronome beat.',tip:'Count syllables out loud. Accent the first note of every beat.',v:['3 to 7','Sixteenths and sextuplets','Quintuplets and septuplets']},
 R12:{name:'Odd meters',goal:'Feel the grouping in an uneven bar.',how:'Eighth notes. The metronome switches to the right meter: a click is an eighth, accents mark the start of each group.',tip:'Tap the grouping on your knee first, then play.',v:['7/8 (2+2+3)','5/8 (3+2)','11/8 (3+3+3+2)']},
 R13:{name:'Polyrhythm',goal:'Hold a figure over a foreign grid.',how:'Sixteenths in 4/4 with the accent on beat one. The figure runs its own cycle and does not adjust to the bar.',tip:'Count the beats out loud (1-2-3-4), not the notes of the figure.',v:[{l:'5-note figure',note:'The figure lines up with beat one again after 5 bars.'},{l:'3 against 4',note:'Accent the first note of each group of three. It realigns after 3 bars.'},{l:'7-note figure',note:'Realigns after 7 bars.'}]},
