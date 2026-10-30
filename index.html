@@ -257,6 +257,9 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="lang" role="group" aria-label="Language">
         <button data-lang="ru">RU</button><button data-lang="en">EN</button>
       </div>
+      <div class="lang" id="instSw" role="group">
+        <button data-inst="guitar"></button><button data-inst="bass"></button>
+      </div>
     </div>
   </header>
 
@@ -266,6 +269,12 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
   <section class="timebar">
     <span class="lbl" data-i="timeLabel"></span>
     <div class="tchips" id="timeChips"></div>
+  </section>
+
+  <section class="timebar" id="bassBar" hidden>
+    <span class="lbl" id="bassLbl"></span>
+    <div class="tchips" id="strChips"></div>
+    <div class="tchips" id="handChips"></div>
   </section>
 
   <section class="cal">
@@ -363,8 +372,18 @@ function splitInt(total,weights){
 }
 
 /* ================= язык ================= */
-let LANG=(function(){const h=(location.hash||'').slice(1);if(h==='en'||h==='ru')return h;const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return /^ru|^uk|^be|^kk/i.test(navigator.language||'')?'ru':'en';})();
+// Адрес: слова через дефис в любом порядке — язык (ru, en) и инструмент (guitar, bass): #en, #bass, #bass-en. Чего нет в адресе — из сохранённых настроек (lsGet).
+const hashWords=()=>(location.hash||'').slice(1).toLowerCase().split(/[-,+]/);
+let LANG=(function(){const h=hashWords();if(h.includes('en'))return 'en';if(h.includes('ru'))return 'ru';const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return /^ru|^uk|^be|^kk/i.test(navigator.language||'')?'ru':'en';})();
 const L=(ru,en)=>LANG==='en'?en:ru;
+// Инструмент: гитара или бас. У баса своё число струн (4/5/6, стандартный строй) и техника правой руки; план дня от них не зависит.
+let INST=(function(){const h=hashWords();if(h.includes('bass'))return 'bass';if(h.includes('guitar'))return 'guitar';return lsGet('inst','guitar')==='bass'?'bass':'guitar';})();
+let STRINGS=(function(){const n=+lsGet('strings',4);return [4,5,6].includes(n)?n:4;})();
+let HAND=lsGet('hand','fingers')==='pick'?'pick':'fingers';
+const GB=(g,b)=>INST==='bass'?b:g;
+const TU=()=>INST==='bass'?'bass'+STRINGS:'guitar';
+// ключ упражнения в grif.bpmEx и grif.lvl: у баса с префиксом, чтобы не смешивать с гитарой
+const exKey=id=>INST==='bass'?'bass.'+id:id;
 const UI={
   ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день'},
   en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day'}
@@ -375,8 +394,8 @@ const ABOUT={
   en:['One program for everyone. The workout is set by the date: everyone who opens Grif on a given day gets the same one.','The only setting is time. The less you have, the earlier blocks drop from the end of the list: music first, then maintenance. The day’s focus always stays.','Tempo is personal. <b>Clean tempo</b> is the fastest you can play with no mistakes and no tension. <b>Working tempo</b> is 10% below it. The week protocol tells you what to do with them.','Week: rhythm, arpeggios and left hand, each focus twice, with technique combinations on Sunday. Base (alternate picking and hand sync) runs every day.','4-week cycle: volume → build → speed → deload, with tests on the last Sunday. Each cycle brings a new scale and a new set of exercise variants.']
 };
 const SAFETY={
-  ru:['Боль, жжение или онемение в кисти, предплечье, локте — сразу стоп. На сегодня с этой техникой всё.','Паузы в плане обязательные. Отложи гитару, встань, расслабь плечи.','Растяжки не через силу. Не получается — сдвинь упражнение выше по грифу.','Зажим хуже ошибки. Если рука каменеет, сбрось темп, даже если ноты чистые.','Тендинит лечится месяцами. Лишний день отдыха стоит дешевле.'],
-  en:['Pain, burning or numbness in the hand, forearm or elbow: stop right away. That technique is done for today.','Breaks in the plan are mandatory. Put the guitar down, stand up, relax your shoulders.','Never force a stretch. If it does not work, move the exercise higher up the neck.','Tension is worse than a mistake. If the hand locks up, drop the tempo even if the notes are clean.','Tendinitis takes months to heal. An extra rest day is cheaper.']
+  ru:['Боль, жжение или онемение в кисти, предплечье, локте — сразу стоп. На сегодня с этой техникой всё.','Паузы в плане обязательные. Отложи инструмент, встань, расслабь плечи.','Растяжки не через силу. Не получается — сдвинь упражнение выше по грифу.','Зажим хуже ошибки. Если рука каменеет, сбрось темп, даже если ноты чистые.','Тендинит лечится месяцами. Лишний день отдыха стоит дешевле.'],
+  en:['Pain, burning or numbness in the hand, forearm or elbow: stop right away. That technique is done for today.','Breaks in the plan are mandatory. Put the instrument down, stand up, relax your shoulders.','Never force a stretch. If it does not work, move the exercise higher up the neck.','Tension is worse than a mistake. If the hand locks up, drop the tempo even if the notes are clean.','Tendinitis takes months to heal. An extra rest day is cheaper.']
 };
 const DOWN={ru:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun']};
 const MONTHS={ru:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],en:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
@@ -392,6 +411,7 @@ const TUNINGS={
   bass5:{strs:['G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43},bass:true},
   bass6:{strs:['C','G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43,C:48},bass:true}
 };
+Object.values(TUNINGS).forEach(x=>{x.name=x.strs.slice().reverse().join('').toUpperCase();});
 const TUN=tu=>TUNINGS[tu]||TUNINGS.guitar;
 const TAB_PART=/^([A-Za-z])(?:([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)|(x))$/;
 const TAB_TOK=/^(.+?)(m?)(?::(\d+))?$/;
@@ -565,7 +585,7 @@ const PERMS=(function(){const r=[];const p=(a,c)=>{if(!a.length){r.push(c);retur
 const PAIRS=[[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]];
 
 /* ================= упражнения (RU) ================= */
-const EX={
+const EX_GUITAR={
 /* ---- разминка ---- */
 W0:{name:'Разминка',goal:'Разогреть руки и включить слух.',how:'Без гитары минуту: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке медленная хроматика по всем струнам.',tip:'Только мягкие движения. Растяжка до боли на холодные руки вредна.',sub:4,v:[{l:'Хроматика',t:[J('E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8 B5 B6 B7 B8 e5 e6 e7 e8')]}]},
 W1:{name:'Мобилизация без гитары',goal:'Разогнать кровь в кистях и предплечьях.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
@@ -1300,7 +1320,7 @@ C36:{n:36,name:'Этюд-комплекс',goal:'Четыре техники п�
   lvl:['Восьмые и триоли, короткие фрагменты','Шестнадцатые и секстоли','Фрагменты длиннее, больше струн','Смена деления внутри фрагмента']}
 };
 /* ================= упражнения (EN) ================= */
-const EXEN={
+const EXEN_GUITAR={
 W0:{name:'Warm-up',goal:'Warm up the hands and wake up the ears.',how:'One minute without the guitar: rub your palms until warm, slow wrist and shoulder circles, open and close your fists 20 times. Then slow chromatics across all strings on a clean tone.',tip:'Gentle movement only. Stretching cold hands into pain does harm.',v:['Chromatics']},
 W1:{name:'Mobility without the guitar',goal:'Get blood flowing in the hands and forearms.',how:'Rub your palms until warm. Wrist circles both ways, 10 each. Shoulders up, back, down. Open and close your fists 20 times. Shake out relaxed hands.',tip:'No stretching into pain: only warmth and mobility.'},
 W2:{name:'Slow chromatics',goal:'Switch on hand sync without load.',how:'Clean tone, deliberately slow tempo. 1-2-3-4 across all strings up and down, then shift one fret up and repeat.',tip:'Listen for every note ringing its full length.',v:['Chromatics']},
@@ -1347,6 +1367,105 @@ C35:{name:'String skipping → sweep',goal:'From picking into a sweep and back.'
 C36:{name:'Étude',goal:'Four techniques in a row, like a real riff.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always at the joint between fragments.',v:['Étude 1: tremolo, sweep, legato, tap','Étude 2: gallop, arpeggio, dim7, stop',{l:'Étude 3: 7/8, legato, tap, sweep',note:'The first fragment is in 7/8, the rest in 4/4.'},'Étude 4: gallop, pinch harmonics, tremolo fifths, legato',{l:'Étude 5: 5/8, tap, sweep, tremolo fifths',note:'The first fragment is in 5/8, the rest in 4/4.'},{l:'Étude 6: legato, gallop in 6/8, sweep, tap',note:'The second fragment is in 6/8, the rest in 4/4.'}],lvl:['Eighths and triplets, short fragments','Sixteenths and sextuplets','Longer fragments, more strings','Subdivision changes within a fragment']}
 };
 
+/* ================= бас: упражнения ================= */
+// Та же схема id, что у гитары (W0–W3, B1–B5, R, A, L, C), поэтому план дня строит тот же buildSession.
+// Таб t — 4 струны (EADG); t5/t6 у уровня — версия с низкой B / высокой C, если на ней материал звучит иначе.
+// hf/hp — указания для пальцев и медиатора (переключатель «Пальцы | Медиатор»).
+// по 4 (q4) или 2 (q2) удара на ноту; «|» проходит как есть
+const q4=(...ns)=>ns.map(n=>n==='|'?n:R(n,4)).join(' ');
+const q2=(...ns)=>ns.map(n=>n==='|'?n:R(n,2)).join(' ');
+// вариант с уровнями: lvs — 4 таба (строка, массив систем или {t,t5,t6,sub,meter})
+const tsys=x=>typeof x==='string'?[x]:x;
+const BV=(l,lvs,x)=>Object.assign({l,lv:lvs.map(e=>{if(typeof e==='string'||Array.isArray(e))return {t:tsys(e)};const o=Object.assign({},e);['t','t5','t6'].forEach(k=>{if(o[k])o[k]=tsys(o[k]);});return o;})},x||{});
+const BASS4=['E','A','D','G'];
+// Gen-упражнения баса. Струны E A D G по модулю 12 совпадают с четырьмя нижними гитарными, поэтому лады threeNps/npsRange/stringGroups подходят без пересчёта.
+function genBass(id,d,lv){
+  const mn=matName(d.material),mat=d.material;
+  if(id==='B4'){
+    const p=PERMS[mod(d.i,24)],run=(strs,base)=>strs.map((st,k)=>p.map(f=>st+(base(k)+f)).join(' ')).join(' ');
+    const t=lv===1?[run(['E','A'],()=>4)+' '+run(['A','E'],()=>5)]
+      :lv===3?[run(BASS4,k=>4+k),run(BASS4.slice().reverse(),k=>8-k)]
+      :lv===4?[run(['E','D','A','G'],()=>4),run(['G','A','D','E'],()=>5)]
+      :[run(BASS4,()=>4),run(BASS4.slice().reverse(),()=>5)];
+    return {l:L('Порядок пальцев дня: ','Today’s finger order: ')+p.join('-'),t};
+  }
+  if(id==='A21'){
+    const l=mn+L(', 3 ноты на струну',', 3 notes per string');
+    if(lv===1){const x=npsRange(mat,0,2,'pick');return {l,t:[x.up.concat(x.down).join(' ')]};}
+    if(lv===3){const cell=k=>{const x=npsRange(mat,k,k+2,'pick');return x.up.concat(x.down).join(' ');};return {l,t:[[0,1,2].map(cell).join(' ')]};}
+    if(lv===4){const up=npsRange(mat,0,4,'pick').up,g=[];for(let k=0;k<8;k++)g.push(up.slice(k,k+4).join(' '));return {l,sub:4,t:[g.slice(0,4).join(' '),g.slice(4).join(' ')]};}
+    const x=npsRange(mat,0,4,'pick');return {l,t:[x.up.join(' '),x.down.join(' ')]};
+  }
+  if(id==='L24'){
+    const pr=PAIRS[mod(d.i,6)],a=4+pr[0],b2=4+pr[1],l=L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn;
+    const tr16=J('/4 G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2),tr6=J('G'+a,R('Gh'+b2+' Gp'+a,5),'Gh'+b2);
+    if(lv===1){const x=npsRange(mat,0,2,'legato');return {l,t:[tr16,x.up.concat(x.down).join(' ')]};}
+    if(lv===3){const x=npsRange(mat,0,4,'nowhere');return {l,t:[tr6,x.up.join(' '),x.down.join(' ')]};}
+    if(lv===4){const gs=stringGroups(mat,'G',3),tc=(k,dir)=>k?(dir==='up'?'h':'p'):'';return {l:L('Трель ','Trill ')+pr.join('-')+L(', ',', ')+mn+L(' на струне G',' on the G string'),t:[tr6,groupsUp('G',gs,tc),groupsDown('G',gs,tc)]};}
+    const x=npsRange(mat,0,4,'legato');return {l,t:[tr16,x.up.join(' '),x.down.join(' ')]};
+  }
+  if(id==='L28'){
+    const on=s=>mn+L(' на струне ',' on the ')+s+L('',' string');
+    if(lv===1){const gs=stringGroups(mat,'G',3).slice(0,4);return {l:on('G'),t:[groupsUp('G',gs)]};}
+    if(lv===3){const gs=stringGroups(mat,'G',4);return {l:on('G'),sub:4,t:[groupsUp('G',gs),groupsDown('G',gs)]};}
+    if(lv===4){return {l:mn+L(' на струнах D и G',' on the D and G strings'),t:[groupsUp('D',stringGroups(mat,'D',3)),groupsDown('G',stringGroups(mat,'G',3))]};}
+    const gs=stringGroups(mat,'G',3);return {l:on('G'),t:[groupsUp('G',gs),groupsDown('G',gs)]};
+  }
+  return null;
+}
+const EX_BASS={
+/* ---- разминка ---- */
+W0:{name:'Разминка',goal:'Разогреть руки и включить слух.',how:'Без баса минуту: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке медленная хроматика в пятой позиции по всем струнам.',tip:'Только мягкие движения. Растяжка до боли на холодные руки вредна.',sub:4,v:[{l:'Хроматика',t:['E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8']}]},
+W1:{name:'Мобилизация без баса',goal:'Разогнать кровь в кистях, предплечьях и плечах.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз: ремень баса тяжелее гитарного и давит на левое плечо. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
+W2:{name:'Медленная хроматика',goal:'Включить синхронизацию рук без нагрузки.',how:'Чистый звук, темп заведомо низкий. Один палец на лад в пятой позиции: 1-2-3-4 по всем струнам вверх, обратно — на лад выше.',hf:'Чередуй указательный и средний, после удара палец ложится на соседнюю струну (опорный удар).',hp:'Строгий альтернейт, медиатор входит в струну неглубоко.',tip:'Слушай, чтобы каждая нота звучала полную длительность и не гудели соседние струны.',sub:4,v:[{l:'Хроматика',t:['E5 E6 E7 E8 A5 A6 A7 A8 D5 D6 D7 D8 G5 G6 G7 G8','G9 G8 G7 G6 D9 D8 D7 D6 A9 A8 A7 A6 E9 E8 E7 E6']}]},
+W3:{name:'Медленные октавы и трели',goal:'Подготовить обе руки к быстрой работе.',how:'Чистый звук. Октавы через струну, затем трель на струне D. Темп — половина рабочего.',tip:'Цель — тёплые руки, а не скорость.',sub:4,v:[{l:'Октавы и трель',t:['E3 D5 E5 D7 A5 G7 A7 G9 D7 Dh9 Dp7 Dh9 Dp7 Dh9 Dp7 .']}]},
+
+/* ---- база ---- */
+B1:{n:1,name:'Ровные 16-е на одной струне',goal:'Скорость и ровность правой руки.',how:'Шестнадцатые, все ноты одной громкости. Каждый третий подход — секстоли, затем 32-е на половине темпа. Нота меняется только на долю.',hf:'Строго указательный — средний (i-m), никогда два удара одним пальцем подряд. Половину подходов начинай со среднего.',hp:'Строго вниз-вверх от запястья, громкость вниз и вверх одинаковая.',tip:'Большой палец правой руки лежит на звукоснимателе или на струне ниже и глушит её.',sub:4,lvl:['Длинные ноты','Смена ладов','Смена струн','Смена позиций и перескоки'],v:[
+  BV('Открытая E',[{t:q4('E0','E0','E0','E0'),t5:q4('B0','B0','B0','B0')},{t:q4('E0','E1','E0','E3','|','E0','E5','E3','E1'),t5:q4('B0','B1','B0','B3','|','B0','B5','B3','B1')},{t:q4('E0','A0','E0','A2','|','E0','A3','A2','A0'),t5:q4('B0','E0','B0','E2','|','B0','E3','E2','E0')},{t:q4('E0','E7','D5','E0','|','E3','D7','E5','D9'),t5:q4('B0','B7','A5','B0','|','B3','A7','B5','A9')}]),
+  BV('По ладам на E',[q4('E3','E3','E5','E5'),q4('E0','E1','E3','E5','|','E6','E5','E3','E1'),q4('E0','E1','A0','A1','|','E3','A2','E1','A0'),q4('E0','E12','E1','E11','|','E3','E10','E5','E8')]),
+  BV('Струна A',[q4('A7','A7','A7','A7'),q4('A7','A8','A10','A8'),q4('A7','D7','A8','D8','|','A10','D9','A8','D7'),q4('A7','G7','A8','G9','|','A10','G9','A8','G7')]),
+  BV('Хроматика на D',[q4('D5','D5','D6','D6'),q4('D5','D6','D7','D8','|','D9','D8','D7','D6'),q4('D5','G5','D6','G6','|','D7','G7','D8','G8'),q4('D5','E6','D7','E8','|','D9','E10','D11','E12')]),
+  BV('Тритон',[q4('E0','E0','E6','E6'),q4('E0','E6','E0','E7','|','E0','E6','E5','E1'),q4('E0','A1','E6','A1','|','E0','A7','E6','A1'),q4('E0','D2','E6','D8','|','E1','D7','E0','D2')]),
+  BV('Струна G',[q4('G5','G5','G5','G5'),q4('G5','G7','G8','G7'),q4('G5','D7','G7','D5','|','G8','D7','G7','D5'),q4('G12','A7','G10','A5','|','G9','A3','G7','A2')])]},
+B2:{n:2,name:'Смена струн',goal:'Ровная смена струн без провалов и призвуков.',how:'Шестнадцатые. Нечётное число нот на струне заставляет менять порядок пальцев или направление медиатора на переходе.',hf:'Вниз по струнам (к низким) палец после удара опирается на следующую струну — опорный удар. Вверх можно «рейком» тем же пальцем, если чередование i-m сбивается.',hp:'Строгий альтернейт. Переход «внутри» — медиатор между струнами, «снаружи» — снаружи пары.',tip:'Отыгранная струна сразу глушится: свободным пальцем правой руки или подушечкой левой.',sub:4,lvl:['Две струны, редкая смена','Три ноты на струну','Три струны','Четыре струны и перескоки'],v:[
+  BV('Струны E и A',[q4('E5','A7','E7','A5'),[R('E5 E7 E8 A5 A7 A8',2),R('A8 A7 A5 E8 E7 E5',2)],['E5 E7 E8 A5 A7 A8 D5 D7 D9 .:3','D9 D7 D5 A8 A7 A5 E8 E7 E5 .:3'],['E5 E7 E8 A5 A7 A8 D5 D7 D9 G5 G7 G9','E5 D7 A7 G9 E7 D9 A8 G10 E8 D10 A10 G12']]),
+  BV('Внутри и снаружи',[R('A7 A7 D5 D5',4),R('A7 D5',8),J(R('A7 D5 G7',5),'.'),J(R('E5 D7',4),R('A5 G7',4))],{note:'Половину подходов начинай со среднего пальца (или апстроком), половину — с указательного (или даунстроком).'}),
+  BV('Три струны',[q4('E5','A7','D7','A7'),J(R('E5 A7 D7',5),'.'),J(R('E5 E7 A5 A7 D5 D7',2),'E5 E7 A5 A7'),J(R('E5 D7 A7 G9',2),R('G9 A7 D7 E5',2))]),
+  BV('Квинты по кругу',[q4('E5','A5','D5','G5'),J(R('E5 A5',4),R('D5 G5',4)),J(R('E5 A5 D5 G5 D5 A5',2),'E5 A5 D5 G5'),R('E5 D5 A5 G5',4)]),
+  BV('Две ноты на струну',[q4('E0','E3','A0','A2'),R('E0 E3 A0 A2 D0 D2 A2 A0',2),R('E0 E3 A0 A2 D0 D2 G0 G2',2),R('E0 E3 D0 D2 A0 A2 G0 G2',2)]),
+  BV('Высокие струны',[q4('D9','G9','D10','G10'),{t:J(R('D9 D10 D12 G9 G10 G12',2),'D9 D10 D12 G9'),t6:J(R('G9 G10 G12 C9 C10 C12',2),'G9 G10 G12 C9')},J(R('A9 A10 A12 D9 D10 D12',2),'G9 G10 G12 .'),{t:J(R('A9 G9 A10 G10',2),R('A12 G12 A10 G10',2)),t6:J(R('D9 C9 D10 C10',2),R('D12 C12 D10 C10',2))}])]},
+B3:{n:3,name:'Перескок через струну',goal:'Точность правой руки на больших расстояниях.',how:'Шестнадцатые, пропущенная струна молчит.',hf:'Палец после удара не упирается в соседнюю струну, а сразу летит через неё. Большой палец глушит низкие струны.',hp:'Альтернейт; медиатор поднимается ровно настолько, чтобы перелететь через струну.',tip:'Октава через струну — главная фигура баса в метале: две ноты должны звучать как одна, только выше.',sub:4,lvl:['Через струну, редкая смена','Октавы','Октавы с движением','Перескок через две струны'],v:[
+  BV('Октава E–D',[q2('E5','D7','E5','D7','E5','D7','E5','D7'),{t:R('E5 D7',8),t5:R('B5 A7',8)},{t:J(R('E5 D7',4),R('E7 D9',2),R('E3 D5',2)),t5:J(R('B5 A7',4),R('B7 A9',2),R('B3 A5',2))},J(R('E5 G5',4),R('E7 G7',4))]),
+  BV('Октава A–G',[q2('A5','G7','A5','G7','A5','G7','A5','G7'),R('A5 G7',8),J(R('A5 G7',4),R('A3 G5',2),R('A7 G9',2)),J(R('E5 G7',4),R('E7 G9',4))]),
+  BV('Две ноты на струну',[q2('E5','E7','D7','D5','E5','E7','D7','D5'),R('E5 E7 D7 D5',4),J(R('E5 E7 D7 D9',2),R('E3 E5 D5 D7',2)),J(R('E5 E7 G5 G7',2),R('E7 E8 G7 G9',2))]),
+  BV('Хроматика через струну',[q2('E5','D6','E6','D7','E7','D8','E8','D9'),'E5 D6 E6 D7 E7 D8 E8 D9 E9 D8 E8 D7 E7 D6 E6 D5','A5 G6 A6 G7 A7 G8 A8 G9 E5 D6 E6 D7 E7 D8 E8 D9','E5 G6 E6 G7 E7 G8 E8 G9 E9 G8 E8 G7 E7 G6 E6 G5']),
+  BV('Тритон через струну',[q2('E0','D8','E0','D8','E1','D7','E1','D7'),J(R('E0 D8',4),R('E1 D7',4)),'E0 D8 E0 D2 E1 D7 E1 D3 E0 D8 E6 D2 E5 D7 E0 D2','E0 G3 E0 G9 E1 G8 E1 G2 E0 G3 E6 G9 E5 G8 E0 G3']),
+  BV('Октавы с мёртвыми нотами',['E5 . D7 . E5 . D7 . E5 . D7 . E5 . D7 .','E5 Ex D7 Dx E5 Ex D7 Dx E7 Ex D9 Dx E3 Ex D5 Dx',J(R('E5 D7 Dx D7',2),R('E3 D5 Dx D5',2)),J(R('A5 Ax G7 Gx',2),R('E5 Ex D7 Dx',2))],{note:'x — мёртвая нота: палец левой руки лежит на струне без нажима.'})]},
+B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальцев обеих рук.',how:'Шестнадцатые, один палец на лад в пятой позиции. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. На обратном пути позиция на лад выше.',hf:'Чередуй i-m; смена пальца правой руки не зависит от смены пальца левой.',hp:'Альтернейт, даже когда струна меняется.',tip:'Палец левой руки ставится на лад чуть раньше удара правой, а не одновременно.',sub:4,gen:true,lvl:['Две струны','Четыре струны','Сдвиг на лад на каждой струне','Перескок через струну']},
+B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз или яркий звук: так слышен любой гул. Точка в табе — пауза, x — мёртвая нота, P.M. — глушение ладонью.',hf:'Плавающий большой палец лежит на струне ниже играемой и глушит всё, что ниже. Пальцы правой руки после удара гасят свою струну.',hp:'Ребро ладони лежит на низких струнах, медиатор после паузы входит точно в долю.',tip:'Проверка: остановись на любой паузе — бас должен молчать. Гул открытых струн на басу слышнее, чем на гитаре.',sub:4,lvl:['Паузы на долю','Короткие ноты','Мёртвые ноты','Смена струн с паузами'],v:[
+  BV('Стаккато',[{t:'E0:2 .:2 E0:2 .:2 E0:2 .:2 E0:2 .:2',t5:'B0:2 .:2 E0:2 .:2 B0:2 .:2 E0:2 .:2'},{t:R('E0 .',8),t5:R('B0 .',8)},{t:R('E0 E0 Ex E0',4),t5:R('B0 B0 Bx B0',4)},{t:R('E0 . A2 . D2 . A2 .',2),t5:R('B0 . E2 . A2 . E2 .',2)}],{note:'На пятиструнном басу низкая B гудит дольше всех: глуши её особенно тщательно.'}),
+  BV('Ноты и паузы',['E0:4 .:4 E0:4 .:4','E0 E0 . . E0 E0 . . E3 E3 . . E5 E5 . .','E0 E0 Ex . E0 E0 Ex . E3 E3 Ex . E5 E5 Ex .','E0 E0 . D2 . . A2 . E0 E0 . D3 . . A3 .']),
+  BV('Мёртвые ноты в ритме',[R('E0 Ex Ex Ex',4),J(R('E0 Ex E0 Ex',2),R('A0 Ax A0 Ax',2)),R('E0 Ex Ex E0 Ex Ex E0 Ex',2),'E0 Ex Ax A2 D2 Dx Ax A2 E0 Ex Ax A3 D3 Dx Ax A0']),
+  BV('Глушение ладонью',[J(R('E0m',8),R('E0:2',4)),'E0m E0m E0m E0m E3:2 .:2 E0m E0m E0m E0m E5:2 .:2',J(R('E0m E0m Ex E0m',2),'E3:2 Ex E3 E5:2 Ex E5'),'E0m E0m D2 . E0m E0m G4 . E0m E0m D3 . E0m G5 D2 .'],{note:'P.M.: ребро ладони у подставки. Пальцами — то же глушение ребром ладони, удар большим пальцем или указательным.'}),
+  BV('Длинные ноты и тишина',['E0:8 .:8','E0:6 .:2 E3:6 .:2','E0:3 Ex E0:3 Ex E3:3 Ex E5:3 Ex','A5:3 . D7:3 . G9:3 . D7:3 .']),
+  BV('Смена струн без гула',['E5:2 .:2 A5:2 .:2 D5:2 .:2 G5:2 .:2','E5 . A7 . D7 . G7 . G7 . D7 . A7 . E5 .','E5 A7 . D7 G7 . D7 A7 E5 . A7 D7 . G9 . .','E5 . D7 . A5 . G7 . E7 . D9 . A7 . G9 .'])]},
+/*@BASS_EX@*/
+};
+const EXEN_BASS={
+W0:{name:'Warm-up',goal:'Warm up the hands and wake up the ears.',how:'One minute without the bass: rub your palms until warm, slow circles with wrists and shoulders, clench and open your fists 20 times. Then slow chromatics in fifth position across all strings on a clean tone.',tip:'Gentle movements only. Stretching cold hands into pain does harm.',v:['Chromatics']},
+W1:{name:'Mobility without the bass',goal:'Get blood flowing in the hands, forearms and shoulders.',how:'Rub your palms until warm. Circle your wrists both ways 10 times. Shoulders up, back, down: a bass strap is heavier than a guitar strap and pulls on the left shoulder. Clench and open your fists 20 times. Shake out your relaxed hands.',tip:'No stretching into pain: just warmth and mobility.'},
+W2:{name:'Slow chromatics',goal:'Switch on hand sync without load.',how:'Clean tone, deliberately slow tempo. One finger per fret in fifth position: 1-2-3-4 up across all strings, back down one fret higher.',hf:'Alternate index and middle; after each stroke the finger comes to rest on the next string (rest stroke).',hp:'Strict alternate picking, keep the pick shallow in the string.',tip:'Listen for every note to last its full length with no ringing from the other strings.',v:['Chromatics']},
+W3:{name:'Slow octaves and trills',goal:'Prepare both hands for fast work.',how:'Clean tone. Octaves across a string, then a trill on the D string. Half your working tempo.',tip:'The goal is warm hands, not speed.',v:['Octaves and trill']},
+B1:{name:'Even sixteenths on one string',goal:'Speed and evenness of the plucking hand.',how:'Sixteenth notes, every note at the same volume. Every third set as sextuplets, then thirty-seconds at half tempo. Notes change only on the beat.',hf:'Strict index-middle (i-m), never two strokes in a row with the same finger. Start half of the sets with the middle finger.',hp:'Strict down-up from the wrist, downstrokes and upstrokes equally loud.',tip:'The plucking-hand thumb rests on the pickup or on the string below and keeps it quiet.',lvl:['Long notes','Fret changes','String changes','Position shifts and skips'],v:['Open E','Frets on the E string','A string','Chromatics on the D string','Tritone','G string']},
+B2:{name:'String changes',goal:'Even string changes with no gaps or stray noise.',how:'Sixteenths. An odd number of notes per string forces the finger order or pick direction to change at the crossing.',hf:'Going down toward the low strings, the finger comes to rest on the next string after the stroke (rest stroke). Going up, rake with the same finger if the i-m alternation breaks.',hp:'Strict alternate picking. An inside change keeps the pick between the strings, an outside change goes around the pair.',tip:'Mute each string as soon as you leave it: with a free plucking-hand finger or with a fretting-hand fingertip.',lvl:['Two strings, few changes','Three notes per string','Three strings','Four strings and skips'],v:['E and A strings',{l:'Inside and outside',note:'Start half of the sets with the middle finger (or an upstroke), the other half with the index (or a downstroke).'},'Three strings','Fifths around the strings','Two notes per string','High strings']},
+B3:{name:'String skipping',goal:'Plucking-hand accuracy over larger distances.',how:'Sixteenths, the skipped string stays silent.',hf:'After the stroke the finger does not rest on the next string but goes straight over it. The thumb mutes the low strings.',hp:'Alternate picking; lift the pick just enough to clear the string.',tip:'The octave across a string is the bass player’s core shape in metal: the two notes should sound like one note, only higher.',lvl:['One string skipped, few changes','Octaves','Moving octaves','Skipping two strings'],v:['E–D octave','A–G octave','Two notes per string','Chromatics across a string','Tritone across a string',{l:'Octaves with dead notes',note:'x is a dead note: the fretting finger lies on the string without pressing it down.'}]},
+B4:{name:'Sync: chromatics',goal:'Fingers of both hands land together.',how:'Sixteenths, one finger per fret in fifth position. The finger order changes every day; today’s is shown in the variant. On the way back, the position is one fret higher.',hf:'Alternate i-m; the plucking finger changes independently of the fretting finger.',hp:'Alternate picking, even when the string changes.',tip:'The fretting finger lands slightly before the plucking hand strikes, not at the same moment.',lvl:['Two strings','Four strings','Shift one fret on every string','String skipping']},
+B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'Overdrive or a bright tone, so every bit of ringing shows. A dot in the tab is a rest, x is a dead note, P.M. is a palm mute.',hf:'Floating thumb: it rests on the string below the one you play and mutes everything lower. Plucking fingers stop their string after the stroke.',hp:'The edge of the palm rests on the low strings; after a rest the pick comes in exactly on the beat.',tip:'Test: stop on any rest and the bass must be silent. Open strings ring longer on a bass than on a guitar.',lvl:['Rests on the beat','Short notes','Dead notes','String changes with rests'],v:[{l:'Staccato',note:'On a five-string, the low B rings longest of all: mute it with extra care.'},'Notes and rests','Dead notes in rhythm',{l:'Palm muting',note:'P.M.: the edge of the palm near the bridge. With fingers, use the same palm mute and pluck with the thumb or index finger.'},'Long notes and silence','String changes without ringing']},
+/*@BASS_EXEN@*/
+};
+let EX=EX_GUITAR,EXEN=EXEN_GUITAR;
+
 function X(id,f){const en=LANG==='en'&&EXEN[id];return (en&&en[f])||EX[id][f];}
 function VX(id,idx,f){
   const v=EX[id].v[idx];
@@ -1354,19 +1473,30 @@ function VX(id,idx,f){
   return v[f];
 }
 
-const GROUPS={R:['R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R37'],A:['A16','A17','A18','A19','A20','A21','A22','A23','A38','A39'],L:['L24','L25','L26','L27','L28','L29','L30','L31','L40'],C:['C32','C33','C34','C35','C36']};
+const GROUPS_GUITAR={R:['R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R37'],A:['A16','A17','A18','A19','A20','A21','A22','A23','A38','A39'],L:['L24','L25','L26','L27','L28','L29','L30','L31','L40'],C:['C32','C33','C34','C35','C36']};
+const GROUPS_BASS={R:['R6','R7','R8','R9','R10','R11','R12','R13','R14','R15'],A:['A16','A17','A18','A19','A20','A21','A22','A23'],L:['L24','L25','L26','L27','L28','L29','L30','L31'],C:['C32','C33','C34','C35','C36']};
+let GROUPS=GROUPS_GUITAR;
 const GNAMES={ru:{R:'Ритм',A:'Арпеджио',L:'Левая рука',C:'Связки'},en:{R:'Rhythm',A:'Arpeggios',L:'Left hand',C:'Combos'}};
 const GSHORTS={ru:{R:'Ритм',A:'Арп.',L:'Л. рука',C:'Связки'},en:{R:'Rhythm',A:'Arp.',L:'L. hand',C:'Combo'}};
 const GN=g=>GNAMES[LANG][g];
 const FOCUS_BY_DOW=['R','A','L','R','A','L','C'];
 
-const TESTS=[
+const TESTS_GUITAR=[
   {id:'T1',ru:['Тремоло шестнадцатыми','Открытая E, держать 30 секунд без сбоя.'],en:['Sixteenth-note tremolo','Open E, hold 30 seconds without a slip.'],sub:4,t:[R('E0',16)]},
   {id:'T2',ru:['Альтернейт по гамме','E фригийский по 3 ноты на струну, вверх и вниз два круга, секстоли.'],en:['Alternate-picked scale','E Phrygian, three notes per string, up and down twice, sextuplets.'],sub:6,t:npsTokens(PHRYG,'pick')},
   {id:'T3',ru:['Даунпикинг восьмыми','Открытая E, только даунстроки, держать 60 секунд.'],en:['Eighth-note downpicking','Open E, downstrokes only, hold 60 seconds.'],sub:2,t:[R('E0',8)]},
   {id:'T4',ru:['Свип Am, 5 струн','4 круга подряд, каждая нота отдельно, секстоли.'],en:['Am sweep, 5 strings','4 loops in a row, every note separate, sextuplets.'],sub:6,t:[J('A12 D14 G14 B13 e12 eh17 ep12 B13 G14 D14 A12 Ah15')]},
   {id:'T5',ru:['Легато по гамме','E фригийский по 3 ноты на струну, вверх и вниз два круга, секстоли.'],en:['Legato scale','E Phrygian, three notes per string, up and down twice, sextuplets.'],sub:6,t:npsTokens(PHRYG,'legato')}
 ];
+const TESTS_BASS=[
+  {id:'BT1',ru:['Шестнадцатые на открытой E','Пальцы i-m или альтернейт, держать 30 секунд без сбоя.'],en:['Sixteenths on the open E','Fingers i-m or alternate picking, hold 30 seconds without a slip.'],sub:4,t:[R('E0',16)]},
+  {id:'BT2',ru:['Гамма по 3 ноты на струну','E фригийский на четырёх струнах, вверх и вниз два круга, секстоли.'],en:['Three-note-per-string scale','E Phrygian across four strings, up and down twice, sextuplets.'],sub:6,t:(function(){const x=npsRange(PHRYG,0,4,'pick');return [x.up.join(' '),x.down.join(' ')];})()},
+  {id:'BT3',ru:['Восьмые на выносливость','Открытая E: только даунстроки или пальцы i-m, держать 60 секунд.'],en:['Eighth-note endurance','Open E: downstrokes only or fingers i-m, hold 60 seconds.'],sub:2,t:[R('E0',8)]},
+  {id:'BT4',ru:['Арпеджио Am через струну','Тоника, октава, квинта, децима по кругу, триоли, четыре круга подряд.'],en:['Am arpeggio across strings','Root, octave, fifth, tenth in a loop, triplets, four loops in a row.'],sub:3,t:[R('A0 G2 D2 G5',3)]},
+  {id:'BT5',ru:['Галоп','Прямой галоп на открытой E, четыре такта подряд без сбоя.'],en:['Gallop','Forward gallop on the open E, four bars in a row without a slip.'],sub:4,t:[R('E0:2 E0 E0',4)]}
+/*@BASS_TESTS@*/
+];
+let TESTS=TESTS_GUITAR;
 
 /* ================= протоколы ================= */
 // co — ведение (тренер): подходы и отдых [от, до, обычно] в секундах, кратно 5; work — минута на рабочем темпе в неделю скорости
@@ -1389,7 +1519,7 @@ const MAINT_STEPS={ru:['Рабочий темп: на 10–15% ниже чист
 const MAINT_CO={set:[50,75,60],rest:[15,30,25],n:[2,3]};
 const COMBO_STEP={ru:'Связки: сначала каждую технику отдельно, потом стык двух соседних нот на границе, потом всю фразу.',en:'Combos: each technique on its own first, then the two notes at the joint, then the whole phrase.'};
 const TEST_STEPS={ru:['Разогрей руки, если пропустил разминку.','Лестница: начни на комфортном темпе. Каждый чистый проход — плюс 4 bpm.','Первая ошибка или зажим — стоп. Результат — последний чистый темп.','Запиши результат: он хранится только в этом браузере.'],en:['Warm up your hands if you skipped the warm-up.','Ladder: start at a comfortable tempo. Every clean run: plus 4 bpm.','First mistake or tension: stop. Your result is the last clean tempo.','Save the result: it is stored only in this browser.']};
-const PAUSE_STEPS={ru:['Отложи гитару и встань.','Расслабь плечи, потряси кистями, сделай пару глубоких вдохов.','Попей воды.','Никакой растяжки через боль.'],en:['Put the guitar down and stand up.','Relax your shoulders, shake out your hands, take a few deep breaths.','Drink some water.','No stretching into pain.']};
+const PAUSE_STEPS={ru:['Отложи инструмент и встань.','Расслабь плечи, потряси кистями, сделай пару глубоких вдохов.','Попей воды.','Никакой растяжки через боль.'],en:['Put the instrument down and stand up.','Relax your shoulders, shake out your hands, take a few deep breaths.','Drink some water.','No stretching into pain.']};
 
 /* ================= расписание ================= */
 const ALLOC={
@@ -1415,12 +1545,16 @@ const RIFF_RULES={
   ru:['хотя бы одна пауза длиной в целую долю','закончить диссонансом: малая секунда или тритон','только три нижние струны','хотя бы одна квинтоль или септоль','второй раз рифф повторяется с изменённой последней долей','через весь рифф проходит одна нота-педаль','не больше шести разных нот','рифф начинается не с сильной доли','внутри фразы одна смена размера','в риффе есть флажолет медиатором','одно место с тремоло двойными нотами','темп риффа на 20% ниже твоего рабочего, но звучит тяжело'],
   en:['at least one rest a full beat long','end on a dissonance: a minor second or a tritone','only the three lowest strings','at least one quintuplet or septuplet','the second time through, the last beat changes','one pedal note runs through the whole riff','no more than six different notes','the riff does not start on a strong beat','one meter change inside the phrase','includes a pinch harmonic','one spot with double-stop tremolo','tempo 20% below your working tempo, but it sounds heavy']
 };
+// у баса вместо флажолета медиатором и тремоло двойными нотами — то, что звучит на басу; индексы те же
+const RIFF_RULES_BASS={ru:RIFF_RULES.ru.slice(),en:RIFF_RULES.en.slice()};
+RIFF_RULES_BASS.ru[9]='в риффе есть натуральный флажолет';RIFF_RULES_BASS.en[9]='includes a natural harmonic';
+RIFF_RULES_BASS.ru[10]='одно место с двойными нотами: квинта или децима';RIFF_RULES_BASS.en[10]='one spot with double stops: a fifth or a tenth';
 function riffOfDay(d){
   const r=rng(Math.imul(d.i+7331,2654435761));
   const list=GROUPS[d.focus];const ti=pickIdx(r,list.length);const mi=pickIdx(r,RIFF_METERS.ru.length);const ri=pickIdx(r,RIFF_RULES.ru.length);
   return {techId:list[ti],mi,ri,material:d.material};
 }
-function riffText(r){return {meter:RIFF_METERS[LANG][r.mi],material:matName(r.material),tech:X(r.techId,'name'),rule:RIFF_RULES[LANG][r.ri]};}
+function riffText(r){return {meter:RIFF_METERS[LANG][r.mi],material:matName(r.material),tech:X(r.techId,'name'),rule:GB(RIFF_RULES,RIFF_RULES_BASS)[LANG][r.ri]};}
 
 function seg(kind,min,extra){return Object.assign({kind,min},extra||{});}
 function warmSegs(W){
@@ -1487,10 +1621,11 @@ function buildSession(i,T){
 const LVL_DEF=2;
 let LVS=lsGet('lvl',{});if(!LVS||typeof LVS!=='object')LVS={};
 const lvlCount=id=>(EX[id]&&EX[id].lvl)?EX[id].lvl.length:0;
-function getLvl(id){const n=lvlCount(id);return n?clamp(Math.round(+LVS[id])||LVL_DEF,1,n):0;}
-function setLvl(id,k){LVS[id]=k;lsSet('lvl',LVS);}
+function getLvl(id){const n=lvlCount(id);return n?clamp(Math.round(+LVS[exKey(id)])||LVL_DEF,1,n):0;}
+function setLvl(id,k){LVS[exKey(id)]=k;lsSet('lvl',LVS);}
 // Упражнения с gen:true: материал по дню и ладу цикла, уровень lv (1…4) меняет сам рисунок.
 function genEx(id,d,lv){
+  if(INST==='bass')return genBass(id,d,lv);
   const mn=matName(d.material),mat=d.material;
   if(id==='B4'){
     const p=PERMS[mod(d.i,24)],run=(strs,base)=>strs.map((st,k)=>p.map(f=>st+(base(k)+f)).join(' ')).join(' ');
@@ -1534,8 +1669,10 @@ function resolveEx(s,d,lv){
     const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
     const e=(lv&&raw.lv)?raw.lv[lv-1]:raw;
     v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
+    // бас: версия под число струн, если есть (t6 → t5 → t)
+    if(INST==='bass')v.t=(STRINGS>=6&&e.t6)||(STRINGS>=5&&e.t5)||e.t;
   }
-  return {ex,id:s.id,v,lv,nl,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
+  return {ex,id:s.id,v,lv,nl,tu:TU(),sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
 }
 const KINDS={ru:{warm:'Разминка',test:'Тесты',base:'База',focus:'Фокус',maint:'Поддержка',combo:'Связки',music:'Музыка',pause:'Пауза'},en:{warm:'Warm-up',test:'Tests',base:'Base',focus:'Focus',maint:'Maintenance',combo:'Combos',music:'Music',pause:'Break'}};
 const KIND=k=>KINDS[LANG][k];
@@ -1565,11 +1702,17 @@ function timeLabel(T){if(T<60)return T+L(' мин',' min');const h=Math.floor(T/
 /* ================= рендер ================= */
 function renderStatic(){
   document.documentElement.lang=LANG;
-  document.title=L('Гриф · Grif','Grif');
+  document.title=L('Гриф · Grif','Grif')+GB('',L(' · бас',' · bass'));
   $('logo').innerHTML=L('Гри<b>ф</b>','Gri<b>f</b>');
   document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.dataset.i);});
   $('prevDay').setAttribute('aria-label',t('prevDay'));$('nextDay').setAttribute('aria-label',t('nextDay'));
-  document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===LANG)));
+  document.querySelectorAll('.lang button[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===LANG)));
+  $('instSw').setAttribute('aria-label',L('Инструмент','Instrument'));
+  document.querySelectorAll('#instSw button').forEach(b=>{b.textContent=b.dataset.inst==='bass'?L('Бас','Bass'):L('Гитара','Guitar');b.setAttribute('aria-pressed',String(b.dataset.inst===INST));});
+  $('bassBar').hidden=INST!=='bass';
+  $('bassLbl').textContent=L('Твой бас','Your bass');
+  $('strChips').innerHTML=[4,5,6].map(n=>'<button data-str="'+n+'" aria-pressed="'+(n===STRINGS)+'">'+n+L(n===4?' струны':' струн',' strings')+'</button>').join('');
+  $('handChips').innerHTML=[['fingers',L('Пальцы','Fingers')],['pick',L('Медиатор','Pick')]].map(o=>'<button data-hand="'+o[0]+'" aria-pressed="'+(o[0]===HAND)+'">'+o[1]+'</button>').join('');
   $('aboutL').innerHTML=ABOUT[LANG].map(x=>'<li>'+x+'</li>').join('');
   $('safeL').innerHTML=SAFETY[LANG].map(x=>'<li>'+esc(x)+'</li>').join('');
   const sv=$('mSub').value||'1',bv=$('mBurst').value||'0';
@@ -1611,11 +1754,13 @@ function renderPlan(){
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
 function tabHtml(label,systems,sub,meter,tu){
   const key=JSON.stringify([systems,sub||1,meter||'4/4',tu||'guitar']),on=Pl.on&&Pl.key===key;
-  return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+L('стандартный строй','standard tuning')+'</span></div>'+
+  return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+L('стандартный строй','standard tuning')+(TUN(tu).bass?' '+TUN(tu).name:'')+'</span></div>'+
     '<div class="tabsc">'+renderTab(systems,sub,meter,tu)+'</div>'+
     '<div class="tabft"><button class="btn tplay" data-play aria-pressed="'+on+'">'+plLabel(on)+'</button><label class="tloop"><input type="checkbox" data-loop'+(Pl.loop?' checked':'')+'> '+L('по кругу','loop')+'</label><span class="legend">'+L('темп метронома','metronome tempo')+'</span></div></div>';
 }
-function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. 7–8 strings: play on the top six.'))+'</p>';}
+function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. '+GB('7–8 струн: играй на шести верхних.','x — мёртвая нота. Строй стандартный; в пониженном играй те же лады.'),'h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. '+GB('7–8 strings: play on the top six.','x: dead note. Standard tuning; if you tune down, play the same frets.')))+'</p>';}
+// бас: указание для выбранной техники правой руки
+function handHtml(id){if(INST!=='bass')return '';const f=HAND==='pick'?'hp':'hf',x=X(id,f);return x?'<p class="note"><b>'+esc(HAND==='pick'?L('Медиатор','Pick'):L('Пальцы','Fingers'))+':</b> '+esc(x)+'</p>':'';}
 function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
 
 function lvlHtml(id,lv,nl){
@@ -1640,15 +1785,15 @@ function renderNow(){
     h=stepsHtml(L('Протокол теста','Test protocol'),TEST_STEPS[LANG]);
     const hist=lsGet('tests',{});
     h+='<div class="tests">'+TESTS.map(tt=>{const arr=hist[tt.id]||[];const last=arr[arr.length-1];const best=arr.reduce((m,x)=>Math.max(m,x.bpm),0);const nm=tt[LANG];
-      return '<div class="test"><div><b>'+esc(nm[0])+'</b><div class="legend">'+esc(nm[1])+'</div></div>'+tabHtml('',tt.t,tt.sub)+'<div class="row"><input id="ti-'+tt.id+'" type="number" min="30" max="400" placeholder="bpm" aria-label="'+esc(nm[0])+'"><button class="btn" data-save="'+tt.id+'">'+L('Записать','Save')+'</button><button class="btn" data-sub="'+tt.sub+'">'+L('Метроном: ','Metronome: ')+subName(tt.sub)+'</button><span class="hist">'+(last?L('прошлый: ','last: ')+last.bpm+' ('+esc(last.date)+') · '+L('лучший: ','best: ')+best:L('результатов пока нет','no results yet'))+'</span></div></div>';}).join('')+'</div>';
+      return '<div class="test"><div><b>'+esc(nm[0])+'</b><div class="legend">'+esc(nm[1])+'</div></div>'+tabHtml('',tt.t,tt.sub,'4/4',TU())+'<div class="row"><input id="ti-'+tt.id+'" type="number" min="30" max="400" placeholder="bpm" aria-label="'+esc(nm[0])+'"><button class="btn" data-save="'+tt.id+'">'+L('Записать','Save')+'</button><button class="btn" data-sub="'+tt.sub+'">'+L('Метроном: ','Metronome: ')+subName(tt.sub)+'</button><span class="hist">'+(last?L('прошлый: ','last: ')+last.bpm+' ('+esc(last.date)+') · '+L('лучший: ','best: ')+best:L('результатов пока нет','no results yet'))+'</span></div></div>';}).join('')+'</div>';
   }
   else{
     const r=resolveEx(s,d);
     if(s.kind==='maint')h+=stepsHtml(L('Протокол поддержки','Maintenance protocol'),MAINT_STEPS[LANG]);
     else if(s.kind!=='warm'){const ph=PH(d.week);h+=stepsHtml(L('Протокол недели ','Week ')+(d.week+1)+L(': ',' protocol: ')+ph.name,ph.steps);if(s.kind==='combo')h+='<div class="sect"><p class="note">'+esc(COMBO_STEP[LANG])+'</p></div>';}
-    h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
+    h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+handHtml(s.id)+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
     if(r.nl)h+=lvlHtml(s.id,r.lv,r.nl);
-    if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter)+legendHtml();
+    if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter,r.tu)+legendHtml();
   }
   $('nowBody').innerHTML=h;
   renderClock();
@@ -1727,7 +1872,7 @@ function draw(){
 function renderDots(){const gs=groupStarts();$('dots').innerHTML=Array.from({length:meterPulses()},(_,k)=>'<i class="'+(gs.has(k)?'g':'')+'"></i>').join('');}
 function metroStart(){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
 function metroStop(){Mt.on=false;clearInterval(Mt.timer);Mt.timer=null;$('mToggle').textContent=t('mOn');$('mState').textContent='';$('mState').className='mstate';[...$('dots').children].forEach(el=>el.classList.remove('on','r'));}
-function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?s.id:null;}
+function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?exKey(s.id):null;}
 function setBpm(v){
   Mt.bpm=clamp(Math.round(v)||Mt.bpm,30,320);
   $('bpm').value=Mt.bpm;$('bpmRange').value=Mt.bpm;
@@ -1737,7 +1882,7 @@ function setMeter(m){Mt.meter=METERS[m]?m:'4/4';$('mMeter').value=Mt.meter;Mt.pu
 function setSub(n){Mt.sub=[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=String(Mt.sub);}
 function applyMetroDefaults(){
   const s=st.plan.segs[st.cur];const d=st.plan.d;
-  if(s.id&&EX[s.id]){const r=resolveEx(s,d);setSub(r.sub);setMeter(r.meter);const m=lsGet('bpmEx',{});if(m[s.id])setBpm(m[s.id]);}
+  if(s.id&&EX[s.id]){const r=resolveEx(s,d);setSub(r.sub);setMeter(r.meter);const m=lsGet('bpmEx',{});if(m[exKey(s.id)])setBpm(m[exKey(s.id)]);}
   else setMeter('4/4');
   const fast=s.kind==='focus'||s.kind==='base'||s.kind==='combo';
   if(!(fast&&d.week===2)){Mt.burst=0;$('mBurst').value='0';}
@@ -1896,13 +2041,22 @@ const TEMPO={
 };
 const COMBO_STAGES=[['Каждая техника отдельно','Each technique on its own'],['Стык: две ноты на границе техник','The joint: the two notes where techniques meet'],['Вся фраза','The whole phrase']];
 // Указания упражнений: cyc — по кругу на подходы, v — только для варианта с этим индексом, stages — этапы от первого подхода к последнему.
-const COACH={
+const COACH_GUITAR={
   W0:{free:60},
   B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
   B2:{v:{1:{cyc:[{tag:['Начни апстроком: переход «внутри»','Start on an upstroke: inside change']},{tag:['Начни даунстроком: переход «снаружи»','Start on a downstroke: outside change']}]}}},
   L31:{v:{1:{cyc:[{sub:2,tag:['Вибрато восьмыми','Vibrato in 8ths']},{sub:3,tag:['Вибрато триолями','Vibrato in triplets']},{sub:4,tag:['Вибрато 16-ми','Vibrato in 16ths']}]}}},
   C36:{stages:[['Фрагмент 1 отдельно','Fragment 1 on its own'],['Фрагмент 2 отдельно','Fragment 2 on its own'],['Фрагмент 3 отдельно','Fragment 3 on its own'],['Фрагмент 4 отдельно','Fragment 4 on its own'],['Пара 1+2','Pair 1+2'],['Пара 2+3','Pair 2+3'],['Пара 3+4','Pair 3+4'],['Целиком','The whole étude']],v:{2:{stageMeter:{0:'7/8'}},4:{stageMeter:{0:'5/8'}},5:{stageMeter:{1:'6/8'}}}}
 };
+const COACH_BASS={
+  W0:{free:60},
+  B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
+  B2:{v:{1:{cyc:[{tag:['Начни со среднего пальца или апстроком','Start with the middle finger or an upstroke']},{tag:['Начни с указательного или даунстроком','Start with the index finger or a downstroke']}]}}},
+/*@BASS_COACH@*/
+};
+let COACH=COACH_GUITAR;
+// Активный инструмент подменяет наборы данных; план дня, тренер и рендер работают с EX/EXEN/GROUPS/TESTS/COACH.
+function applyInst(){const b=INST==='bass';EX=b?EX_BASS:EX_GUITAR;EXEN=b?EXEN_BASS:EXEN_GUITAR;GROUPS=b?GROUPS_BASS:GROUPS_GUITAR;TESTS=b?TESTS_BASS:TESTS_GUITAR;COACH=b?COACH_BASS:COACH_GUITAR;Pl.hand=HAND;}
 const rng3=a=>({lo:a[0],hi:a[1],p:a[2]});
 // Подогнать длительности к S секундам шагом 5 с: сначала в пределах диапазонов, потом за счёт подходов. null — не выходит.
 function coFit(items,S){
@@ -1942,7 +2096,7 @@ function coachPlan(s,d,lv){
     TESTS.forEach((tt,j)=>{
       if(!mins[j])return;
       const base={blk:j,test:tt.id,tag:[[tt.ru[0],tt.en[0]]],sub:tt.sub,meter:'4/4',burst:0};
-      const sr=rng3(TEST_CO.set[tt.id]||TEST_CO.def);
+      const sr=rng3(TEST_CO.set[tt.id.replace(/^B/,'')]||TEST_CO.def); // у баса BT1…BT5 — те же длительности, что у T1…T5
       out.push(...coLayout(mins[j]*60,[fixed('prep',CO_PREP,base)],k=>Object.assign({},base,sr,{tempo:[k?'ladder':'ladder0']}),()=>Object.assign({blk:j},rng3(TEST_CO.rest)),null));
     });
     return out;
@@ -2025,7 +2179,7 @@ function coSkipTo(sec){
 }
 function coName(x){
   if(x.type==='prep')return L('Приготовься','Get ready');
-  if(x.type==='free')return L('Без гитары','No guitar');
+  if(x.type==='free')return GB(L('Без гитары','No guitar'),L('Без баса','No bass'));
   if(x.type==='rest')return L('Отдых','Rest');
   return(x.test?L('Проход ','Run '):L('Подход ','Set '))+(x.k+1)+L(' из ',' of ')+x.n;
 }
@@ -2073,14 +2227,27 @@ function rebuild(){
 }
 function setLang(l){
   LANG=l;lsSet('lang',l);
-  try{history.replaceState(null,'','#'+l);}catch(e){try{location.hash=l;}catch(e2){}}
+  writeHash();
   renderStatic();renderHeader();renderPlan();renderNow();markPlan();
 }
+function writeHash(){const h=(INST==='bass'?'bass-':'')+LANG;try{history.replaceState(null,'','#'+h);}catch(e){try{location.hash=h;}catch(e2){}}}
+// смена инструмента: другой набор упражнений, план дня строится заново
+function setInst(i){
+  if(i!=='bass')i='guitar';if(i===INST)return;
+  INST=i;lsSet('inst',i);applyInst();writeHash();plStop();
+  renderStatic();rebuild();
+}
+// число струн и техника меняют только таб и указания текущего упражнения, не план и не таймер
+function setStrings(n){if(![4,5,6].includes(n)||n===STRINGS)return;STRINGS=n;lsSet('strings',n);plStop();renderStatic();renderNow();}
+function setHand(h){h=h==='pick'?'pick':'fingers';if(h===HAND)return;HAND=h;Pl.hand=h;lsSet('hand',h);plStop();renderStatic();renderNow();}
 let toastT=null;
 function toast(msg){let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);}el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2200);}
 
-document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if((h==='en'||h==='ru')&&h!==LANG)setLang(h);});
+document.querySelectorAll('.lang button[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+window.addEventListener('hashchange',()=>{const h=hashWords();const i=h.includes('bass')?'bass':'guitar';if(i!==INST)setInst(i);const l=h.includes('en')?'en':h.includes('ru')?'ru':LANG;if(l!==LANG)setLang(l);});
+document.querySelectorAll('#instSw button').forEach(b=>b.onclick=()=>setInst(b.dataset.inst));
+$('strChips').addEventListener('click',e=>{const b=e.target.closest('button[data-str]');if(b)setStrings(+b.dataset.str);});
+$('handChips').addEventListener('click',e=>{const b=e.target.closest('button[data-hand]');if(b)setHand(b.dataset.hand);});
 $('timeChips').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;st.T=+b.dataset.t;lsSet('time',st.T);rebuild();});
 $('prevDay').onclick=()=>{st.i--;rebuild();};
 $('nextDay').onclick=()=>{st.i++;rebuild();};
@@ -2122,7 +2289,7 @@ $('mTap').onclick=()=>{const tm=performance.now();taps=taps.filter(x=>tm-x<2500)
 
 $('shareBtn').onclick=()=>{
   const {segs,d,T}=st.plan;const r=riffText(st.plan.riff);
-  const lines=[L('Гриф · тренировка дня · ','Grif · daily workout · ')+dateText(d.date),L('Неделя ','Week ')+(d.week+1)+' ('+PH(d.week).name+') · '+L('фокус: ','focus: ')+GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')+' · '+L('лад: ','scale: ')+matName(d.material),L('Время: ','Time: ')+timeLabel(T),''];
+  const lines=[L('Гриф · тренировка дня · ','Grif · daily workout · ')+GB('',L('бас · ','bass · '))+dateText(d.date),L('Неделя ','Week ')+(d.week+1)+' ('+PH(d.week).name+') · '+L('фокус: ','focus: ')+GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')+' · '+L('лад: ','scale: ')+matName(d.material),L('Время: ','Time: ')+timeLabel(T),''];
   segs.forEach(s=>lines.push(fmtStart(s.start)+'  '+KIND(s.kind)+': '+segTitle(s,d)+' ('+s.min+L(' мин',' min')+')'));
   lines.push('',L('Рифф дня: ','Riff of the day: ')+r.meter+', '+r.material+', '+r.tech.toLowerCase()+', '+L('условие: ','rule: ')+r.rule+'.');
   const text=lines.join('\n');
@@ -2131,10 +2298,13 @@ $('shareBtn').onclick=()=>{
   try{navigator.clipboard.writeText(text).then(()=>{box.hidden=true;toast(L('Тренировка скопирована','Workout copied'));},fallback);}catch(e){fallback();}
 };
 
+applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl};
+window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+// активные наборы данных меняются вместе с инструментом
+['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND})[k]}));
 })();
 </script>
 
