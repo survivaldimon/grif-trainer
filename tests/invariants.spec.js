@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl'];
 // Среда, 28 октября 2026: dayIndex = −5, вводная неделя. Дата зафиксирована, чтобы тесты не зависели от сегодняшнего дня.
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 
@@ -89,7 +89,15 @@ test('EXEN покрывает EX', async ({ page }) => {
         const l = typeof e === 'string' ? e : e && e.l;
         if (!l) errs.push(`${id}.v${k}: нет EN l`);
         if (v.note && !(e && typeof e === 'object' && e.note)) errs.push(`${id}.v${k}: нет EN note`);
+        // уровни: у варианта столько же уровней, сколько у упражнения, у каждого свой таб
+        const nl = EX[id].lvl ? EX[id].lvl.length : 0;
+        if (v.lv && v.lv.length !== nl) errs.push(`${id}.v${k}: уровней ${v.lv.length}, у упражнения ${nl}`);
+        if (v.lv) v.lv.forEach((x, j) => { if (!x || !x.t || !x.t.length) errs.push(`${id}.v${k}.lv${j + 1}: нет таба`); });
       });
+      const rl = EX[id].lvl || [], el = en.lvl || [];
+      if (rl.length !== el.length) errs.push(`${id}: уровней RU ${rl.length}, EN ${el.length}`);
+      if (rl.length && (rl.length < 3 || rl.length > 5)) errs.push(`${id}: уровней ${rl.length}, нужно 3–5`);
+      rl.forEach((x, j) => { if (!x || !el[j]) errs.push(`${id}.lvl${j + 1}: пустая подпись`); });
     }
     return errs;
   });
@@ -144,15 +152,18 @@ test('табы: стандартный строй, 6 струн, коррект�
         if (/NaN|undefined|Infinity/.test(svg.outerHTML)) errs.push(`${where}: NaN в SVG`);
       });
     };
-    for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => checkSystems(`${id}.v${k}`, v.t, v.sub || ex.sub, v.meter));
+    for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => {
+      if (v.t) checkSystems(`${id}.v${k}`, v.t, v.sub || ex.sub, v.meter);
+      (v.lv || []).forEach((x, j) => checkSystems(`${id}.v${k}.lv${j + 1}`, x.t, x.sub || v.sub || ex.sub, x.meter || v.meter));
+    });
     G.TESTS.forEach(t => checkSystems(t.id, t.t, t.sub));
     // gen-упражнения зависят от дня и лада: проходим все 6 ладов и все перестановки
     for (let i = -7; i <= 168; i++) {
       const d = G.dayInfo(i);
-      for (const id of ['B4', 'A21', 'L24', 'L28']) {
-        const r = G.resolveEx({ id }, d);
-        if (!r || !r.v) { errs.push(`${id} day ${i}: нет варианта`); continue; }
-        checkSystems(`${id} day ${i}`, r.v.t, r.sub, r.meter);
+      for (const id of ['B4', 'A21', 'L24', 'L28']) for (let lv = 1; lv <= G.EX[id].lvl.length; lv++) {
+        const r = G.resolveEx({ id }, d, lv);
+        if (!r || !r.v) { errs.push(`${id} day ${i} lv${lv}: нет варианта`); continue; }
+        checkSystems(`${id} day ${i} lv${lv}`, r.v.t, r.sub, r.meter);
       }
     }
     return errs.slice(0, 30);
@@ -207,6 +218,7 @@ test('EN: данные без кириллицы', async ({ page }) => {
         segs.forEach(s => {
           if (!s.id || s.id === 'TESTS') return;
           for (const f of ['name', 'goal', 'how', 'tip']) chk(`${s.id}.${f}`, G.X(s.id, f));
+          (G.X(s.id, 'lvl') || []).forEach((x, j) => chk(`${s.id}.lvl${j + 1}`, x));
           const r = G.resolveEx(s, d);
           if (r && r.v) { chk(`${s.id} day ${i} label`, r.v.l); chk(`${s.id} day ${i} note`, r.v.note); }
         });

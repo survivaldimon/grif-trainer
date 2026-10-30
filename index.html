@@ -117,6 +117,12 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tabft{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:6px 10px;border-top:1px solid var(--line)}
 .tplay{padding:4px 12px;font-size:13px}
 .tplay[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.lvl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.lvl .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lvlb{display:flex;gap:4px}
+.lvlb button{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:34px;padding:4px 10px;font-family:var(--f-mono);font-size:14px}
+.lvlb button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.lvld{font-size:13px}
 .tloop{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .tb text{font-family:var(--f-mono)}
 .tb .ln{stroke:var(--muted);stroke-opacity:.45}
@@ -526,10 +532,24 @@ function npsTokens(mat,mode){
   const tk=(n,dir)=>{if(mode!=='legato'||n.j===(dir==='up'?0:2))return n.s+n.f;return n.s+(dir==='up'?'h':'p')+n.f;};
   return [up.map(n=>tk(n,'up')).join(' '),down.map(n=>tk(n,'down')).join(' ')];
 }
+// Группы по size соседних ступеней лада на одной струне, вверх; не больше 8 групп.
+function stringGroups(mat,str,size){
+  const fr=[];for(let f=0;f<=19;f++){if(mat.pcs.includes(mod(OPEN[str]+f,12)))fr.push(f);}
+  const groups=[];for(let g=0;g+size-1<fr.length&&groups.length<8;g++)groups.push(fr.slice(g,g+size));
+  return groups;
+}
+// tech(k) — техника k-й ноты группы ('' — медиатором).
+const groupsUp=(str,gs,tech)=>gs.map(g=>g.map((f,k)=>str+(tech?tech(k,'up'):'')+f).join(' ')).join(' ');
+const groupsDown=(str,gs,tech)=>gs.slice().reverse().map(g=>g.slice().reverse().map((f,k)=>str+(tech?tech(k,'down'):'')+f).join(' ')).join(' ');
 function oneStringSeq(mat){
-  const fr=[];for(let f=0;f<=19;f++){if(mat.pcs.includes(mod(64+f,12)))fr.push(f);}
-  const groups=[];for(let g=0;g+2<fr.length&&groups.length<8;g++)groups.push([fr[g],fr[g+1],fr[g+2]]);
-  return [groups.map(g=>g.map(f=>'e'+f).join(' ')).join(' '),groups.slice().reverse().map(g=>g.slice().reverse().map(f=>'e'+f).join(' ')).join(' ')];
+  const gs=stringGroups(mat,'e',3);
+  return [groupsUp('e',gs),groupsDown('e',gs)];
+}
+// Гамма по 3 ноты на струну на струнах [a,b): ноты вверх и вниз; legato — медиатором только первая нота фразы на струне, nowhere — и её хаммером.
+function npsRange(mat,a,b,mode){
+  const up=threeNps(mat).filter(n=>{const k=LOW_TO_HIGH.indexOf(n.s);return k>=a&&k<b;}),down=up.slice().reverse();
+  const tk=(n,dir)=>{const first=n.j===(dir==='up'?0:2);if(mode==='pick'||(first&&mode==='legato'))return n.s+n.f;if(first)return n.s+'h'+n.f;return n.s+(dir==='up'?'h':'p')+n.f;};
+  return {up:up.map(n=>tk(n,'up')),down:down.map(n=>tk(n,'down'))};
 }
 const PERMS=(function(){const r=[];const p=(a,c)=>{if(!a.length){r.push(c);return;}a.forEach((x,i)=>p(a.filter((_,j)=>j!==i),c.concat(x)));};p([1,2,3,4],[]);return r;})();
 const PAIRS=[[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]];
@@ -555,7 +575,7 @@ B3:{n:3,name:'Перескок через струну',goal:'Точность �
   {l:'G и e',t:[R('G14 e12',8)]},
   {l:'По две ноты',t:[J(R('G12 G14 e12 e15',2),'|',R('e15 e12 G14 G12',2))]},
   {l:'D и B',t:[R('D14 B13',8)]}]},
-B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальца и медиатора.',how:'Альтернейт, шестнадцатые. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. Вниз по струнам — на лад выше.',tip:'Палец ставится на лад чуть раньше удара медиатора, а не одновременно.',sub:4,gen:true},
+B4:{n:4,name:'Синхронизация: хроматика',goal:'Точное совпадение пальца и медиатора.',how:'Альтернейт, шестнадцатые. Порядок пальцев меняется каждый день — сегодняшний указан в варианте. На обратном пути позиция на лад выше.',tip:'Палец ставится на лад чуть раньше удара медиатора, а не одновременно.',sub:4,gen:true,lvl:['Три струны','Шесть струн','Сдвиг на лад на каждой струне','Перескок через струну']},
 B5:{n:5,name:'Глушение',goal:'Тишина везде, где не играет нота.',how:'Перегруз. Точка в табе — пауза. Ребро правой ладони глушит басы, свободные пальцы левой лежат на неиграющих струнах.',tip:'Проверка: остановись на любой паузе — должно быть тихо, без гула и свиста.',sub:2,v:[
   {l:'Палм-мьют и открытые ноты',t:[J('E0m E0m D7 . E0m E0m G7 .','|','E0m E0m D7 . E0m G9 D7 .')],note:'E — палм-мьют, верхние ноты открыто.'},
   {l:'Перескоки под перегрузом',t:[J('A7 . G9 . A7 . e7 .','|','A5 . G7 . A5 . e5 .')]},
@@ -628,7 +648,7 @@ A20:{n:20,name:'Перекат пальца',goal:'Ноты одного лад�
   {l:'Две струны',t:[R('B12 e12',8)]},
   {l:'Три струны',t:[R('G12 B12 e12 B12',4)]},
   {l:'Перекат в свипе',sub:6,t:[J('G12 B12 e10 eh15 ep10 B12','|','G12 B12 e10 eh15 ep10 B12')]}]},
-A21:{n:21,name:'Экономный пикинг',goal:'Гамма по 3 ноты на струну экономно.',how:'На новой струне медиатор продолжает движение в ту же сторону. Вверх по гамме: вниз-вверх-вниз, переход на новую струну — снова вниз.',tip:'Это не свип: каждая нота звучит отдельно и ровно.',sub:6,gen:true},
+A21:{n:21,name:'Экономный пикинг',goal:'Гамма по 3 ноты на струну экономно.',how:'На новой струне медиатор продолжает движение в ту же сторону. Вверх по гамме: вниз-вверх-вниз, переход на новую струну — снова вниз.',tip:'Это не свип: каждая нота звучит отдельно и ровно.',sub:6,gen:true,lvl:['Три нижние струны','Шесть струн','Пары струн туда и обратно','Секвенция четвёрками']},
 A22:{n:22,name:'Арпеджио альтернейтом',goal:'Широкие интервалы строгим пикингом.',how:'Две ноты на струну с перескоком через струну, строгий альтернейт. Звучит как арпеджио, играется пикингом.',tip:'Перескок — минимальная дуга, медиатор едва поднимается над пропущенной струной.',sub:6,v:[
   {l:'Am',t:[J('A12 A15 G14 G17 e12 e17','|','e17 e12 G17 G14 A15 A12')]},
   {l:'Em',t:[J('A7 A10 G9 G12 e7 e12','|','e12 e7 G12 G9 A10 A7')]},
@@ -647,7 +667,7 @@ A39:{n:39,name:'Педальный альтернейт',goal:'Мелодия в
   {l:'Тройки с педалью',sub:6,t:[J('e12 e13 e15 e12 e13 e15 e12 e15 e17 e12 e15 e17 e12 e17 e15 e12 e17 e15 e12 e15 e13 e12 e15 e13')]}]},
 
 /* ---- левая рука ---- */
-L24:{n:24,name:'Легато',goal:'Ровные хаммеры и пулл-оффы.',how:'Первая система — трель пары пальцев дня. Вторая — гамма цикла по 3 ноты на струну: медиатором только первая нота на струне.',tip:'Громкость хаммера и пулл-оффа как у ноты медиатором. Пулл-офф — чуть вниз, а не просто снять палец.',sub:6,gen:true},
+L24:{n:24,name:'Легато',goal:'Ровные хаммеры и пулл-оффы.',how:'Первая система — трель пары пальцев дня. Дальше лад цикла легато: медиатором только первая нота на струне, а на третьем уровне — вообще без медиатора.',tip:'Громкость хаммера и пулл-оффа как у ноты медиатором. Пулл-офф — чуть вниз, а не просто снять палец.',sub:6,gen:true,lvl:['Трель и гамма на трёх струнах','Трель и гамма на шести струнах','Трель секстолями, гамма без медиатора','Трель секстолями, смена позиций на струне e']},
 L25:{n:25,name:'Удар пальцем без медиатора',goal:'Сила и точность каждого пальца.',how:'Правая рука не играет: каждая нота — хаммер, включая первую на новой струне.',tip:'Первая нота на струне должна звучать так же громко, как остальные.',sub:3,v:[
   {l:'Вниз по струнам',t:[J('eh12 eh15 eh17 Bh13 Bh15 Bh17 Gh12 Gh14 Gh16')]},
   {l:'Вверх по струнам',t:[J('Gh12 Gh14 Gh16 Bh13 Bh15 Bh17 eh12 eh13 eh15')]},
@@ -660,7 +680,7 @@ L27:{n:27,name:'Независимость пальцев',goal:'Каждый п
   {l:'Паук',t:[J('E9 A10 E11 A12','|','A9 D10 A11 D12','|','D9 G10 D11 G12','|','G9 B10 G11 B12','|','B9 e10 B11 e12')]},
   {l:'Паук 1-3 / 2-4',t:[J('E9 A11 E10 A12','|','A9 D11 A10 D12','|','D9 G11 D10 G12','|','G9 B11 G10 B12','|','B9 e11 B10 e12')]},
   {l:'Мизинец отдельно',t:[R('G14 Gh15 Gp14 Gh15',4)],note:'Пальцы 1 и 2 всё время прижаты на 12 и 13 ладу. Трель играют только 3 и 4.'}]},
-L28:{n:28,name:'Смена позиций',goal:'Передвижение по грифу без пауз.',how:'Секвенция по 3 ноты на одной струне в ладу цикла. Каждая группа начинается на следующей ступени: рука смещается без разрыва звука.',tip:'Смотри на точку назначения до сдвига, а не во время.',sub:3,gen:true},
+L28:{n:28,name:'Смена позиций',goal:'Передвижение по грифу без пауз.',how:'Секвенция по 3–4 ноты на одной струне в ладу цикла. Каждая группа начинается на следующей ступени: рука смещается без разрыва звука.',tip:'Смотри на точку назначения до сдвига, а не во время.',sub:3,gen:true,lvl:['Четыре группы вверх','Восемь групп вверх и вниз','Группы по 4 ноты','Две струны: вверх по B, вниз по e']},
 L29:{n:29,name:'Теппинг',goal:'Ровный теппинг под перегрузом.',how:'Тэп средним пальцем правой руки, медиатор зажат в ладони. Пулл-офф с тэпа — чуть вниз к полу.',tip:'Левая рука глушит неиграющие струны, иначе под перегрузом всё гудит.',sub:3,v:[
   {l:'Am – F – G – E',t:[J(R('et17 ep8 eh12',2),'|',R('et13 ep5 eh8',2),'|',R('et15 ep7 eh10',2),'|',R('et16 ep7 eh12',2))]},
   {l:'Два тэпающих пальца',sub:6,t:[R('e8 eh12 et17 et20 ep17 ep12',2)],note:'17 лад — средний палец, 20 лад — безымянный.'},
@@ -709,7 +729,7 @@ W3:{name:'Slow sweeps and trills',goal:'Prepare both hands for fast work.',how:'
 B1:{name:'Single-string tremolo',goal:'Speed and evenness of alternate picking.',how:'Strict down-up, sixteenth notes. Every third set as sextuplets, then thirty-seconds at half tempo.',tip:'Move from the wrist and keep the pick shallow in the string. Downstrokes and upstrokes equally loud.',v:['Open string','Moving across frets','A string']},
 B2:{name:'Alternate picking across strings',goal:'Clean pick transitions between strings.',how:'Strict alternate picking, sixteenths. An odd number of notes per string makes you alternate inside and outside string changes.',tip:'Use the smallest possible arc between strings. If you catch the neighbouring string, drop the tempo.',v:['3 notes per string, two strings',{l:'Inside and outside',note:'Start half of your sets with a downstroke on G: that is an inside change, with the pick between the strings. Start the other half with an upstroke: an outside change.'},'Three strings']},
 B3:{name:'String skipping',goal:'Picking-hand accuracy over larger distances.',how:'Strict alternate picking, the skipped string stays silent. Sixteenths.',tip:'Lift the pick just enough to clear the string.',v:['G and e','Two notes each','D and B']},
-B4:{name:'Sync: chromatics',goal:'Finger and pick land together.',how:'Alternate picking, sixteenths. The finger order changes every day; today’s is shown in the variant. On the way back down, shift one fret up.',tip:'The finger lands on the fret slightly before the pick hits, not at the same moment.'},
+B4:{name:'Sync: chromatics',goal:'Finger and pick land together.',how:'Alternate picking, sixteenths. The finger order changes every day; today’s is shown in the variant. On the way back, the position is one fret higher.',tip:'The finger lands on the fret slightly before the pick hits, not at the same moment.',lvl:['Three strings','Six strings','Shift one fret on every string','String skipping']},
 B5:{name:'Muting',goal:'Silence everywhere a note is not played.',how:'High gain. A dot in the tab is a rest. The edge of the picking hand mutes the low strings, free fretting-hand fingers rest on unused strings.',tip:'Test: stop on any rest. It should be silent, with no hum or squeal.',v:[{l:'Palm mute and open notes',note:'E palm-muted, upper notes open.'},'Skips under high gain','Chord and silence']},
 R6:{name:'Downpicking',goal:'Downstroke speed and endurance.',how:'Downstrokes only, eighth notes. Find the tempo you can hold for 60 seconds straight and apply the week protocol to it.',tip:'No force needed. Short motion, the pick bounces off the string. Shoulder and neck stay relaxed.',v:['Moving chugs','Power chords','Across strings']},
 R7:{name:'Gallops',goal:'A crisp gallop at any tempo.',how:'Sixteenth subdivision. Choose one picking pattern (alternate or down-down-up) and keep it for the whole set.',tip:'The long note of the gallop does not drop out: it is as loud as the short ones.',v:[{l:'Forward gallop',note:'Each group of three: one eighth, then two sixteenths.'},{l:'Reverse gallop',note:'Each group of three: two sixteenths, then one eighth.'},{l:'Chord gallops',note:'Alternate forward and reverse gallops every bar.'}]},
@@ -727,16 +747,16 @@ A17:{name:'5–6 string sweep',goal:'A long sweep in one motion.',how:'12 notes 
 A18:{name:'Diminished and m7b5',goal:'The neoclassical arpeggios of the genre.',how:'The diminished seventh is symmetrical: the same shape repeats every 3 frets.',tip:'Play the shape as a chord first and listen. Then sweep it slowly, one note at a time.',v:['dim7 up in minor thirds','Bm7b5 – E – Am','dim7 on 4 strings']},
 A19:{name:'Sweep with tapping and legato',goal:'Extend the arpeggio beyond one position.',how:'t is a picking-hand tap, h a hammer-on, p a pull-off. Keep the pick in your hand and tap with the middle finger.',tip:'The joint between sweep and tap is the weak spot. Drill it on its own: last sweep note, tap, pull-off.',v:['Am, 5 strings','Am7, 3 strings','Dm, 5 strings']},
 A20:{name:'Finger roll',goal:'Same-fret notes on adjacent strings without ringing.',how:'One finger covers two or three strings: roll the fingertip so only the played note sounds.',tip:'Check on a clean tone: it must not ring like a chord.',v:['Two strings','Three strings','Roll inside a sweep']},
-A21:{name:'Economy picking',goal:'A three-note-per-string scale, economy style.',how:'On a new string the pick keeps moving in the same direction. Going up the scale: down-up-down, and the move to the next string is another down.',tip:'This is not a sweep: every note sounds separately and evenly.'},
+A21:{name:'Economy picking',goal:'A three-note-per-string scale, economy style.',how:'On a new string the pick keeps moving in the same direction. Going up the scale: down-up-down, and the move to the next string is another down.',tip:'This is not a sweep: every note sounds separately and evenly.',lvl:['Three low strings','Six strings','String pairs up and back','Sequence in fours']},
 A22:{name:'Arpeggios with alternate picking',goal:'Wide intervals with strict picking.',how:'Two notes per string, skipping a string, strict alternate picking. It sounds like an arpeggio but is played as a picking line.',tip:'Skip with the smallest arc: the pick barely clears the skipped string.',v:['Am','Em','Dm']},
 A23:{name:'Hybrid picking',goal:'Pick and fingers together.',how:'Lowest note with the pick, upper notes with the middle and ring fingers. The hand position does not change.',tip:'Pluck with the fingertip pad. Fingers and pick equally loud.',v:['Am','Am across strings','Em with open string']},
 A38:{name:'Four-string sweep',goal:'A mid-length sweep on an even sixteenth grid.',how:'Strings D–G–B–e: shorter than a five-string sweep, longer than a three-string one. Sixteenths: one downward motion going up, one upward motion going down, hammer-on and pull-off at the top.',tip:'The low note on D rings as clearly as the top ones: it is the one most often swallowed.',v:['Am','Em – C',{l:'Dm in sextuplets',note:'No legato: one downward motion going up, one upward motion going down. Three strings at fret 10: roll one finger.'}]},
 A39:{name:'Pedal-point picking',goal:'A melody around a repeating note with strict picking.',how:'Strict alternate picking. The pedal is the note the phrase keeps returning to; only the other note changes. It sounds like a melody or an arpeggio but rests on the picking hand.',tip:'The pedal finger stays on its fret: only the melody fingers move.',v:['Pedal on top',{l:'Pedal on the next string',note:'Pedal B12 with the index finger, the melody on e with the other fingers.'},'Triplets with a pedal']},
-L24:{name:'Legato',goal:'Even hammer-ons and pull-offs.',how:'First system: a trill with today’s finger pair. Second: the cycle scale, three notes per string, picking only the first note on each string.',tip:'Hammer-ons and pull-offs as loud as picked notes. Pull slightly downward instead of just lifting the finger.'},
+L24:{name:'Legato',goal:'Even hammer-ons and pull-offs.',how:'First system: a trill with today’s finger pair. Then the cycle scale in legato: pick only the first note on each string, and on level 3 do not pick at all.',tip:'Hammer-ons and pull-offs as loud as picked notes. Pull slightly downward instead of just lifting the finger.',lvl:['Trill and a three-string scale','Trill and a six-string scale','Sextuplet trill, scale without the pick','Sextuplet trill, position shifts on the e string']},
 L25:{name:'Hammer-on from nowhere',goal:'Strength and accuracy of every finger.',how:'The picking hand rests: every note is a hammer-on, including the first one on a new string.',tip:'The first note on a string should be as loud as the rest.',v:['Down the strings','Up the strings','Trills without the pick']},
 L26:{name:'Stretches',goal:'A wide position without tension.',how:'Fingers 1-2-4 or 1-3-4. Thumb lower behind the neck, elbow closer to the body.',tip:'If it pulls or hurts, move the exercise higher up the neck. Stretching is not a strength exercise.',v:['5 frets (12–16)','6 frets (12–17)','7 frets (12–18)']},
 L27:{name:'Finger independence',goal:'Each finger moves on its own.',how:'Each finger owns its fret. Only the finger whose note is next moves.',tip:'Idle fingers hover low over the strings. The lower, the faster.',v:['Spider','Spider 1-3 / 2-4',{l:'Pinky alone',note:'Fingers 1 and 2 stay pressed on frets 12 and 13 the whole time. Only 3 and 4 play the trill.'}]},
-L28:{name:'Position shifts',goal:'Moving along the neck without gaps.',how:'A three-note sequence on one string in the cycle scale. Each group starts one step higher: the hand shifts without breaking the sound.',tip:'Look at the target before the shift, not during it.'},
+L28:{name:'Position shifts',goal:'Moving along the neck without gaps.',how:'A three- or four-note sequence on one string in the cycle scale. Each group starts one step higher: the hand shifts without breaking the sound.',tip:'Look at the target before the shift, not during it.',lvl:['Four groups up','Eight groups up and down','Groups of four notes','Two strings: up on B, down on e']},
 L29:{name:'Tapping',goal:'Even tapping under high gain.',how:'Tap with the picking-hand middle finger, pick tucked into the palm. Pull off from the tap slightly toward the floor.',tip:'The fretting hand mutes unused strings, otherwise everything hums under gain.',v:['Am – F – G – E',{l:'Two tapping fingers',note:'Fret 17 with the middle finger, fret 20 with the ring finger.'},'Two strings']},
 L30:{name:'Chord shape changes',goal:'Instant shape changes.',how:'Change shape exactly on the beat, with no gap between chords. Fingers land on the new shape together.',tip:'Picture the next shape in advance; do not look at the neck at the moment of the change.',v:['Octave, tritone, fifth','Same at fret 7','Tremolo with changes']},
 L31:{name:'Vibrato and bends',goal:'Exact pitch and a living sound in solos.',how:'b is a bend, r a release, ~ vibrato. Bend with 2–3 fingers together; the motion comes from the wrist.',tip:'Check the pitch against a reference note. An out-of-tune bend is more obvious than a speed mistake.',v:[{l:'Bends to pitch',note:'Play the target note first (fret 17), then bend fret 15 up to the same pitch.'},{l:'Vibrato in time',note:'Vibrato in steady eighths, then triplets, then sixteenths with the metronome.'},'Half, whole, one and a half']},
@@ -808,7 +828,7 @@ const TIMES=[15,30,45,60,90,120,180,240,300];
 
 function dayInfo(i){
   const cycle=Math.floor(i/28), dic=mod(i,28), week=Math.floor(dic/7), dow=dic%7;
-  return {i,cycle,week,dow,focus:FOCUS_BY_DOW[dow],occ:(dow===6||dow<3)?0:1,gweek:Math.floor(i/7),pool:i<0?0:mod(cycle,3),material:i<0?MATERIALS[0]:MATERIALS[mod(cycle,6)],isTest:week===3&&dow===6,pre:i<0,date:dateOfIndex(i)};
+  return {i,cycle,week,dow,focus:FOCUS_BY_DOW[dow],occ:(dow===6||dow<3)?0:1,gweek:Math.floor(i/7),pool:i<0?0:mod(cycle,6),material:i<0?MATERIALS[0]:MATERIALS[mod(cycle,6)],isTest:week===3&&dow===6,pre:i<0,date:dateOfIndex(i)};
 }
 
 const RIFF_METERS={ru:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 поверх 4/4'],en:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 over 4/4']};
@@ -855,7 +875,7 @@ function buildSession(i,T){
     segs.push(...listSegs('maint',[...new Set(ids)],b.M));
   }
   if(b.C>0){
-    if(d.focus==='C'){const k=clamp(Math.floor(b.C/10),1,2);const vs=[mod(d.pool+1,3),mod(d.pool+2,3)].slice(0,k);const mins=splitInt(b.C,vs.map(()=>1));vs.forEach((v,j)=>segs.push(seg('combo',mins[j],{id:'C36',variant:v})));}
+    if(d.focus==='C'){const k=clamp(Math.floor(b.C/10),1,2);const nv=EX.C36.v.length,vs=[mod(d.pool+1,nv),mod(d.pool+2,nv)].slice(0,k);const mins=splitInt(b.C,vs.map(()=>1));vs.forEach((v,j)=>segs.push(seg('combo',mins[j],{id:'C36',variant:v})));}
     else{const k=clamp(Math.floor(b.C/10),1,3);segs.push(...listSegs('combo',rot(GROUPS.C,i).slice(0,k),b.C));}
   }
   if(b.Mu>0){
@@ -884,20 +904,59 @@ function buildSession(i,T){
 }
 
 /* ================= разрешение упражнения ================= */
-function resolveEx(s,d){
-  const ex=EX[s.id];if(!ex)return null;
-  let v=null;
-  if(ex.gen){
-    const mn=matName(d.material);
-    if(s.id==='B4'){const p=PERMS[mod(d.i,24)];const up=[],dn=[];LOW_TO_HIGH.forEach(st=>p.forEach(f=>up.push(st+(8+f))));LOW_TO_HIGH.slice().reverse().forEach(st=>p.forEach(f=>dn.push(st+(9+f))));v={l:L('Порядок пальцев дня: ','Today’s finger order: ')+p.join('-'),t:[up.join(' '),dn.join(' ')]};}
-    else if(s.id==='A21'){v={l:mn+L(', 3 ноты на струну',', 3 notes per string'),t:npsTokens(d.material,'pick')};}
-    else if(s.id==='L24'){const pr=PAIRS[mod(d.i,6)];const a=11+pr[0],b2=11+pr[1];v={l:L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn,t:[J('/4 G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2)].concat(npsTokens(d.material,'legato'))};}
-    else if(s.id==='L28'){v={l:mn+L(' на струне e',' on the e string'),t:oneStringSeq(d.material)};}
-  }else if(ex.v){
-    const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
-    v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:raw.t,sub:raw.sub,meter:raw.meter};
+// Уровень сложности: свой у каждого упражнения, по умолчанию 2, хранится в grif.lvl. Уровень меняет материал, а не план дня.
+const LVL_DEF=2;
+let LVS=lsGet('lvl',{});if(!LVS||typeof LVS!=='object')LVS={};
+const lvlCount=id=>(EX[id]&&EX[id].lvl)?EX[id].lvl.length:0;
+function getLvl(id){const n=lvlCount(id);return n?clamp(Math.round(+LVS[id])||LVL_DEF,1,n):0;}
+function setLvl(id,k){LVS[id]=k;lsSet('lvl',LVS);}
+// Упражнения с gen:true: материал по дню и ладу цикла, уровень lv (1…4) меняет сам рисунок.
+function genEx(id,d,lv){
+  const mn=matName(d.material),mat=d.material;
+  if(id==='B4'){
+    const p=PERMS[mod(d.i,24)],run=(strs,base)=>strs.map((st,k)=>p.map(f=>st+(base(k)+f)).join(' ')).join(' ');
+    const up=LOW_TO_HIGH,dn=LOW_TO_HIGH.slice().reverse(),skip=['E','D','A','G','D','B','G','e'];
+    const t=lv===1?[run(up.slice(0,3),()=>8),run(dn.slice(3),()=>9)]
+      :lv===3?[run(up,k=>7+k),run(dn,k=>12-k)]
+      :lv===4?[run(skip,()=>8),run(skip.slice().reverse(),()=>9)]
+      :[run(up,()=>8),run(dn,()=>9)];
+    return {l:L('Порядок пальцев дня: ','Today’s finger order: ')+p.join('-'),t};
   }
-  return {ex,id:s.id,v,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
+  if(id==='A21'){
+    const l=mn+L(', 3 ноты на струну',', 3 notes per string');
+    if(lv===1){const x=npsRange(mat,0,3,'pick');return {l,t:[x.up.concat(x.down).join(' ')]};}
+    if(lv===3){const cell=k=>{const x=npsRange(mat,k,k+2,'pick');return x.up.concat(x.down).join(' ');};return {l,t:[[0,1,2].map(cell).join(' '),[3,4].map(cell).join(' ')]};}
+    if(lv===4){const up=npsRange(mat,0,6,'pick').up,g=[];for(let k=0;k<12;k++)g.push(up.slice(k,k+4).join(' '));return {l,sub:4,t:[g.slice(0,4).join(' '),g.slice(4,8).join(' '),g.slice(8).join(' ')]};}
+    return {l,t:npsTokens(mat,'pick')};
+  }
+  if(id==='L24'){
+    const pr=PAIRS[mod(d.i,6)],a=11+pr[0],b2=11+pr[1],l=L('Трель ','Trill ')+pr.join('-')+L(' и ',' and ')+mn;
+    const tr16=J('/4 G'+a,R('Gh'+b2+' Gp'+a,3),'Gh'+b2),tr6=J('G'+a,R('Gh'+b2+' Gp'+a,5),'Gh'+b2);
+    if(lv===1){const x=npsRange(mat,0,3,'legato');return {l,t:[tr16,x.up.concat(x.down).join(' ')]};}
+    if(lv===3){const x=npsRange(mat,0,6,'nowhere');return {l,t:[tr6,x.up.join(' '),x.down.join(' ')]};}
+    if(lv===4){const gs=stringGroups(mat,'e',3),tc=(k,dir)=>k?(dir==='up'?'h':'p'):'';return {l:L('Трель ','Trill ')+pr.join('-')+L(', ',', ')+mn+L(' на струне e',' on the e string'),t:[tr6,groupsUp('e',gs,tc),groupsDown('e',gs,tc)]};}
+    return {l,t:[tr16].concat(npsTokens(mat,'legato'))};
+  }
+  if(id==='L28'){
+    if(lv===1){const gs=stringGroups(mat,'e',3).slice(0,4);return {l:mn+L(' на струне e',' on the e string'),t:[groupsUp('e',gs)]};}
+    if(lv===3){const gs=stringGroups(mat,'e',4);return {l:mn+L(' на струне e',' on the e string'),sub:4,t:[groupsUp('e',gs),groupsDown('e',gs)]};}
+    if(lv===4){return {l:mn+L(' на струнах B и e',' on the B and e strings'),t:[groupsUp('B',stringGroups(mat,'B',3)),groupsDown('e',stringGroups(mat,'e',3))]};}
+    return {l:mn+L(' на струне e',' on the e string'),t:oneStringSeq(mat)};
+  }
+  return null;
+}
+// lv — уровень; без него берётся сохранённый для упражнения.
+function resolveEx(s,d,lv){
+  const ex=EX[s.id];if(!ex)return null;
+  const nl=lvlCount(s.id);lv=nl?clamp(lv||getLvl(s.id),1,nl):0;
+  let v=null;
+  if(ex.gen)v=genEx(s.id,d,lv||LVL_DEF);
+  else if(ex.v){
+    const idx=mod(s.variant!=null?s.variant:d.pool,ex.v.length);const raw=ex.v[idx];
+    const e=(lv&&raw.lv)?raw.lv[lv-1]:raw;
+    v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
+  }
+  return {ex,id:s.id,v,lv,nl,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
 }
 const KINDS={ru:{warm:'Разминка',test:'Тесты',base:'База',focus:'Фокус',maint:'Поддержка',combo:'Связки',music:'Музыка',pause:'Пауза'},en:{warm:'Warm-up',test:'Tests',base:'Base',focus:'Focus',maint:'Maintenance',combo:'Combos',music:'Music',pause:'Break'}};
 const KIND=k=>KINDS[LANG][k];
@@ -980,6 +1039,10 @@ function tabHtml(label,systems,sub,meter){
 function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. 7–8 струн: играй на шести верхних.','h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. 7–8 strings: play on the top six.'))+'</p>';}
 function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
 
+function lvlHtml(id,lv,nl){
+  let b='';for(let k=1;k<=nl;k++)b+='<button data-lvl="'+k+'" aria-pressed="'+(k===lv)+'">'+k+'</button>';
+  return '<div class="lvl"><span class="lbl">'+L('Уровень','Level')+'</span><div class="lvlb" role="group" aria-label="'+L('Уровень сложности','Difficulty level')+'">'+b+'</div><span class="lvld">'+esc(X(id,'lvl')[lv-1])+'</span></div>';
+}
 function renderNow(){
   const {segs,d}=st.plan;const s=segs[st.cur];
   const kc='var(--k-'+s.kind+')';
@@ -1005,6 +1068,7 @@ function renderNow(){
     if(s.kind==='maint')h+=stepsHtml(L('Протокол поддержки','Maintenance protocol'),MAINT_STEPS[LANG]);
     else if(s.kind!=='warm'){const ph=PH(d.week);h+=stepsHtml(L('Протокол недели ','Week ')+(d.week+1)+L(': ',' protocol: ')+ph.name,ph.steps);if(s.kind==='combo')h+='<div class="sect"><p class="note">'+esc(COMBO_STEP[LANG])+'</p></div>';}
     h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
+    if(r.nl)h+=lvlHtml(s.id,r.lv,r.nl);
     if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter)+legendHtml();
   }
   $('nowBody').innerHTML=h;
@@ -1310,9 +1374,11 @@ function coachPlan(s,d){
 
 const co={on:true,key:'',iv:null,idx:-1,beep:0};
 const coActive=()=>co.on&&!!co.iv;
+// Смена уровня пересчитывает указания, но не позицию: раскладка подходов от уровня не зависит.
 function coSync(){
-  const key=st.i+'|'+st.T+'|'+st.cur;
-  if(co.key!==key){co.key=key;co.iv=coachPlan(st.plan.segs[st.cur],st.plan.d);co.idx=-1;co.beep=0;}
+  const s=st.plan.segs[st.cur],key=st.i+'|'+st.T+'|'+st.cur,lk=s.id?getLvl(s.id):0;
+  if(co.key!==key){co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;co.beep=0;}
+  else if(co.lk!==lk){co.lk=lk;co.iv=coachPlan(s,st.plan.d);}
 }
 // Где мы внутри сегмента: индекс интервала и сколько секунд до его конца.
 function coPos(){
@@ -1421,8 +1487,21 @@ $('nowBody').addEventListener('click',e=>{
   const sv=e.target.closest('button[data-save]');
   if(sv){const id=sv.dataset.save;const inp=$('ti-'+id);const v=Math.round(+inp.value);if(!v||v<20||v>400){toast(L('Введи темп в bpm, например 140','Enter a tempo in bpm, e.g. 140'));return;}
     const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
-  const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));}
+  const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
+  const lb=e.target.closest('button[data-lvl]');if(lb)changeLvl(+lb.dataset.lvl);
 });
+// Уровень меняется на ходу: таймер и позиция тренера не трогаются, деление и размер метронома — по новому материалу.
+function changeLvl(k){
+  const s=st.plan.segs[st.cur];if(!s.id||!lvlCount(s.id)||k===getLvl(s.id))return;
+  setLvl(s.id,k);
+  if(Pl.on)plStop();
+  renderNow();
+  let x=null;
+  if(coActive()){x=co.iv[coPos().k];if(x.type!=='set')return;}
+  else x=resolveEx(s,st.plan.d);
+  setSub(x.sub);
+  if(x.meter!==Mt.meter){setMeter(x.meter);if(Mt.on){metroStop();metroStart();}}
+}
 document.querySelectorAll('.mbpm button[data-d]').forEach(b=>b.onclick=()=>setBpm(Mt.bpm+(+b.dataset.d)));
 $('bpm').addEventListener('change',e=>setBpm(+e.target.value));
 $('bpmRange').addEventListener('input',e=>setBpm(+e.target.value));
@@ -1449,7 +1528,7 @@ $('shareBtn').onclick=()=>{
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX};
+window.__grif={buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,EX,EXEN,GROUPS,renderTab,parseTab,TESTS,setLang,X,VX,getLvl,st,co};
 })();
 </script>
 

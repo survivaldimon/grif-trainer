@@ -117,6 +117,45 @@ test('тренер: метроном включается на подходе и
   expect(errors).toEqual([]);
 });
 
+test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
+  const errors = await openApp(page, 'en');
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  const ID = 'B4'; // база с генератором: уровни меняют рисунок
+  const k = await page.evaluate(id => window.__grif.st.plan.segs.findIndex(s => s.id === id), ID);
+  await page.locator('#planList li').nth(k).click();
+  await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText('2'); // по умолчанию 2
+  await page.click('#playBtn');
+  await page.click('#coSkip'); // подготовка → подход 1
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
+  const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
+  for (const lv of ['1', '4', '3']) {
+    await page.click(`.lvlb button[data-lvl="${lv}"]`);
+    await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText(lv);
+  }
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(id => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur, running: G.st.running, lvl: G.getLvl(id), ls: localStorage.getItem('grif.lvl') }; }, ID);
+  expect(after.cur).toBe(before.cur);
+  expect(after.idx).toBe(before.idx);
+  expect(after.secs).toEqual(before.secs);
+  expect(after.running).toBe(true);
+  expect(after.remain).toBeLessThan(before.remain);
+  expect(before.remain - after.remain).toBeLessThan(10);
+  expect(after.lvl).toBe(3);
+  expect(JSON.parse(after.ls)).toEqual({ [ID]: 3 });
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  expect(await page.locator('#nowBody .tabbox').innerHTML()).not.toBe(tab0);
+  // выбор запоминается для упражнения: после перезагрузки уровень 3, у других упражнений — по умолчанию
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.__grif);
+  expect(await page.evaluate(id => window.__grif.getLvl(id), ID)).toBe(3);
+  expect(await page.evaluate(() => window.__grif.getLvl('A21'))).toBe(2);
+  expect(errors).toEqual([]);
+});
+
 test('EN: ведение прокликано по всем интервалам без кириллицы', async ({ page }) => {
   test.setTimeout(300000);
   const errors = await openApp(page, 'en');
