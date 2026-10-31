@@ -87,6 +87,8 @@ button{cursor:pointer}
 .cell.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .cell.t .v{color:var(--k-test)}
 
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+#nowBody{display:flex;flex-direction:column;gap:14px;min-width:0}
 .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
 .now{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:14px}
@@ -225,6 +227,35 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
 .coact{display:flex;gap:8px;flex-wrap:wrap}
 .test.cur{border-color:var(--k-test);box-shadow:inset 0 0 0 1px var(--k-test)}
 
+/* широкий экран: слева настройки дня и план, справа «Сейчас» во всю высоту */
+@media (min-width:1200px){
+  .wrap{max-width:1600px;display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);grid-template-areas:"hd hd" "side now" "plan now" "about about";gap:20px 24px;align-items:start}
+  .hd{grid-area:hd}
+  .side{grid-area:side}
+  .grid{display:contents}
+  .now{grid-area:now;max-height:calc(100vh - 24px);overflow:auto}
+  .plan{grid-area:plan}
+  .about{grid-area:about}
+  .cal{grid-template-columns:minmax(0,1fr)}
+  .tchips button{padding:6px 10px}
+  .tabsc{zoom:1.2}
+  #nowBody>.lvl,#nowBody>.tabbox{order:-1}
+  .week .cell{padding:5px 4px}
+  .week .cell .v{font-size:12px;text-overflow:clip}
+  .cell .full{display:none}
+  .cell .short{display:inline}
+}
+@media (min-width:1440px){
+  .now{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:14px 20px;align-content:start;grid-auto-flow:row dense}
+  .now>*{grid-column:1/-1}
+  .now>#nowBody{grid-column:1;grid-row:span 2}
+  .now>.coach,.now>.metro{grid-column:2}
+  .now>.metro{border-top:0;padding-top:0}
+  .clock{font-size:56px}
+}
+@media (min-width:1800px){
+  .tabsc{zoom:1.35}
+}
 @media (max-width:900px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .now{position:static}
@@ -265,6 +296,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
     </div>
   </header>
 
+  <div class="side">
   <div class="meta" id="meta"></div>
   <div id="notice" hidden class="notice"></div>
 
@@ -289,6 +321,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="strip cycle" id="cycleStrip"></div>
     </div>
   </section>
+  </div>
 
   <main class="grid">
     <section class="panel now" id="now" aria-live="polite">
@@ -305,7 +338,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
         <span class="total" id="totalLeft"></span>
       </div>
       <div class="coach" id="coach" hidden></div>
-      <div id="nowBody" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div id="nowBody"></div>
 
       <div class="metro">
         <div class="mtop"><span class="lbl" data-i="metro"></span><span class="mstate" id="mState"></span></div>
