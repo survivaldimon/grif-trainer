@@ -205,3 +205,60 @@ test('бас, EN: план 5 часов на 6 струнах с медиато�
   expect([...bad].map(([w, where]) => `${where}: ${w}`)).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+// Струны, названные в подписи явно (эвристика): «Открытая E», «на струне G», «Октава E–D», «на A и D», «низкая B»;
+// Open E, G string, E and A strings, E–D octave, on A and D, high C. Аккорды (Am), ноты с диезом и «B-бемоль» не считаются.
+const STR = '([BCDEGA])(?![A-Za-z#♭-])';
+const NAMED = [
+  new RegExp(String.raw`(?:[Оо]ткрыт\S*|[Сс]трун\S*|[Оо]ктав\S*|[Гг]лушён\S*|(?:^|\s)на|низк\S*|высок\S*)\s+` + STR + String.raw`(?:\s*(?:–|-|и)\s*` + STR + ')?', 'g'),
+  new RegExp(String.raw`(?:\b[Oo]pen|\b[Oo]n(?: the)?|\b[Mm]uted|\blow|\bhigh)\s+` + STR + String.raw`(?:\s*(?:–|-|and)\s*` + STR + ')?', 'g'),
+  new RegExp(String.raw`\b` + STR + String.raw`(?:\s*(?:–|-|and)\s*` + STR + String.raw`)?\s+(?:strings?|octave)`, 'g')
+];
+const namedStrings = txt => { const out = new Set(); if (txt) NAMED.forEach(re => { for (const m of txt.matchAll(re)) [m[1], m[2]].forEach(x => x && out.add(x)); }); return [...out]; };
+
+test('эвристика подписей: находит названную струну, не путает с аккордами и нотами', () => {
+  const r = ['Открытая E', 'Open E', 'Октава B–A', 'E and A strings', 'Глушение на A и D', 'Muting on A and D', 'Высоко на грифе, струна C', 'низкая B', 'Am и Dm', 'G# → B', 'B и B-бемоль', 'B and B-flat', 'Open string', 'Bends on a bass'].map(t => namedStrings(t).join(''));
+  expect(r).toEqual(['E', 'E', 'BA', 'EA', 'AD', 'AD', 'C', 'B', '', '', '', '', '', '']);
+});
+
+test('подпись и пояснение называют только струны, которые есть в табе выбранной версии', async ({ page }) => {
+  await openApp(page, 'bass-ru');
+  // все варианты и уровни баса на 4, 5 и 6 струнах, RU и EN: текст и струны таба
+  const rows = await page.evaluate(() => {
+    const G = window.__grif, rows = [], d0 = G.dayInfo(0);
+    const strsOf = t => [...new Set(t.join(' ').split(/\s+/).flatMap(tok => tok.split('+')).map(p => (p.match(/^[A-Za-z]/) || [])[0]).filter(Boolean))];
+    for (const n of [4, 5, 6]) {
+      G.setStrings(n);
+      for (const lang of ['ru', 'en']) {
+        G.setLang(lang);
+        for (const [id, ex] of Object.entries(G.EX)) {
+          const nv = ex.gen ? 1 : (ex.v || []).length, nl = (ex.lvl || []).length || 1;
+          for (let k = 0; k < nv; k++) for (let lv = 1; lv <= nl; lv++) {
+            const r = G.resolveEx({ id, kind: 'focus', pick: ex.gen ? undefined : k }, d0, lv);
+            if (r && r.v) rows.push({ where: `${n} струн, ${lang}, ${id}.v${k} lv${lv}`, texts: [r.v.l, r.v.note], have: strsOf(r.v.t) });
+          }
+        }
+      }
+    }
+    return rows;
+  });
+  expect(rows.length).toBeGreaterThan(1000);
+  const errs = [];
+  rows.forEach(r => r.texts.forEach(txt => namedStrings(txt).forEach(x => { if (!r.have.includes(x)) errs.push(`${r.where}: «${txt}» — струны ${x} нет в табе`); })));
+  expect(errs.slice(0, 30)).toEqual([]);
+});
+
+test('подпись l5/l6 и note5/note6 есть в EN', async ({ page }) => {
+  await openApp(page, 'bass-ru');
+  const errs = await page.evaluate(() => {
+    const G = window.__grif, errs = [], CYR = /[Ѐ-ӿ]/;
+    for (const [id, ex] of Object.entries(G.EX_BASS)) (ex.v || []).forEach((v, k) => ['l5', 'l6', 'note5', 'note6'].forEach(f => {
+      if (!v[f]) return;
+      const e = G.EXEN_BASS[id].v[k];
+      if (!(e && typeof e === 'object' && e[f])) errs.push(`${id}.v${k}: нет EN ${f}`);
+      else if (CYR.test(e[f])) errs.push(`${id}.v${k}: кириллица в EN ${f}`);
+    }));
+    return errs;
+  });
+  expect(errs).toEqual([]);
+});
