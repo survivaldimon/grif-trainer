@@ -153,3 +153,50 @@ test('EN в нестандартном строе: план и данные бе
   expect(bad).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test('drop: перенос в тональность drop — открытая нижняя остаётся, остальное на тон ниже', async ({ page }) => {
+  await openApp(page);
+  const r = await page.evaluate(() => {
+    const G = window.__grif, T = G.TUN('guitar@0d'), k = t => { const x = G.dropKey([t], T); return x && x[0]; };
+    return [k('E0 A2 D2'), k('E0m A2+E0:2 D4b6r4~'), k('E0 D3+A1'), k('E0 A1'), k('E0 Ah1'), k('A5 D7'), k('E0 Ax E3')];
+  });
+  expect(r).toEqual(['E0 A0 D0', 'E0m A0+E0:2 D2b4r2~', 'E0 A6+E6', 'E0 E6', null, null, 'E0 Ax E3']);
+});
+
+test('drop: все упражнения играбельны, подписи без «2-й лад», струны подписи есть в табе', async ({ page }) => {
+  await openApp(page);
+  const errs = await page.evaluate(() => {
+    const G = window.__grif, errs = [], d0 = G.dayInfo(0);
+    const strsOf = t => new Set(t.join(' ').split(/\s+/).flatMap(tok => tok.split('+')).map(p => (p.match(/^[A-Za-z]/) || [])[0]).filter(Boolean));
+    let key = 0;
+    for (const [inst, ns] of [['guitar', [6, 7, 8]], ['bass', [4, 5, 6]]]) {
+      G.setInst(inst);
+      for (const n of ns) for (const o of [0, -5]) {
+        G.setStrings(n); G.setTuning(o, true);
+        for (const lang of ['ru', 'en']) {
+          G.setLang(lang);
+          for (const [id, ex] of Object.entries(G.EX)) {
+            const nv = ex.gen ? 1 : (ex.v || []).length, nl = (ex.lvl || []).length || 1;
+            for (let k = 0; k < nv; k++) for (let lv = 1; lv <= nl; lv++) {
+              const r = G.resolveEx({ id, kind: 'focus', pick: ex.gen ? undefined : k }, d0, lv);
+              if (!r || !r.v || !r.v.t) continue;
+              const where = `${inst}${n} ${o} ${lang} ${id}.v${k} L${lv}`;
+              if (r.tu.endsWith('k')) key++;
+              G.parseTab(r.v.t, r.sub, r.tu).forEach(s => s.errs.forEach(e => errs.push(`${where}: ${e}`)));
+              [r.v.l, r.v.note].forEach(x => { if (/2-й лад|fret 2|\{/.test(x || '')) errs.push(`${where}: «${x}»`); });
+              if (!ex.gen && r.tu.endsWith('k')) {
+                const have = strsOf(r.v.t);
+                const e = ex.v[k].lv ? ex.v[k].lv[lv - 1] : ex.v[k], kv = (inst === 'bass' ? [6, 5] : [8, 7]).find(x => n >= x && e['t' + x]) || '';
+                ['l', 'note'].forEach(f => { for (const m of String((kv && G.VX(id, k, f + kv, 'raw')) || G.VX(id, k, f, 'raw') || '').matchAll(/\{[so]:([A-Za-z])\}/g)) if (!have.has(m[1])) errs.push(`${where}: струна ${m[1]} из подписи ушла из таба`); });
+              }
+            }
+          }
+        }
+        G.setTuning(0, false);
+      }
+    }
+    if (key < 500) errs.push('в тональность drop перенесено мало вариантов: ' + key);
+    return errs;
+  });
+  expect(errs.slice(0, 30)).toEqual([]);
+});

@@ -431,26 +431,63 @@ const TUN_C={};
 // строй по ключу TU(): струны, midi открытых струн с учётом сдвига и drop, нижняя струна, название
 function TUN(tu){
   tu=tu||'guitar';if(TUN_C[tu])return TUN_C[tu];
-  const m=String(tu).match(/^([a-z0-9]+)(?:@(-?\d+)(d?))?$/),base=(m&&TUNINGS[m[1]])||TUNINGS.guitar,off=m&&m[2]?+m[2]:0,drop=!!(m&&m[3]);
+  const m=String(tu).match(/^([a-z0-9]+)(?:@(-?\d+)(d?)(k?))?$/),base=(m&&TUNINGS[m[1]])||TUNINGS.guitar,off=m&&m[2]?+m[2]:0,drop=!!(m&&m[3]);
   const low=base.strs[base.strs.length-1],open={};
   base.strs.forEach(s=>{open[s]=base.open[s]+off-(drop&&s===low?2:0);});
   const nm=base.strs.slice().reverse().map(s=>NOTES[mod(open[s],12)]);
-  return TUN_C[tu]={strs:base.strs,open,bass:!!base.bass,off,drop,low,std:!off&&!drop,name:nm.join(nm.some(x=>x.length>1)?' ':''),key:NOTES[mod(4+off,12)]};
+  return TUN_C[tu]={strs:base.strs,open,bass:!!base.bass,off,drop,dk:drop&&!!m[4],low,std:!off&&!drop,name:nm.join(nm.some(x=>x.length>1)?' ':''),key:NOTES[mod(4+off,12)]};
 }
-// drop: ноты нижней струны в табе на 2 лада выше — звучат как в стандарте того же тона
-const dsh=(T,s)=>T.drop&&s===T.low?2:0;
+// drop, два способа переноса таба:
+// — «+2 лада» (dsh): ноты нижней струны на 2 лада выше, звучание как в стандарте того же тона;
+// — «в тональности drop» (dropKey, ключ строя с суффиксом k): нижняя струна как в табе, остальные на 2 лада ниже — всё на тон ниже,
+//   открытая нижняя остаётся открытой, квинты берутся одним пальцем. Выбирается, если в табе есть открытая нижняя струна,
+//   а на остальных струнах нет нот ниже 2-го лада.
+const dsh=(T,s)=>T.drop&&!T.dk&&s===T.low?2:0;
+const RAW='raw';
+function dropKey(t,T){
+  // нота ниже 2-го лада на верхних струнах уходит на соседнюю нижнюю струну (A0 → нижняя 5 лад в drop D);
+  // если так не выходит аккорд, весь аккорд переносится на струну ниже той же формой (D3+A1 → A6+E6). Легато на другую струну не переносим.
+  const low=T.strs.indexOf(T.low);let open=false,ok=true;
+  const conv=(notes,all)=>{
+    const used=new Set(),res=[];
+    for(const q of notes){
+      let si=T.strs.indexOf(q[1]);
+      if(q[8]){si+=all&&si!==low?1:0;if(si>low||used.has(si))return null;used.add(si);res.push({p:T.strs[si]+'x'});continue;}
+      let f=+q[3];
+      if(si===low&&!all){if(f===0)open=true;used.add(si);res.push({f,p:q[0]});continue;}
+      if(si===low)return null;
+      f-=2;
+      if(f<0||all){if(q[2])return null;const lo=T.strs[si+1];f+=T.open[q[1]]-T.open[lo];si++;}
+      if(used.has(si))return null;used.add(si);
+      const sh=f-(+q[3]);
+      res.push({f,p:T.strs[si]+q[2]+f+(q[4]!=null?'b'+(+q[4]+sh)+(q[5]!=null?'r'+(+q[5]+sh):''):'')+q[6]+q[7]});
+    }
+    const fr=res.map(x=>x.f).filter(x=>x>0);
+    return fr.length>1&&Math.max(...fr)-Math.min(...fr)>4?null:res;
+  };
+  const out=t.map(sys=>sys.split(/(\s+)/).map(tok=>{
+    const m=tok.match(TAB_TOK);if(!tok.trim()||!m||/^[.|\/]/.test(tok))return tok;
+    const notes=m[1].split('+').map(p=>p.match(TAB_PART));
+    if(notes.some(q=>!q))return tok;
+    const res=conv(notes,false)||(notes.length>1&&conv(notes,true));
+    if(!res){ok=false;return tok;}
+    return res.map(x=>x.p).join('+')+m[2]+(m[3]?':'+m[3]:'');
+  }).join(''));
+  return open&&ok?out:null;
+}
 // текст с разметкой нот под текущий строй: {E} — нота (сдвиг строя), {Bb} — нота бемолем, {s:A} — струна по её настройке, {o:E} — открытая струна (в drop нижняя — 2-й лад)
-function noteTxt(x){
-  if(typeof x!=='string'||x.indexOf('{')<0)return x;
-  const T=TUN(TU());
+// tu — строй таба (по умолчанию текущий); в тональности drop ноты на тон ниже. tu===RAW — разметку не трогать.
+function noteTxt(x,tu){
+  if(tu===RAW||typeof x!=='string'||x.indexOf('{')<0)return x;
+  const T=TUN(tu||TU());
   return x.replace(/\{(?:([so]):)?([A-GYZe])(#|b)?\}/g,(all,k,r,a)=>{
     const R=r==='e'?'E':r,pc={C:0,D:2,E:4,F:5,G:7,A:9,B:11,Y:11,Z:6}[R]+(a==='#'?1:a==='b'?-1:0);
     if((k||r==='e'||r==='Y'||r==='Z')&&T.open[r]!=null){
       const lo=r==='e'?(s=>s.toLowerCase()):(s=>s);
-      if(k==='o'&&T.drop&&r===T.low)return NOTES[mod(T.open[r]+2,12)]+L(' (2-й лад)',' (fret 2)');
+      if(k==='o'&&T.drop&&!T.dk&&r===T.low)return NOTES[mod(T.open[r]+2,12)]+L(' (2-й лад)',' (fret 2)');
       return lo(NOTES[mod(T.open[r],12)]);
     }
-    return (a==='b'?FLATS:NOTES)[mod(pc+T.off,12)];
+    return (a==='b'?FLATS:NOTES)[mod(pc+T.off-(T.dk?2:0),12)];
   });
 }
 const TAB_PART=/^([A-Za-z])(?:([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)|(x))$/;
@@ -1771,10 +1808,10 @@ L38:{name:'Chromatic passing runs',goal:'Fast chromatic links between riff notes
 let EX=EX_GUITAR,EXEN=EXEN_GUITAR;
 
 function X(id,f){const en=LANG==='en'&&EXEN[id];return noteTxt((en&&en[f])||EX[id][f]);}
-function VX(id,idx,f){
+function VX(id,idx,f,tu){
   const v=EX[id].v[idx];
-  if(LANG==='en'&&EXEN[id]&&EXEN[id].v){const ev=EXEN[id].v[idx];if(typeof ev==='string')return f==='l'?noteTxt(ev):undefined;if(ev)return noteTxt(ev[f]);}
-  return noteTxt(v[f]);
+  if(LANG==='en'&&EXEN[id]&&EXEN[id].v){const ev=EXEN[id].v[idx];if(typeof ev==='string')return f==='l'?noteTxt(ev,tu):undefined;if(ev)return noteTxt(ev[f],tu);}
+  return noteTxt(v[f],tu);
 }
 
 const GROUPS_GUITAR={R:['R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R37'],A:['A16','A17','A18','A19','A20','A21','A22','A23','A38','A39'],L:['L24','L25','L26','L27','L28','L29','L30','L31','L40'],C:['C32','C33','C34','C35','C36']};
@@ -1975,12 +2012,16 @@ function resolveEx(s,d,lv){
   else if(ex.v){
     const idx=varIdx(s,d);const raw=ex.v[idx];
     const e=(lv&&raw.lv)?raw.lv[lv-1]:raw;
-    v={l:VX(s.id,idx,'l'),note:VX(s.id,idx,'note'),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
+    v={l:VX(s.id,idx,'l',RAW),note:VX(s.id,idx,'note',RAW),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
     // версия под число струн, если есть: бас t6 → t5 → t, гитара t8 → t7 → t; у такой версии своя подпись lN и noteN, если струна в подписи другая
     const n=NSTR(),k=(INST==='bass'?[6,5]:[8,7]).find(k=>n>=k&&e['t'+k])||0;
-    if(k){v.t=e['t'+k];v.l=VX(s.id,idx,'l'+k)||v.l;v.note=VX(s.id,idx,'note'+k)||v.note;}
+    if(k){v.t=e['t'+k];v.l=VX(s.id,idx,'l'+k,RAW)||v.l;v.note=VX(s.id,idx,'note'+k,RAW)||v.note;}
   }
-  return {ex,id:s.id,v,lv,nl,tu:TU(),sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
+  // drop: таб в тональности drop, если можно (см. dropKey); иначе ноты нижней струны +2 лада (dsh)
+  let tu=TU();
+  if(v&&Array.isArray(v.t)&&TUN(tu).drop){const kt=dropKey(v.t,TUN(tu));if(kt){v.t=kt;tu+='k';}}
+  if(v){v.l=noteTxt(v.l,tu);v.note=noteTxt(v.note,tu);}
+  return {ex,id:s.id,v,lv,nl,tu,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
 }
 const KINDS={ru:{warm:'Разминка',test:'Тесты',base:'База',focus:'Фокус',maint:'Поддержка',combo:'Связки',music:'Музыка',pause:'Пауза'},en:{warm:'Warm-up',test:'Tests',base:'Base',focus:'Focus',maint:'Maintenance',combo:'Combos',music:'Music',pause:'Break'}};
 const KIND=k=>KINDS[LANG][k];
@@ -2067,7 +2108,7 @@ function renderPlan(){
 }
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
 // заголовок строя таба: «стандартный строй», «B drop · ADGCFBE»; у баса и 7/8 струн — ещё ноты струн
-function tuneName(tu){const T=TUN(tu);return (T.std?L('стандартный строй','standard tuning'):T.key+' '+(T.drop?'drop':L('стандарт','standard')))+(T.bass||T.strs.length!==6||!T.std?' '+T.name:'');}
+function tuneName(tu){const T=TUN(tu);return (T.std?L('стандартный строй','standard tuning'):T.key+' '+(T.drop?'drop':L('стандарт','standard')))+(T.bass||T.strs.length!==6||!T.std?' '+T.name:'')+(T.dk?L(' · на тон ниже',' · a tone lower'):'');}
 function tabHtml(label,systems,sub,meter,tu){
   const key=JSON.stringify([systems,sub||1,meter||'4/4',tu||'guitar']),on=Pl.on&&Pl.key===key;
   return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+tuneName(tu)+'</span></div>'+
@@ -2653,7 +2694,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={noteTxt,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();

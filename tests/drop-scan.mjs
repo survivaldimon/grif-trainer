@@ -1,33 +1,31 @@
-// Разовый отчёт: какие упражнения в drop играют нижнюю струну открытой или с растяжкой.
-// node tests/drop-scan.mjs
+// Разовый отчёт: как упражнения переносятся в drop (node tests/drop-scan.mjs).
+// key — в тональности drop; shift — +2 лада на нижней струне; bad — shift, хотя в табе есть открытая нижняя струна (нужна ручная версия tD).
 import { chromium } from '@playwright/test';
 import path from 'path';
 const b = await chromium.launch(); const p = await b.newPage();
 await p.goto('file://' + path.resolve('index.html'));
 const out = await p.evaluate(() => {
-  const g = window.__grif, res = [];
-  for (const inst of ['guitar', 'bass']) {
+  const g = window.__grif, res = {}, d0 = g.dayInfo(0);
+  for (const [inst, ns] of [['guitar', [6, 7]], ['bass', [4, 5]]]) {
     g.setInst(inst);
-    const tu = g.TU(), low = g.TUN(tu).low;
-    for (const id of Object.keys(g.EX)) {
-      const ex = g.EX[id]; if (!ex.v || ex.gen) continue;
-      ex.v.forEach((v, vi) => (v.lv || [v]).forEach((e, li) => {
-        const sys = g.parseTab(e.t, e.sub || v.sub || 1, tu);
-        let open = 0, low_ = 0, span = 0;
-        sys.forEach(s => s.items.forEach(it => {
-          if (!it.notes) return;
-          it.notes.forEach(n => { if (n.s === low && !n.x) { low_++; if (n.f === 0) open++; } });
-          // конфликт аппликатуры: бывшая открытая нижняя (теперь 2-й лад) рядом с 1–2 ладом на других струнах
-          if (it.notes.some(n => n.s === low && n.f === 0) && it.notes.some(n => n.s !== low && !n.x && n.f >= 1 && n.f <= 2)) span++;
-          if (it.notes.some(n => n.s === low && n.f === 0)) { const nx = s.items[s.items.indexOf(it) + 1]; if (nx && nx.notes && nx.notes.some(n => n.s !== low && !n.x && n.f === 1)) span++; }
-        }));
-        if (open || span) res.push({ inst, id, v: vi, lv: li + 1, open, low: low_, span, l: v.l });
-      }));
+    for (const n of ns) {
+      g.setStrings(n); g.setTuning(0, true);
+      const low = g.TUN(g.TU()).low;
+      for (const [id, ex] of Object.entries(g.EX)) {
+        const nv = ex.gen ? 1 : (ex.v || []).length, nl = (ex.lvl || []).length || 1;
+        for (let k = 0; k < nv; k++) for (let lv = 1; lv <= nl; lv++) for (let day = 0; day < (ex.gen ? 168 : 1); day += 28) {
+          const r = g.resolveEx({ id, kind: 'focus', pick: ex.gen ? undefined : k }, g.dayInfo(day), lv);
+          if (!r || !r.v || !r.v.t) continue;
+          const key = `${inst}${n} ${id}`; const a = res[key] ||= { key: 0, shift: 0, bad: [] };
+          if (r.tu.endsWith('k')) a.key++;
+          else if (new RegExp(`(^|[\\s+])${low}0(?!\\d)`).test(r.v.t.join(' '))) a.bad.push(`v${k}L${lv}`);
+          else a.shift++;
+        }
+      }
+      g.setTuning(0, false);
     }
   }
   return res;
 });
-const agg = {};
-out.forEach(r => { const k = r.inst + ' ' + r.id; (agg[k] ||= { open: 0, span: 0, lv: new Set(), l: new Set() }); agg[k].open += r.open; agg[k].span += r.span; agg[k].lv.add('v' + r.v + 'L' + r.lv); agg[k].l.add(r.l); });
-for (const [k, a] of Object.entries(agg)) console.log(k, 'open:', a.open, 'fingering:', a.span, [...a.lv].length + ' уровней', [...a.l].slice(0, 3).join(' | '));
+for (const [k, a] of Object.entries(out)) if (a.key || a.bad.length) console.log(k, 'key', a.key, 'shift', a.shift, 'bad', a.bad.length, [...new Set(a.bad)].join(' '));
 await b.close();
