@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass'];
 const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
@@ -175,6 +175,10 @@ test(`${inst}: табы: стандартный строй, корректные
         if (!bass && (x.t5 || x.t6)) errs.push(`${where}: t5/t6 у гитары`);
         if (x.t5) { checkSystems(where + ' t5', x.t5, sub, meter, 'bass5'); if (!/(^|[\s+])B/.test(x.t5.join(' '))) errs.push(`${where}: t5 без струны B`); }
         if (x.t6) { checkSystems(where + ' t6', x.t6, sub, meter, 'bass6'); if (!/(^|[\s+])C/.test(x.t6.join(' '))) errs.push(`${where}: t6 без струны C`); }
+        // гитара: t7 — с низкой B (Y), t8 — с F# (Z)
+        if (bass && (x.t7 || x.t8)) errs.push(`${where}: t7/t8 у баса`);
+        if (x.t7) { checkSystems(where + ' t7', x.t7, sub, meter, 'guitar7'); if (!/(^|[\s+])Y/.test(x.t7.join(' '))) errs.push(`${where}: t7 без струны Y`); }
+        if (x.t8) { checkSystems(where + ' t8', x.t8, sub, meter, 'guitar8'); if (!/(^|[\s+])Z/.test(x.t8.join(' '))) errs.push(`${where}: t8 без струны Z`); }
       });
     });
     G.TESTS.forEach(t => checkSystems(t.id, t.t, t.sub));
