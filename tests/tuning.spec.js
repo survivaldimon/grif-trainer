@@ -200,3 +200,15 @@ test('drop: все упражнения играбельны, подписи б�
   });
   expect(errs.slice(0, 30)).toEqual([]);
 });
+
+test('drop: в тональности drop струна в подписи называется по струне, нота — на тон ниже', async ({ page }) => {
+  await openApp(page);
+  const r = await page.evaluate(() => {
+    const G = window.__grif, d0 = G.dayInfo(0), get = (id, l) => { const k = G.EX[id].v.findIndex(v => v.l === l); return G.resolveEx({ id, kind: 'focus', pick: k }, d0, 4); };
+    G.setTuning(0, true);
+    const a = get('B5', 'Пауэр-аккорды на {s:A}'), b = get('B2', 'Фригийский от открытой {o:E}');
+    G.setTuning(0, false);
+    return [a.tu, a.v.l, b.v.l];
+  });
+  expect(r).toEqual(['guitar@0dk', 'Пауэр-аккорды на A', 'Фригийский от открытой D']);
+});
