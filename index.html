@@ -239,6 +239,26 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
   .cell .full{display:none}
   .cell .short{display:inline}
 }
+/* раздел «Все упражнения»: в режиме lib-on видны только шапка, панель баса и сам раздел */
+.lib-on .wrap>:not(.hd):not(#bassBar):not(#lib){display:none!important}
+.lib-btn{height:36px;padding:0 12px}
+.lib-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.lib{display:flex;flex-direction:column;gap:18px;margin-top:16px}
+.lib-hd{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+.lib-hd h2{margin:0;font-size:22px}
+.lib-grp{display:flex;flex-direction:column;gap:8px}
+.lib-grp>h3{margin:0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lib-ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+.lib-ex>summary{display:flex;gap:10px;align-items:baseline;padding:12px 16px;cursor:pointer;list-style:none}
+.lib-ex>summary::-webkit-details-marker{display:none}
+.lib-ex>summary::after{content:"+";margin-left:auto;color:var(--muted);font-family:var(--f-mono)}
+.lib-ex[open]>summary::after{content:"\2212"}
+.lib-id{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-width:34px}
+.lib-goal{color:var(--muted);font-size:13px}
+.lib-body{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px;min-width:0}
+.lib-body p{margin:0}
+.lib-body ol{margin:0;padding-left:20px}
+.lib-body li[aria-current="true"]{font-weight:600}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -263,6 +283,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="lang" id="instSw" role="group">
         <button data-inst="guitar"></button><button data-inst="bass"></button>
       </div>
+      <button class="btn lib-btn" id="libBtn" aria-pressed="false"></button>
     </div>
   </header>
 
@@ -343,6 +364,8 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="riff" id="riffCard"></div>
     </section>
   </main>
+
+  <section class="lib" id="lib" hidden></section>
 
   <section class="about">
     <div class="panel"><h3 data-i="aboutT"></h3><ul id="aboutL"></ul></div>
@@ -2651,19 +2674,89 @@ $('coach').addEventListener('click',e=>{
   else if(e.target.closest('#coSkipBlk')){const b=co.iv[p.k].blk;let el=0,c=0;co.iv.forEach(y=>{c+=y.sec;if(y.blk<=b)el=c;});coSkipTo(st.plan.segs[st.cur].min*60-el);}
 });
 
+/* ================= все упражнения ================= */
+// Раздел строится из активных EX/EXEN и GROUPS: новое упражнение попадает сюда само. Слово library в адресе открывает раздел.
+const LIB={on:hashWords().includes('library'),open:new Set(),sel:{}};
+const LIB_ORDER=[['W',()=>KIND('warm')],['B',()=>KIND('base')]].concat(['R','A','L','C'].map(g=>[g,()=>GN(g)]));
+const libNum=id=>EX[id].n!=null?EX[id].n:+id.replace(/\D/g,'');
+function libGroups(){
+  const ids=Object.keys(EX),seen=new Set(),out=[];
+  LIB_ORDER.forEach(([g,name])=>{
+    const list=(GROUPS[g]||ids.filter(id=>id.replace(/\d+$/,'')===g)).filter(id=>EX[id]&&!seen.has(id)).sort((a,b)=>libNum(a)-libNum(b));
+    list.forEach(id=>seen.add(id));if(list.length)out.push({g,name:name(),list});
+  });
+  const rest=ids.filter(id=>!seen.has(id)).sort((a,b)=>libNum(a)-libNum(b));
+  if(rest.length)out.push({g:'X',name:L('Другие','Other'),list:rest});
+  return out;
+}
+// Выбор в разделе живёт только здесь: уровень по умолчанию сохранённый, вариант — вариант дня; grif.lvl не меняется.
+function libSel(id){
+  const ex=EX[id],x=LIB.sel[id]||{},n=lvlCount(id);
+  return {lv:n?clamp(x.lv||getLvl(id),1,n):0,k:(ex.gen||!ex.v)?null:(x.k!=null?x.k:dayVar({id},st.plan.d))};
+}
+function libExHtml(id){
+  const ex=EX[id],d=st.plan.d,{lv,k}=libSel(id),open=LIB.open.has(id);
+  let h='<details class="lib-ex" data-lib="'+id+'"'+(open?' open':'')+'><summary><span class="lib-id">'+id+'</span><span><b>'+esc(X(id,'name'))+'</b><br><span class="lib-goal">'+esc(X(id,'goal'))+'</span></span></summary>';
+  if(!open)return h+'</details>';
+  h+='<div class="lib-body"><div class="sect"><h4>'+L('Как играть','How to play')+'</h4><p>'+esc(X(id,'how'))+'</p></div>';
+  // бас: оба указания правой руки, выбранная техника — первой
+  if(INST==='bass')(HAND==='pick'?['hp','hf']:['hf','hp']).forEach((f,j)=>{const x=X(id,f);if(x)h+='<p class="note"'+(j?' style="opacity:.7"':'')+'><b>'+esc(f==='hp'?L('Медиатор','Pick'):L('Пальцы','Fingers'))+':</b> '+esc(x)+'</p>';});
+  if(X(id,'tip'))h+='<p class="tip">'+esc(X(id,'tip'))+'</p>';
+  if(lv)h+='<div class="sect"><h4>'+L('Уровни','Levels')+'</h4><ol>'+X(id,'lvl').map((x,j)=>'<li'+(j+1===lv?' aria-current="true"':'')+'>'+esc(x)+'</li>').join('')+'</ol></div>';
+  if(k!=null){
+    const day=dayVar({id},d);let b='';
+    h+='<div class="sect"><h4>'+L('Варианты','Variants')+'</h4><ol>'+ex.v.map((_,j)=>'<li'+(j===k?' aria-current="true"':'')+'>'+esc(resolveEx({id,pick:j},d,lv||undefined).v.l||'')+'</li>').join('')+'</ol></div>';
+    for(let j=0;j<ex.v.length;j++)b+='<button data-libvar="'+j+'" aria-pressed="'+(j===k)+'"'+(j===day?' class="day" title="'+L('Вариант дня','Today’s variant')+'"':'')+'>'+(j+1)+'</button>';
+    h+='<div class="lvl"><span class="lbl">'+L('Вариант','Variant')+'</span><div class="lvlb" role="group" aria-label="'+L('Вариант упражнения','Exercise variant')+'">'+b+'</div><span class="lvld">'+esc(L('вариант дня — ','today’s variant: ')+(day+1))+'</span></div>';
+  }else if(ex.gen)h+='<p class="legend" style="margin:0">'+esc(L('Материал строится по дню и ладу цикла, показан день: ','The material follows the day and the cycle scale. Showing: ')+dateText(d.date))+'</p>';
+  if(lv){let b='';for(let j=1;j<=lvlCount(id);j++)b+='<button data-liblvl="'+j+'" aria-pressed="'+(j===lv)+'">'+j+'</button>';
+    h+='<div class="lvl"><span class="lbl">'+L('Уровень','Level')+'</span><div class="lvlb" role="group" aria-label="'+L('Уровень сложности','Difficulty level')+'">'+b+'</div><span class="lvld">'+esc(X(id,'lvl')[lv-1])+'</span></div>';}
+  const r=resolveEx(k!=null?{id,pick:k}:{id},d,lv||undefined);
+  if(r&&r.v){if(r.v.note)h+='<p class="note">'+esc(r.v.note)+'</p>';if(r.v.t)h+=tabHtml(r.v.l,r.v.t,r.sub,r.meter,r.tu);}
+  return h+'</div></details>';
+}
+function renderLib(){
+  document.body.classList.toggle('lib-on',LIB.on);
+  $('lib').hidden=!LIB.on;
+  $('libBtn').textContent=LIB.on?L('← К тренировке','← Back to workout'):L('Все упражнения','All exercises');
+  $('libBtn').setAttribute('aria-pressed',String(LIB.on));
+  if(!LIB.on){$('lib').innerHTML='';return;}
+  const gs=libGroups(),n=gs.reduce((a,g)=>a+g.list.length,0);
+  $('lib').innerHTML='<div class="lib-hd"><h2>'+L('Все упражнения','All exercises')+GB('',L(' · бас',' · bass'))+'</h2><span class="lbl">'+n+L(' упражнений',' exercises')+'</span></div>'+
+    gs.map(g=>'<div class="lib-grp" data-libg="'+g.g+'"><h3>'+esc(g.name)+'</h3>'+g.list.map(libExHtml).join('')+'</div>').join('')+legendHtml();
+}
+function libRerender(id){const el=document.querySelector('#lib details[data-lib="'+id+'"]');if(el)el.outerHTML=libExHtml(id);}
+function setLib(on){on=!!on;if(on===LIB.on)return;plStop();LIB.on=on;writeHash();renderLib();window.scrollTo(0,0);}
+$('libBtn').onclick=()=>setLib(!LIB.on);
+$('lib').addEventListener('toggle',e=>{
+  const el=e.target;if(!el.matches||!el.matches('details[data-lib]'))return;const id=el.dataset.lib;
+  if(el.open===LIB.open.has(id))return;
+  if(el.open)LIB.open.add(id);else{LIB.open.delete(id);if(Pl.box&&el.contains(Pl.box))plStop();}
+  libRerender(id);
+},true);
+$('lib').addEventListener('click',e=>{
+  const pb=e.target.closest('button[data-play]');if(pb){const box=pb.closest('.tabbox');if(Pl.on&&Pl.box===box)plStop();else plStart(box);return;}
+  const el=e.target.closest('details[data-lib]'),lb=e.target.closest('button[data-liblvl]'),vb=e.target.closest('button[data-libvar]');
+  if(!el||(!lb&&!vb))return;const id=el.dataset.lib,x=LIB.sel[id]=LIB.sel[id]||{};
+  if(lb)x.lv=+lb.dataset.liblvl;if(vb)x.k=+vb.dataset.libvar;
+  if(Pl.box&&el.contains(Pl.box))plStop();
+  libRerender(id);
+});
+$('lib').addEventListener('change',e=>{if(e.target.matches('input[data-loop]')){Pl.loop=e.target.checked;document.querySelectorAll('input[data-loop]').forEach(x=>{x.checked=Pl.loop;});}});
+
 /* ================= события ================= */
 function rebuild(){
   st.plan=buildSession(st.i,st.T);
   st.done=new Set();st.running=false;st.cur=0;st.remain=st.plan.segs[0].min*60;
   metroStop();
-  renderHeader();renderPlan();applyMetroDefaults();renderNow();
+  renderHeader();renderPlan();applyMetroDefaults();renderNow();renderLib();
 }
 function setLang(l){
   LANG=l;lsSet('lang',l);
   writeHash();
-  renderStatic();renderHeader();renderPlan();renderNow();markPlan();
+  renderStatic();renderHeader();renderPlan();renderNow();markPlan();renderLib();
 }
-function writeHash(){const h=(INST==='bass'?'bass-':'')+LANG;try{history.replaceState(null,'','#'+h);}catch(e){try{location.hash=h;}catch(e2){}}}
+function writeHash(){const h=(INST==='bass'?'bass-':'')+(LIB.on?'library-':'')+LANG;try{history.replaceState(null,'','#'+h);}catch(e){try{location.hash=h;}catch(e2){}}}
 // смена инструмента: другой набор упражнений, план дня строится заново
 function setInst(i){
   if(i!=='bass')i='guitar';if(i===INST)return;
@@ -2674,11 +2767,11 @@ function setInst(i){
 function setStrings(n){
   if(!GB([6,7,8],[4,5,6]).includes(n)||n===NSTR())return;
   if(INST==='bass'){STRINGS=n;lsSet('strings',n);}else{GSTR=n;lsSet('gstrings',n);}
-  plStop();renderStatic();renderNow();
+  plStop();renderStatic();renderNow();renderLib();
 }
 function setTuning(o,d){
   o=Math.max(-11,Math.min(0,Math.round(+o)||0));d=!!d;const t=TUNE[INST];if(t.o===o&&t.d===d)return;
-  TUNE[INST]={o,d};lsSet('tuning',TUNE);plStop();renderStatic();renderHeader();renderPlan();renderNow();markPlan();
+  TUNE[INST]={o,d};lsSet('tuning',TUNE);plStop();renderStatic();renderHeader();renderPlan();renderNow();markPlan();renderLib();renderLib();
 }
 // «Настроиться»: открытые струны текущего строя снизу вверх
 function tuneUp(){
@@ -2686,12 +2779,12 @@ function tuneUp(){
   Pl.tu=TU();const T=TUN(Pl.tu),t0=c.currentTime+0.1;
   T.strs.slice().reverse().forEach((s,k)=>plNote(c,{s,f:-dsh(T,s),tech:'',b:null,r:null,ph:false,vib:false},t0+k*1.1,1.5,false,0.8));
 }
-function setHand(h){h=h==='pick'?'pick':'fingers';if(h===HAND)return;HAND=h;Pl.hand=h;lsSet('hand',h);plStop();renderStatic();renderNow();}
+function setHand(h){h=h==='pick'?'pick':'fingers';if(h===HAND)return;HAND=h;Pl.hand=h;lsSet('hand',h);plStop();renderStatic();renderNow();renderLib();}
 let toastT=null;
 function toast(msg){let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el);}el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},2200);}
 
 document.querySelectorAll('.lang button[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-window.addEventListener('hashchange',()=>{const h=hashWords();const i=h.includes('bass')?'bass':'guitar';if(i!==INST)setInst(i);const l=h.includes('en')?'en':h.includes('ru')?'ru':LANG;if(l!==LANG)setLang(l);});
+window.addEventListener('hashchange',()=>{const h=hashWords();const i=h.includes('bass')?'bass':'guitar';if(i!==INST)setInst(i);const l=h.includes('en')?'en':h.includes('ru')?'ru':LANG;if(l!==LANG)setLang(l);setLib(h.includes('library'));});
 document.querySelectorAll('#instSw button').forEach(b=>b.onclick=()=>setInst(b.dataset.inst));
 $('strChips').addEventListener('click',e=>{const b=e.target.closest('button[data-str]');if(b)setStrings(+b.dataset.str);});
 $('tuneKey').onchange=e=>setTuning(+e.target.value,TUNE[INST].d);
@@ -2767,7 +2860,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();
