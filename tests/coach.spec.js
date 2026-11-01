@@ -18,6 +18,15 @@ async function openApp(page, lang) {
   return errors;
 }
 
+// Первый подход упражнения: тренер играет пример (здесь глушим его сразу), ждёт «Готов», затем отсчёт в один такт.
+async function readySet(page) {
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await page.evaluate(() => { const P = window.__grif.Pl; if (P.on && P.box) P.box.querySelector('[data-play]').click(); });
+  await expect(page.locator('#coReady')).toBeVisible();
+  await page.keyboard.press('Space');
+  await page.waitForFunction(() => !window.__grif.co.hold, null, { timeout: 10000 });
+}
+
 for (const inst of INSTS) {
 test(`${inst}: тренер: подходы и отдых ровно укладываются в минуты сегмента`, async ({ page }) => {
   test.setTimeout(120000);
@@ -112,8 +121,8 @@ test('тренер: метроном включается на подходе и
   const bpm = await page.inputValue('#bpm');
   await page.click('#playBtn');
   await page.click('#coSkip'); // подготовка → подход 1
+  await readySet(page);
   await expect(page.locator('#mToggle')).toHaveText('Stop');
-  await expect(page.locator('.cost')).toHaveClass(/t-set/);
   await page.click('#coSkip'); // подход → отдых
   await expect(page.locator('#mToggle')).toHaveText('Start');
   await expect(page.locator('.cost')).toHaveClass(/t-rest/);
@@ -130,6 +139,84 @@ test('тренер: метроном включается на подходе и
   expect(errors).toEqual([]);
 });
 
+for (const inst of INSTS)
+test(`${inst}: готовность и отсчёт: пример перед 1-м подходом, таймер стоит, отсчёт = такт размера в bpm`, async ({ page }) => {
+  const errors = await openApp(page, H(inst, 'en'));
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4')); // база с уровнями
+  await page.locator('#planList li').nth(k).click();
+  await page.click('#playBtn');
+  await page.click('#coSkip'); // подготовка → подход 1
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  // пример играет один раз, метроном тренера молчит, таймер стоит в начале подхода
+  const w0 = await page.evaluate(() => { const G = window.__grif; return { ph: G.co.hold && G.co.hold.ph, pl: G.Pl.on, once: G.Pl.once, remain: G.st.remain }; });
+  expect(w0).toMatchObject({ ph: 'listen', pl: true, once: true });
+  await expect(page.locator('#mToggle')).toHaveText('Start');
+  await expect(page.locator('#coReady')).toHaveCount(0);
+  await page.keyboard.press('Space'); // пока играет пример, пробел ничего не делает
+  expect(await page.evaluate(() => window.__grif.co.hold.ph)).toBe('listen');
+  // смена уровня во время ожидания перезапускает пример
+  const tab0 = await page.evaluate(() => window.__grif.Pl.key);
+  await page.click('.lvlb button[data-lvl="3"]');
+  expect(await page.evaluate(() => [window.__grif.co.hold.ph, window.__grif.Pl.on])).toEqual(['listen', true]);
+  expect(await page.evaluate(() => window.__grif.Pl.key)).not.toBe(tab0);
+  await page.click('.lvlb button[data-lvl="2"]');
+  await page.evaluate(() => window.__grif.Pl.box.querySelector('[data-play]').click()); // пример дослушан
+  await expect(page.locator('#coReady')).toHaveText('Ready (Space)');
+  await page.waitForTimeout(700);
+  expect(await page.evaluate(() => window.__grif.st.remain)).toBe(w0.remain); // ожидание не тратит минуты
+  await page.click('#coReady');
+  const c = await page.evaluate(() => { const G = window.__grif, a = G.co.arm; return { ph: G.co.hold.ph, n: a.n, osc: a.osc.length, len: a.goAt - a.t0, beat: 60 / G.Mt.bpm, meter: G.Mt.meter, mt: G.Mt.on, next: G.Mt.next, goAt: a.goAt }; });
+  expect(c.ph).toBe('count');
+  expect(c.n).toBe(+c.meter.split('/')[0]);
+  expect(c.osc).toBe(c.n);
+  expect(c.len).toBeCloseTo(c.n * c.beat, 6);
+  expect(c.mt).toBe(true); // метроном уже запланирован с сильной доли после отсчёта
+  expect(c.next).toBeGreaterThan(c.goAt - 1e-9);
+  await page.waitForFunction(() => !window.__grif.co.hold, null, { timeout: 10000 });
+  const s1 = await page.evaluate(() => window.__grif.st.remain);
+  expect(w0.remain - s1).toBeLessThan(1); // подход начался с начала: отсчёт не съел минуты
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  // 2-й подход: без примера и кнопки, только отсчёт; он планируется к концу отдыха, подход вступает ровно в конец отдыха
+  await page.click('#coSkip'); // подход → отдых
+  await expect(page.locator('.cost')).toHaveClass(/t-rest/);
+  const nk = await page.evaluate(() => { const G = window.__grif; G.st.remain -= G.co.iv[G.co.idx].sec - 4; return G.co.idx + 1; });
+  await page.waitForFunction(() => !!window.__grif.co.arm, null, { timeout: 5000 });
+  const ar = await page.evaluate(() => { const G = window.__grif, a = G.co.arm; return { k: a.k, lead: a.goAt - G.Mt.ctx.currentTime, hold: G.co.hold, pl: G.Pl.on }; });
+  expect(ar.k).toBe(nk);
+  expect(ar.lead).toBeGreaterThan(1.5); // такт при 100 bpm = 2,4 с: отсчёт начат за такт до конца отдыха
+  expect(ar.lead).toBeLessThan(2.7);
+  expect(ar.hold).toBe(null); // таймер в отдыхе не стоит
+  expect(ar.pl).toBe(false);
+  await page.waitForFunction(k => { const G = window.__grif; return G.co.idx === k && !G.co.hold; }, nk, { timeout: 10000 });
+  await expect(page.locator('#coReady')).toHaveCount(0);
+  await expect(page.locator('#mToggle')).toHaveText('Stop');
+  expect(errors).toEqual([]);
+});
+
+test('отсчёт в x/8: число долей = числитель размера, доля = пульс метронома', async ({ page }) => {
+  const errors = await openApp(page, 'en');
+  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.click('#timeChips button[data-t="60"]');
+  await page.locator('#planList li').nth(1).click();
+  await page.click('#playBtn');
+  await page.click('#coSkip');
+  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  // подменяем размер подхода и жмём пробел в состоянии «Готов»
+  const r = await page.evaluate(() => {
+    const G = window.__grif, x = G.co.iv[G.co.idx], out = {};
+    for (const m of ['3/4', '6/8', '7/8', '11/8', '13/16']) {
+      x.meter = m; G.co.hold.ph = 'ready';
+      document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+      const a = G.co.arm; out[m] = [a.n, Math.round((a.goAt - a.t0) * G.Mt.bpm / 60 * 1000) / 1000, G.Mt.meter];
+    }
+    return out;
+  });
+  expect(r).toEqual({ '3/4': [3, 3, '3/4'], '6/8': [6, 6, '6/8'], '7/8': [7, 7, '7/8'], '11/8': [11, 11, '11/8'], '13/16': [13, 13, '13/16'] });
+  expect(errors).toEqual([]);
+});
+
 test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
   const errors = await openApp(page, 'en');
   for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
@@ -140,7 +227,7 @@ test('уровень: переключение на подходе не сбив
   await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText('2'); // по умолчанию 2
   await page.click('#playBtn');
   await page.click('#coSkip'); // подготовка → подход 1
-  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await readySet(page);
   await expect(page.locator('#mToggle')).toHaveText('Stop');
   const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
   const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
@@ -194,7 +281,7 @@ test(`${inst}: вариант: ручной выбор на подходе не 
   await expect(page.locator('.lvlb button[data-var].day')).toHaveText(String(day + 1));
   await page.click('#playBtn');
   await page.click('#coSkip'); // подготовка → подход 1
-  await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await readySet(page);
   const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
   const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
   const pick = (day + 3) % 6;

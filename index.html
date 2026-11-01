@@ -2185,7 +2185,9 @@ function goto(k,keepRun){
 function chime(){const c=audio();if(!c)return;const t0=c.currentTime+0.02;[0,0.18,0.36].forEach((dt,k)=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=k===2?1320:880;g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(0.4,t0+dt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.16);o.connect(g).connect(c.destination);o.start(t0+dt);o.stop(t0+dt+0.18);});}
 setInterval(()=>{
   if(!st.running)return;
-  const now=performance.now();st.remain-=(now-st.last)/1000;st.last=now;
+  const now=performance.now();
+  if(co.hold&&coActive()){st.last=now;coachTick();return;} // тренер ждёт «Готов» или отсчёт: минуты не идут
+  st.remain-=(now-st.last)/1000;st.last=now;
   if(st.remain<=0){
     chime();st.done.add(st.cur);
     if(st.cur<st.plan.segs.length-1){goto(st.cur+1,true);}
@@ -2208,6 +2210,7 @@ function click(tm,level,rest){
   let v=[0.22,0.5,0.7,0.95][level];if(rest)v*=0.22;
   g.gain.setValueAtTime(0.0001,tm);g.gain.exponentialRampToValueAtTime(v,tm+0.002);g.gain.exponentialRampToValueAtTime(0.0001,tm+0.045);
   o.connect(g).connect(c.destination);o.start(tm);o.stop(tm+0.05);
+  return o;
 }
 function schedule(){
   const c=Mt.ctx;const n=meterPulses(),gs=groupStarts();
@@ -2233,7 +2236,7 @@ function draw(){
   requestAnimationFrame(draw);
 }
 function renderDots(){const gs=groupStarts();$('dots').innerHTML=Array.from({length:meterPulses()},(_,k)=>'<i class="'+(gs.has(k)?'g':'')+'"></i>').join('');}
-function metroStart(){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
+function metroStart(at){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=at!=null?at:c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
 function metroStop(){Mt.on=false;clearInterval(Mt.timer);Mt.timer=null;$('mToggle').textContent=t('mOn');$('mState').textContent='';$('mState').className='mstate';[...$('dots').children].forEach(el=>el.classList.remove('on','r'));}
 function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?exKey(s.id):null;}
 function setBpm(v){
@@ -2254,7 +2257,7 @@ function applyMetroDefaults(){
 /* ================= плеер ================= */
 // Синтез гитары: Karplus–Strong в буфер (кэш по высоте) → перегруз WaveShaper → «кабинет». Время в долях метронома, темп — Mt.bpm.
 // Бас: те же буферы на его открытых струнах, свой тракт (чистый низ + перегруженная середина); пальцы — мягкий щипок, медиатор — яркий.
-const Pl={on:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bbus:null,bufs:{},voices:[],q:[],lit:'',tu:'guitar',hand:'fingers'};
+const Pl={on:false,once:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bbus:null,bufs:{},voices:[],q:[],lit:'',tu:'guitar',hand:'fingers'};
 function plLabel(on){return on?'■ '+L('Стоп','Stop'):'▶ '+L('Послушать','Listen');}
 function plShaper(c,k){
   const sh=c.createWaveShaper(),cv=new Float32Array(2048);
@@ -2327,7 +2330,7 @@ function plTick(){
   }
   Pl.voices=Pl.voices.filter(v=>v.end>c.currentTime);
   while(Pl.next<c.currentTime+0.15){
-    if(Pl.i>=Pl.ev.length){if(!Pl.loop){if(c.currentTime>=Pl.next)plStop();return;}Pl.i=0;}
+    if(Pl.i>=Pl.ev.length){if(!Pl.loop||Pl.once){if(c.currentTime>=Pl.next)plStop();return;}Pl.i=0;}
     const e=Pl.ev[Pl.i],spb=60/Mt.bpm,len=e.dur*spb;
     if(!e.rest){const vel=0.9/Math.sqrt(e.notes.length);e.notes.forEach(nt=>plNote(c,nt,Pl.next,len,e.pm,nt.tech?vel*0.6:vel));}
     if(!Mt.on)for(let p=Math.ceil(Pl.pos-EPS);p<Pl.pos+e.dur-EPS;p++)plClick(c,Pl.next+(p-Pl.pos)*spb,mod(p,Pl.bar)===0);
@@ -2348,8 +2351,8 @@ function plDraw(){
   requestAnimationFrame(plDraw);
 }
 function plButtons(){document.querySelectorAll('.tabbox [data-play]').forEach(b=>{const on=Pl.on&&b.closest('.tabbox')===Pl.box;b.textContent=plLabel(on);b.setAttribute('aria-pressed',String(on));});}
-function plStart(box){
-  plStop();
+function plStart(box,once){
+  plStop();Pl.once=!!once;
   const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}
   const [systems,sub,meter,tu]=JSON.parse(box.dataset.tab);
   Pl.tu=tu||'guitar';
@@ -2368,7 +2371,7 @@ function plStart(box){
 }
 function plStop(){
   if(!Pl.on)return;
-  Pl.on=false;clearInterval(Pl.timer);Pl.timer=null;
+  Pl.on=false;Pl.once=false;clearInterval(Pl.timer);Pl.timer=null;
   const c=Mt.ctx,now=c?c.currentTime:0;
   Pl.voices.forEach(v=>{try{v.g.gain.cancelScheduledValues(now);v.g.gain.setTargetAtTime(0,now,0.01);v.src.stop(now+0.06);if(v.lfo)v.lfo.stop(now+0.06);}catch(e){}});
   Pl.voices=[];Pl.q=[];
@@ -2497,12 +2500,14 @@ function coachPlan(s,d,lv){
   return coLayout(S,head,setAt,rest,nPref);
 }
 
-const co={on:true,key:'',iv:null,idx:-1,beep:0};
+// hold — таймер стоит в начале (или посреди) подхода k: ph 'listen' — играет пример, 'ready' — ждём «Готов», 'count' — идёт отсчёт.
+// arm — отсчёт, запланированный по часам Web Audio: подход и метроном вступают в goAt. heard — первые подходы, где пример уже был.
+const co={on:true,key:'',iv:null,idx:-1,hold:null,arm:null,heard:{}};
 const coActive=()=>co.on&&!!co.iv;
 // Смена уровня пересчитывает указания, но не позицию: раскладка подходов от уровня не зависит.
 function coSync(){
   const s=st.plan.segs[st.cur],key=st.i+'|'+st.T+'|'+st.cur,lk=s.id?getLvl(s.id)+'|'+s.pick:'';
-  if(co.key!==key){co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;co.beep=0;}
+  if(co.key!==key){coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;co.heard={};co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;}
   else if(co.lk!==lk){co.lk=lk;co.iv=coachPlan(s,st.plan.d);}
 }
 // Где мы внутри сегмента: индекс интервала и сколько секунд до его конца.
@@ -2511,38 +2516,100 @@ function coPos(){
   for(let k=0;k<co.iv.length;k++){c+=co.iv[k].sec;if(el<c-1e-6)return{k,left:c-el};}
   return{k:co.iv.length-1,left:0};
 }
-function cue(kind){
+function cue(){
   const c=audio();if(!c)return;const t0=c.currentTime+0.01;
-  (kind==='tick'?[0]:[0,0.16]).forEach(dt=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=kind==='tick'?660:440;
+  [0,0.16].forEach(dt=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=440;
     g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(0.35,t0+dt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.12);o.connect(g).connect(c.destination);o.start(t0+dt);o.stop(t0+dt+0.14);});
 }
-function coApply(x,prev){
-  if(x.type==='set'){
-    setSub(x.sub);setMeter(x.meter);Mt.burst=x.burst;Mt.bc=0;$('mBurst').value=String(x.burst);
-    if(Mt.on)metroStop();metroStart();
-  }else{
-    if(Mt.on)metroStop();
-    if(prev&&prev.type==='set')cue('end');
-  }
+function coMetro(x){setSub(x.sub);setMeter(x.meter);Mt.burst=x.burst;Mt.bc=0;$('mBurst').value=String(x.burst);}
+const coStart=k=>co.iv.slice(0,k).reduce((a,y)=>a+y.sec,0);
+// Перед первым подходом упражнения (у тестов — каждого теста) тренер играет пример и ждёт «Готов».
+const coFirst=k=>co.iv[k].type==='set'&&co.iv[k].k===0&&!co.heard[k];
+const coBar=x=>METERS[METERS[x.meter]?x.meter:'4/4'].reduce((a,b)=>a+b,0)*60/Mt.bpm;
+// Отсчёт — один такт размера подхода в темпе метронома (доля = пульс метронома, в x/8 — восьмая), сильная доля с акцентом.
+// Метроном запускается сразу на goAt — следующую сильную долю, поэтому сетка не сбивается.
+function coCount(k,goAt){
+  const c=audio();if(!c)return null;
+  const x=co.iv[k];coMetro(x);
+  const sp=60/Mt.bpm,n=meterPulses(),gs=groupStarts();
+  if(goAt==null||goAt-n*sp<c.currentTime+0.05)goAt=c.currentTime+0.08+n*sp;
+  const t0=goAt-n*sp,osc=[];
+  for(let q=0;q<n;q++)osc.push(click(t0+q*sp,q===0?3:gs.has(q)?2:1));
+  if(Mt.on)metroStop();metroStart(goAt);
+  return{k,goAt,t0,n,osc};
+}
+function coCancel(){
+  if(!co.arm)return;
+  const c=Mt.ctx,now=c?c.currentTime:0;
+  co.arm.osc.forEach(o=>{try{o.stop(now);}catch(e){}});
+  co.arm=null;if(Mt.on)metroStop();
+}
+// Пример: таб текущего варианта и уровня один раз, без метронома тренера.
+function coListen(){
+  co.hold.ph='listen';coCancel();if(Mt.on)metroStop();
+  const x=co.iv[co.hold.k];coMetro(x);
+  const box=x.blk!=null?(document.querySelectorAll('#nowBody .test')[x.blk]||document).querySelector('.tabbox[data-tab]'):document.querySelector('#nowBody .tabbox[data-tab]');
+  if(box)plStart(box,true);
+  if(!Pl.on)co.hold.ph='ready';
+}
+function coHoldCount(){co.hold.ph='count';co.arm=coCount(co.hold.k);if(!co.arm)co.hold=null;}
+function coReady(){
+  if(!co.hold||co.hold.ph==='count')return;
+  co.heard[co.hold.k]=true;plStop();coHoldCount();renderCoach();
 }
 function coachTick(){
   coSync();if(!coActive())return;
   const p=coPos(),x=co.iv[p.k];
-  if(p.k!==co.idx){const prev=co.idx>=0?co.iv[co.idx]:null;co.idx=p.k;co.beep=0;coApply(x,prev);renderCoach();}
+  if(co.hold){
+    const h=co.hold;
+    if(h.ph==='listen'&&!Pl.on){h.ph='ready';renderCoach();}
+    else if(h.ph==='count'&&co.arm&&Mt.ctx.currentTime>=co.arm.goAt){
+      // подход начинается ровно с сильной доли: таймер догоняет часы Web Audio
+      st.last=performance.now()-(Mt.ctx.currentTime-co.arm.goAt)*1000;co.hold=null;co.arm=null;renderCoach();
+    }
+    renderCoachClock(p);return;
+  }
+  if(p.k!==co.idx){
+    const prev=co.idx>=0?co.iv[co.idx]:null;co.idx=p.k;
+    if(x.type==='set'){
+      // таймер мог перескочить границу на долю секунды — подход начинается с начала
+      if(x.sec-p.left<0.5)st.remain=st.plan.segs[st.cur].min*60-coStart(p.k);
+      if(co.arm&&co.arm.k===p.k){if(Mt.ctx.currentTime<co.arm.goAt)co.hold={k:p.k,ph:'count'};else co.arm=null;}
+      else{coCancel();co.hold={k:p.k};if(coFirst(p.k))coListen();else coHoldCount();}
+    }else{
+      coCancel();if(Mt.on)metroStop();
+      if(prev&&prev.type==='set')cue();
+    }
+    renderCoach();
+    return;
+  }
+  // отдых перед подходом: отсчёт так, чтобы подход вступил ровно к концу отдыха
   const nx=co.iv[p.k+1];
-  if(x.type!=='set'&&nx&&nx.type==='set'){const n=Math.ceil(p.left);if(n>=1&&n<=3&&n!==co.beep){co.beep=n;cue('tick');}}
+  if(x.type!=='set'&&nx&&nx.type==='set'&&!co.arm&&!coFirst(p.k+1)&&p.left<=coBar(nx)+0.2)co.arm=coCount(p.k+1,Mt.ctx?Mt.ctx.currentTime+p.left:null);
   renderCoachClock(p);
 }
-// Пауза таймера останавливает метроном; после «Продолжить» текущий интервал применяется заново.
-function coachRun(){if(!coActive())return;if(st.running)co.idx=-1;else metroStop();}
+// Пауза таймера останавливает метроном, пример и отсчёт; после «Продолжить» текущий интервал применяется заново.
+function coachRun(){
+  if(!coActive())return;
+  if(st.running)co.idx=-1;
+  else{coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;metroStop();}
+}
 function coSkipTo(sec){
+  coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;
   st.remain=Math.max(0,sec);
   if(st.remain<=0.001){st.done.add(st.cur);if(st.cur<st.plan.segs.length-1){goto(st.cur+1,st.running);return;}st.remain=0;}
   if(!st.running)co.idx=-1;
   renderClock();
   if(st.running)coachTick();else renderCoach();
 }
+// Пробел = «Готов», только пока тренер ждёт; в полях ввода пробел работает как обычно.
+document.addEventListener('keydown',e=>{
+  if(e.code!=='Space'&&e.key!==' ')return;
+  if(!coActive()||!co.hold||co.hold.ph!=='ready'||!st.running||(e.target.closest&&e.target.closest('input,textarea,select,[contenteditable]')))return;
+  e.preventDefault();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();coReady();
+});
 function coName(x){
+  if(co.hold&&x.type==='set'){const ph=co.hold.ph;if(ph==='listen')return L('Пример','Example');if(ph==='ready')return L('Готов к подходу?','Ready for the set?');return L('Отсчёт','Count-in');}
   if(x.type==='prep')return L('Приготовься','Get ready');
   if(x.type==='free')return GB(L('Без гитары','No guitar'),L('Без баса','No bass'));
   if(x.type==='rest')return L('Отдых','Rest');
@@ -2564,7 +2631,7 @@ function renderCoach(){
   if(nextSet&&coTempo(nextSet))h+='<p class="cotempo"><span class="lbl">'+(x.type==='set'?L('Темп','Tempo'):L('Темп к подходу','Tempo for the set'))+'</span>'+esc(coTempo(nextSet))+'</p>';
   h+='<p class="conext"><span class="lbl">'+L('Дальше','Next')+'</span>'+(after.length?after.map(y=>esc(coName(y)+(y.type==='set'&&coTag(y)?' · '+coTag(y):''))+' '+fmt(y.sec)).join(' → '):esc(L('конец блока','end of block')))+'</p>';
   const skip=x.type==='set'?L('Пропустить подход','Skip set'):x.type==='rest'?L('Пропустить отдых','Skip rest'):L('Сразу к подходу','Start the set now');
-  h+='<div class="coact"><button class="btn" id="coSkip">'+skip+'</button>';
+  h+='<div class="coact">'+(co.hold&&co.hold.ph==='ready'?'<button class="btn primary" id="coReady">'+L('Готов','Ready')+' (Space)</button>':'')+'<button class="btn" id="coSkip">'+skip+'</button>';
   if(x.blk!=null&&co.iv.some(y=>y.blk>x.blk))h+='<button class="btn" id="coSkipBlk">'+L('Следующий тест','Next test')+'</button>';
   h+='</div>';
   box.innerHTML=h;
@@ -2576,8 +2643,9 @@ function renderCoachClock(p){
   const cell=$('coStrip').children[p.k];if(cell)cell.firstChild.style.width=(100*(1-p.left/co.iv[p.k].sec))+'%';
 }
 $('coach').addEventListener('click',e=>{
-  if(e.target.closest('#coToggle')){co.on=!co.on;co.idx=-1;if(co.on&&st.running)coachTick();renderCoach();return;}
+  if(e.target.closest('#coToggle')){co.on=!co.on;co.idx=-1;coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;if(co.on&&st.running)coachTick();renderCoach();return;}
   if(!coActive())return;
+  if(e.target.closest('#coReady')){coReady();return;}
   const p=coPos();
   if(e.target.closest('#coSkip'))coSkipTo(st.remain-p.left);
   else if(e.target.closest('#coSkipBlk')){const b=co.iv[p.k].blk;let el=0,c=0;co.iv.forEach(y=>{c+=y.sec;if(y.blk<=b)el=c;});coSkipTo(st.plan.segs[st.cur].min*60-el);}
@@ -2662,7 +2730,12 @@ function materialChanged(s){
   if(Pl.on)plStop();
   renderNow();
   let x=null;
-  if(coActive()){x=co.iv[coPos().k];if(x.type!=='set')return;}
+  if(coActive()){
+    // ждём «Готов» — пример заново по новому материалу; отсчёт — заново в новом размере
+    if(co.hold){if(co.hold.ph==='count'){coCancel();coHoldCount();}else coListen();renderCoach();return;}
+    if(co.arm)coCancel(); // отсчёт в отдыхе перепланируется на следующем тике
+    x=co.iv[coPos().k];if(x.type!=='set')return;
+  }
   else x=resolveEx(s,st.plan.d);
   setSub(x.sub);
   if(x.meter!==Mt.meter){setMeter(x.meter);if(Mt.on){metroStop();metroStart();}}
@@ -2694,7 +2767,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();
