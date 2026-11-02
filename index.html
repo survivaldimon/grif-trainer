@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -445,7 +445,7 @@ function splitInt(total,weights){
 /* ================= язык ================= */
 // Адрес: слова через дефис в любом порядке — язык (ru, en) и инструмент (guitar, bass): #en, #bass, #bass-en. Чего нет в адресе — из сохранённых настроек (lsGet).
 const hashWords=()=>(location.hash||'').slice(1).toLowerCase().split(/[-,+]/);
-let LANG=(function(){const h=hashWords();if(h.includes('en'))return 'en';if(h.includes('ru'))return 'ru';const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return /^ru|^uk|^be|^kk/i.test(navigator.language||'')?'ru':'en';})();
+let LANG=(function(){const h=hashWords();if(h.includes('en'))return 'en';if(h.includes('ru'))return 'ru';const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return 'en';})();
 const L=(ru,en)=>LANG==='en'?en:ru;
 // Инструмент: гитара или бас. У баса своё число струн (4/5/6, стандартный строй) и техника правой руки; план дня от них не зависит.
 let INST=(function(){const h=hashWords();if(h.includes('bass'))return 'bass';if(h.includes('guitar'))return 'guitar';return lsGet('inst','guitar')==='bass'?'bass':'guitar';})();
