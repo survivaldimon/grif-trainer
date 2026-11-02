@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning', 'theme'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass'];
 const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
@@ -328,5 +328,24 @@ test('дни: доступны только сегодня и 7 дней наз�
   await expect(page.locator('#settings')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test('тема: авто, светлая, тёмная — запоминается в grif.theme', async ({ page }) => {
+  const errors = await openApp(page, 'en');
+  const attr = () => page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+  expect(await attr()).toBeNull();
+  await page.click('#setBtn');
+  await page.click('#themeSw button[data-theme-set="dark"]');
+  expect(await attr()).toBe('dark');
+  await expect(page.locator('#themeSw button[data-theme-set="dark"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('grif.theme'))).toBe('"dark"');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.__grif);
+  expect(await attr()).toBe('dark');
+  await page.evaluate(() => window.__grif.setTheme('light'));
+  expect(await attr()).toBe('light');
+  await page.evaluate(() => window.__grif.setTheme('auto'));
+  expect(await attr()).toBeNull();
   expect(errors).toEqual([]);
 });
