@@ -1,4 +1,4 @@
-// Инварианты «Грифа» (см. CLAUDE.md). Запуск: npm test
+// Инварианты RiffGym (см. CLAUDE.md). Запуск: npm test
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');

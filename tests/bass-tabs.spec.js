@@ -110,7 +110,7 @@ test('плеер играет басовый таб без ошибок, пал�
 test('адрес и переключатель инструмента: #bass, #bass-en, запоминание', async ({ page }) => {
   const errors = await openApp(page, 'bass-en');
   let st = await page.evaluate(() => ({ inst: window.__grif.INST, title: document.title, hash: location.hash, bar: !document.getElementById('bassBar').hidden }));
-  expect(st).toEqual({ inst: 'bass', title: 'Grif · bass', hash: '#bass-en', bar: true });
+  expect(st).toEqual({ inst: 'bass', title: 'RiffGym · bass', hash: '#bass-en', bar: true });
   // язык меняется — инструмент в адресе остаётся
   await page.click('.lang button[data-lang="ru"]');
   expect(await page.evaluate(() => location.hash)).toBe('#bass-ru');
