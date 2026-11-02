@@ -1,14 +1,14 @@
-# Гриф · Grif
+# RiffGym
 
 **RU** · [EN](#english)
 
 Ежедневная тренировка на электрогитаре для техничного дэт-метала, устроенная как программа в тренажёрном зале.
 
-**Открыть:** `https://<ваш-ник>.github.io/grif-trainer/` · английская версия: `.../grif-trainer/#en`
+**Открыть:** https://riffgym.app/ · английская версия: https://riffgym.app/#en
 
 ## Идея
 
-- **Одна программа для всех.** Тренировка определяется датой: у всех, кто открыл «Гриф» в этот день, она одинаковая. Удобно заниматься вместе с друзьями и обсуждать одно и то же.
+- **Одна программа для всех.** Тренировка определяется датой: у всех, кто открыл RiffGym в этот день, она одинаковая. Удобно заниматься вместе с друзьями и обсуждать одно и то же.
 - **Единственная настройка — время:** от 15 минут до 5 часов. При нехватке времени первыми выпадают блоки с конца плана: музыка, затем поддержка. Фокус дня остаётся всегда.
 - **Темп у каждого свой.** Программа задаёт не bpm, а протокол: как найти свой чистый темп и что с ним делать на этой неделе. Одно и то же упражнение работает и для новичка, и для профи.
 
@@ -52,17 +52,17 @@
 
 <a id="english"></a>
 
-# Grif · daily tech death guitar workout
+# RiffGym · daily tech death guitar workout
 
-[RU](#гриф--grif) · **EN**
+[RU](#riffgym) · **EN**
 
-A daily electric guitar workout for technical death metal, built like a gym program. *Grif* is Russian for both a guitar neck and a barbell.
+A daily electric guitar workout for technical death metal, built like a gym program.
 
-**Open:** `https://<your-username>.github.io/grif-trainer/#en`
+**Open:** https://riffgym.app/#en
 
 ## The idea
 
-- **One program for everyone.** The workout is set by the date: everyone who opens Grif on a given day gets the same one, so you can train alongside friends.
+- **One program for everyone.** The workout is set by the date: everyone who opens RiffGym on a given day gets the same one, so you can train alongside friends.
 - **The only setting is time:** from 15 minutes to 5 hours. When time is short, blocks drop from the end of the plan: music first, then maintenance. The day's focus always stays.
 - **Tempo is personal.** The program prescribes protocols, not bpm: how to find your clean tempo and what to do with it this week. The same exercise works for a beginner and a pro.
 
