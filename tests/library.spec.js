@@ -102,3 +102,23 @@ test('раздел: адрес, кнопка возврата, уровень н
   await expect(page.locator('#lib')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('раздел: поиск и фильтр групп скрывают карточки, не перерисовывая раздел', async ({ page }) => {
+  const errors = await openApp(page, 'library-ru');
+  const visible = () => page.evaluate(() => [...document.querySelectorAll('#lib details[data-lib]')].filter(d => !d.closest('[hidden]')).map(d => d.dataset.lib));
+  const all = await visible();
+  await page.fill('#libQ', 'b1');
+  expect(await visible()).toEqual(['B1']);
+  await page.fill('#libQ', 'тремоло');
+  const trem = await visible();
+  expect(trem.length).toBeGreaterThan(1);
+  expect(trem).toContain('B1');
+  await page.click('#lib button[data-libf="R"]');
+  expect((await visible()).every(id => id.startsWith('R'))).toBe(true);
+  await page.fill('#libQ', 'zzzz');
+  await expect(page.locator('#libEmpty')).toBeVisible();
+  await page.fill('#libQ', '');
+  await page.click('#lib button[data-libf="all"]');
+  expect(await visible()).toEqual(all);
+  expect(errors).toEqual([]);
+});

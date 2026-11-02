@@ -295,7 +295,7 @@ test('EN: план 5 часов прокликан по дням цикла бе
     await page.click('#shareBtn');
     const share = await page.evaluate(() => { const t = document.getElementById('shareText'); return t ? t.value : ''; });
     (share.match(CYR) || []).forEach(w => { if (!bad.has(w)) bad.set(w, `day ${day}, share`); });
-    await page.click('#nextDay');
+    await page.evaluate(d => window.__grif.setDay(d + 1), day);
   }
   expect([...bad].map(([w, where]) => `${where}: ${w}`)).toEqual([]);
   expect(errors).toEqual([]);
@@ -307,5 +307,26 @@ test('RU: страница грузится без ошибок JS', async ({ pa
   const items = page.locator('#planList li');
   const n = await items.count();
   for (let k = 0; k < n; k++) await items.nth(k).click();
+  expect(errors).toEqual([]);
+});
+
+test('дни: доступны только сегодня и 7 дней назад', async ({ page }) => {
+  const errors = await openApp(page, 'ru');
+  const days = await page.evaluate(() => [...document.querySelectorAll('#weekStrip button[data-day]')].map(b => +b.dataset.day));
+  expect(days).toEqual([-12, -11, -10, -9, -8, -7, -6, -5]); // 2026-10-28 = −5
+  await expect(page.locator('#nextDay')).toBeDisabled();
+  for (let k = 0; k < 7; k++) await page.click('#prevDay');
+  expect(await page.evaluate(() => window.__grif.st.i)).toBe(-12);
+  await expect(page.locator('#prevDay')).toBeDisabled();
+  await page.click('#weekStrip button[data-day="-8"]');
+  expect(await page.evaluate(() => window.__grif.st.i)).toBe(-8);
+  await page.click('#todayBtn');
+  expect(await page.evaluate(() => window.__grif.st.i)).toBe(-5);
+  // настройки свёрнуты, открываются кнопкой и закрываются Esc
+  await expect(page.locator('#settings')).toBeHidden();
+  await page.click('#setBtn');
+  await expect(page.locator('#settings')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings')).toBeHidden();
   expect(errors).toEqual([]);
 });

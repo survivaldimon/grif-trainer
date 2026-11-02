@@ -115,7 +115,7 @@ test(`${inst}: тренер: указания упражнений и недел
 
 test('тренер: метроном включается на подходе и выключается на отдыхе, bpm не меняется', async ({ page }) => {
   const errors = await openApp(page, 'en');
-  await page.click('#nextDay'); await page.click('#nextDay'); await page.click('#nextDay'); await page.click('#nextDay'); await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   await page.locator('#planList li').nth(1).click(); // база B1
   const bpm = await page.inputValue('#bpm');
@@ -142,7 +142,7 @@ test('тренер: метроном включается на подходе и
 for (const inst of INSTS)
 test(`${inst}: готовность и отсчёт: пример перед 1-м подходом, таймер стоит, отсчёт = такт размера в bpm`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4')); // база с уровнями
   await page.locator('#planList li').nth(k).click();
@@ -197,7 +197,7 @@ test(`${inst}: готовность и отсчёт: пример перед 1-�
 
 test('отсчёт в x/8: число долей = числитель размера, доля = пульс метронома', async ({ page }) => {
   const errors = await openApp(page, 'en');
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   await page.locator('#planList li').nth(1).click();
   await page.click('#playBtn');
@@ -219,7 +219,7 @@ test('отсчёт в x/8: число долей = числитель разме
 
 test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
   const errors = await openApp(page, 'en');
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   const ID = 'B4'; // база с генератором: уровни меняют рисунок
   const k = await page.evaluate(id => window.__grif.st.plan.segs.findIndex(s => s.id === id), ID);
@@ -258,7 +258,7 @@ test('уровень: переключение на подходе не сбив
 
 test('бас: уровень хранится с префиксом bass. и не смешивается с гитарой', async ({ page }) => {
   const errors = await openApp(page, 'bass-en');
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4'));
   await page.locator('#planList li').nth(k).click();
@@ -271,7 +271,7 @@ test('бас: уровень хранится с префиксом bass. и н�
 for (const inst of INSTS)
 test(`${inst}: вариант: ручной выбор на подходе не сбивает таймер и тренера, план и вариант дня не меняются`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0
   await page.click('#timeChips button[data-t="60"]');
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.kind === 'focus'));
   await page.locator('#planList li').nth(k).click();
@@ -306,7 +306,7 @@ test(`${inst}: вариант: ручной выбор на подходе не 
   expect(await page.locator('#nowBody .tabbox').innerHTML()).toBe(tab0);
   // смена дня сбрасывает выбор
   await page.click(`.lvlb button[data-var="${pick}"]`);
-  await page.click('#nextDay'); await page.click('#prevDay');
+  await page.evaluate(() => { window.__grif.setDay(1); window.__grif.setDay(0); });
   await page.locator('#planList li').nth(k).click();
   await expect(page.locator('.lvlb button[data-var][aria-pressed="true"]')).toHaveText(String(day + 1));
   expect(errors).toEqual([]);
@@ -327,7 +327,7 @@ test(`${inst}: EN: ведение прокликано по всем интер�
   const days = inst === 'bass' ? [[-5, 15], [0, 60], [27, 60]] : [[-5, 15], [0, 60], [8, 60], [16, 120], [27, 60]];
   let cur = -5;
   for (const [day, T] of days) {
-    while (cur < day) { await page.click('#nextDay'); cur++; }
+    if (cur !== day) { await page.evaluate(d => window.__grif.setDay(d), day); cur = day; }
     await page.click(`#timeChips button[data-t="${T}"]`);
     await page.click('#playBtn');
     const n = await page.locator('#planList li').count();

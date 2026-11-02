@@ -52,42 +52,50 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px;display:flex;flex-direction:column;gap:20px}
 
-.hd{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
-.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(52px,9vw,84px);line-height:.82;letter-spacing:.02em;text-transform:uppercase}
+.hd{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.logo{font-family:var(--f-display);font-weight:800;font-size:clamp(36px,5vw,48px);line-height:.9;letter-spacing:.02em;text-transform:uppercase}
 .logo b{color:var(--accent);font-weight:800}
-.tag{color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
-.hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{color:var(--muted);font-size:14px}
+.hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lib-btn,.set-btn{height:40px;padding:0 14px;display:inline-flex;align-items:center;gap:8px}
+.btn.lib-btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.lib-btn:hover{border-color:var(--fg)}
+.set-btn{max-width:100%}
+.set-btn[aria-expanded="true"]{border-color:var(--accent)}
+.gear{font-size:17px;line-height:1}
+#setSum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.settings{display:flex;flex-direction:column;gap:12px}
+.setrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.setrow>.lbl{min-width:110px}
 .daynav{display:flex;align-items:center;gap:6px}
 .daynav button{background:var(--surface);border:1px solid var(--line);border-radius:6px;height:36px;min-width:36px;padding:0 10px}
-.daynav button:hover{border-color:var(--muted)}
+.daynav button:hover:not(:disabled){border-color:var(--muted)}
+.daynav button:disabled{opacity:.35;cursor:default}
 #dateLabel{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.02em;min-width:9ch;text-align:center;text-transform:uppercase}
 .lang{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;height:36px}
-.lang button{border:0;background:var(--surface);padding:0 10px;font-family:var(--f-mono);font-size:13px}
+.lang button{border:0;background:var(--surface);padding:0 12px;font-size:14px}
 .lang button[aria-pressed="true"]{background:var(--fg);color:var(--bg);font-weight:600}
 
-.meta{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
-.chip span{color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-.notice{border:1px dashed var(--accent);border-radius:8px;padding:10px 14px;font-size:14px;max-width:80ch}
+.meta{margin:0;color:var(--muted);font-size:14px}
+.meta b{color:var(--fg);font-weight:500}
+.notice{border-left:2px solid var(--accent);padding:4px 0 4px 12px;font-size:14px;max-width:80ch}
 
-.timebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
-.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.timebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.lbl{font-size:13px;color:var(--muted)}
 .tchips{display:flex;flex-wrap:wrap;gap:6px}
-.tchips button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;font-family:var(--f-mono);font-size:14px;font-variant-numeric:tabular-nums}
-.tsel{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:6px;padding:6px 8px;font-family:var(--f-mono);font-size:14px}
+.tchips button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;font-size:14px;font-variant-numeric:tabular-nums}
+.tsel{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:6px;padding:6px 8px;font-size:14px}
 .tchips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
 
-.cal{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:12px}
 .strip{display:grid;gap:4px}
-.week{grid-template-columns:repeat(7,minmax(0,1fr))}
-.cycle{grid-template-columns:repeat(4,minmax(0,1fr))}
-.cell{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);min-width:0}
-.cell .d{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.days{grid-template-columns:repeat(8,minmax(64px,1fr));overflow-x:auto}
+.cell{border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface);min-width:0;text-align:left}
+.cell:hover{border-color:var(--muted)}
+.cell .d{font-size:12px;color:var(--muted)}
 .cell .v{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cycle .v{white-space:normal}
-.cell .short{display:none}
 .cell.cur{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cell.today .d{color:var(--accent);font-weight:600}
 .cell.t .v{color:var(--k-test)}
 
 .side{display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -96,7 +104,7 @@ button{cursor:pointer}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
 .now{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:flex;flex-direction:column;gap:14px}
 .nowhd{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.kind{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.kind{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--fg)}
 .kind::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--kc,var(--muted))}
 h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,40px);line-height:.95;margin:0;text-wrap:balance;letter-spacing:.01em}
 .clockrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -109,7 +117,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;min-width:96px}
 .total{font-size:12px;color:var(--muted);font-family:var(--f-mono);margin-left:auto;align-self:center}
 
-.sect h4{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sect h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:600}
 .sect p{margin:0 0 6px;max-width:68ch}
 .sect ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;max-width:68ch}
 .goal{font-weight:600}
@@ -123,7 +131,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tplay{padding:4px 12px;font-size:13px}
 .tplay[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .lvl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
-.lvl .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lvl .lbl{font-size:13px;color:var(--muted)}
 .lvlb{display:flex;gap:4px}
 .lvlb button{border:1px solid var(--line);background:var(--surface);border-radius:6px;min-width:34px;padding:4px 10px;font-family:var(--f-mono);font-size:14px}
 .lvlb button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
@@ -160,7 +168,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 
 .metro{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
 .mtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.mstate{font-family:var(--f-display);font-weight:800;font-size:22px;letter-spacing:.06em;min-height:26px}
+.mstate{font-weight:600;font-size:15px;letter-spacing:.04em;min-height:22px}
 .mstate.play{color:var(--k-music)}
 .mstate.rest{color:var(--k-test)}
 .mbpm{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -174,14 +182,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .dots i.on{background:var(--accent);border-color:var(--accent)}
 .dots i.on.r{background:var(--k-test);border-color:var(--k-test)}
 .mopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-.mopts label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mopts label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
 .mopts select{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--fg)}
 .mopts .chk{flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--fg)}
 .mact{display:flex;gap:8px}
 
 .plan{display:flex;flex-direction:column;gap:14px}
 .planhd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.planhd h3,.riff h3,.about h3{font-family:var(--f-display);font-weight:800;font-size:28px;margin:0;letter-spacing:.02em;text-transform:uppercase}
+.planhd h3,.riff h3,.about h3{font-size:18px;font-weight:600;margin:0}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .plist li{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:4px}
 .plist li:hover{background:var(--surface-2)}
@@ -193,15 +201,19 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .plist .mn{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
 .plist li.pause .nm b{color:var(--muted);font-weight:400}
 
-.riff{border:1px solid var(--k-music);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.riff{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
 .riff dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;margin:0}
-.riff dt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.riff dt{font-size:13px;color:var(--muted)}
 .riff dd{margin:0}
 
 .about{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
 .about .panel li{max-width:65ch}
 .about ul{margin:10px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.safety{border-color:var(--danger)}
+.about summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.about summary::-webkit-details-marker{display:none}
+.about summary::after{content:"+";color:var(--muted);font-family:var(--f-mono)}
+.about details[open] summary::after{content:"\2212"}
+.about{align-items:start}
 .safety h3{color:var(--danger)}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:6px;font-size:14px;z-index:20}
@@ -232,21 +244,18 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
 
 /* широкий экран: слева настройки дня и план, справа «Сейчас» во всю высоту */
 @media (min-width:1200px){
-  .wrap{max-width:1600px;display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);grid-template-areas:"hd hd" "side now" "plan now" "about about";gap:20px 24px;align-items:start}
+  .wrap{max-width:1600px;display:grid;grid-template-columns:minmax(320px,380px) minmax(0,1fr);grid-template-areas:"hd hd" "set set" "side now" "plan now" "about about";gap:20px 24px;align-items:start}
   .hd{grid-area:hd}
   .side{grid-area:side}
+  .settings{grid-area:set}
+  .days{grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
   .grid{display:contents}
   .now{grid-area:now;max-height:calc(100vh - 24px);overflow:auto}
   .plan{grid-area:plan}
   .about{grid-area:about}
-  .cal{grid-template-columns:minmax(0,1fr)}
   .tchips button{padding:6px 10px}
   .tabsc{zoom:1.2}
   #nowBody>.lvl,#nowBody>.tabbox{order:-1}
-  .week .cell{padding:5px 4px}
-  .week .cell .v{font-size:12px;text-overflow:clip}
-  .cell .full{display:none}
-  .cell .short{display:inline}
 }
 @media (min-width:1440px){
   .now{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:14px 20px;align-content:start;grid-auto-flow:row dense}
@@ -262,31 +271,34 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
 @media (max-width:900px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .now{position:static}
-  .cal{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:520px){
   .plist li{grid-template-columns:74px minmax(0,1fr) auto;gap:8px}
   .clock{font-size:40px}
-  .week .cell{padding:5px 4px}
-  .week .cell .v{font-size:12px;text-overflow:clip}
-  .cell .full{display:none}
-  .cell .short{display:inline}
 }
 /* раздел «Все упражнения»: в режиме lib-on видны только шапка, панель баса и сам раздел */
-.lib-on .wrap>:not(.hd):not(#bassBar):not(#lib){display:none!important}
-.lib-btn{height:36px;padding:0 12px}
-.lib-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-.lib{display:flex;flex-direction:column;gap:18px;margin-top:16px}
+.lib-on .wrap>:not(.hd):not(#settings):not(#lib){display:none!important}
+.btn.lib-btn[aria-pressed="true"]{background:var(--surface-2);border-color:var(--line);color:var(--fg);font-weight:500}
+.lib{display:flex;flex-direction:column;gap:18px}
 .lib-hd{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
-.lib-hd h2{margin:0;font-size:22px}
-.lib-grp{display:flex;flex-direction:column;gap:8px}
-.lib-grp>h3{margin:0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lib-hd h2{margin:0;font-size:24px;font-weight:600}
+.lib-tools{display:flex;flex-direction:column;gap:10px;position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0}
+.lib-q{width:100%;max-width:560px;height:44px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:0 14px;font-size:16px}
+.lib-q:focus{border-color:var(--accent);outline:none}
+.lib-f button .n{color:var(--muted);font-size:12px;margin-left:4px}
+.lib-f button[aria-pressed="true"] .n{color:inherit}
+.lib-empty{color:var(--muted);margin:0}
+.lib-grp{display:flex;flex-direction:column;gap:10px}
+.lib-grp>h3{margin:0;font-size:16px;font-weight:600}
+.lib-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;align-items:start}
 .lib-ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
-.lib-ex>summary{display:flex;gap:10px;align-items:baseline;padding:12px 16px;cursor:pointer;list-style:none}
+.lib-ex:hover{border-color:var(--muted)}
+.lib-ex[open]{grid-column:1/-1;border-color:var(--accent)}
+.lib-ex>summary{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;cursor:pointer;list-style:none;height:100%}
 .lib-ex>summary::-webkit-details-marker{display:none}
 .lib-ex>summary::after{content:"+";margin-left:auto;color:var(--muted);font-family:var(--f-mono)}
 .lib-ex[open]>summary::after{content:"\2212"}
-.lib-id{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-width:34px}
+.lib-id{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-width:34px;padding-top:1px}
 .lib-goal{color:var(--muted);font-size:13px}
 .lib-body{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px;min-width:0}
 .lib-body p{margin:0}
@@ -304,50 +316,45 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="tag" data-i="tag"></div>
     </div>
     <div class="hdr">
-      <div class="daynav">
-        <button id="prevDay">‹</button>
-        <div id="dateLabel"></div>
-        <button id="nextDay">›</button>
-        <button id="todayBtn" data-i="today"></button>
-      </div>
-      <div class="lang" role="group" aria-label="Language">
-        <button data-lang="ru">RU</button><button data-lang="en">EN</button>
-      </div>
-      <div class="lang" id="instSw" role="group">
-        <button data-inst="guitar"></button><button data-inst="bass"></button>
-      </div>
       <button class="btn lib-btn" id="libBtn" aria-pressed="false"></button>
+      <button class="btn set-btn" id="setBtn" aria-expanded="false" aria-controls="settings"><span class="gear" aria-hidden="true">⚙</span><span id="setSum"></span></button>
     </div>
   </header>
 
+  <section class="panel settings" id="settings" hidden>
+    <div class="setrow"><span class="lbl" data-i="langLabel"></span>
+      <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+    </div>
+    <div class="setrow"><span class="lbl" data-i="instLabel"></span>
+      <div class="lang" id="instSw" role="group"><button data-inst="guitar"></button><button data-inst="bass"></button></div>
+    </div>
+    <div class="setrow" id="instBar"><span class="lbl" id="instLbl"></span>
+      <div class="tchips" id="strChips"></div>
+    </div>
+    <div class="setrow"><span class="lbl" data-i="tuneLabel"></span>
+      <div class="tchips" id="tuneChips"><select id="tuneKey" class="tsel"></select></div>
+      <div class="tchips" id="dropChips"></div>
+      <div class="tchips"><button id="tuneBtn" type="button"></button></div>
+    </div>
+    <div class="setrow" id="bassBar" hidden><span class="lbl" data-i="handLabel"></span>
+      <span class="tchips" id="handChips"></span>
+    </div>
+  </section>
+
   <div class="side">
-  <div class="meta" id="meta"></div>
-  <div id="notice" hidden class="notice"></div>
-
-  <section class="timebar">
-    <span class="lbl" data-i="timeLabel"></span>
-    <div class="tchips" id="timeChips"></div>
-  </section>
-
-  <section class="timebar" id="instBar">
-    <span class="lbl" id="instLbl"></span>
-    <div class="tchips" id="strChips"></div>
-    <div class="tchips" id="tuneChips"><select id="tuneKey" class="tsel"></select></div>
-    <div class="tchips" id="dropChips"></div>
-    <div class="tchips"><button id="tuneBtn" type="button"></button></div>
-    <span id="bassBar" hidden><span class="tchips" id="handChips"></span></span>
-  </section>
-
-  <section class="cal">
-    <div>
-      <div class="lbl" style="margin-bottom:6px" data-i="weekLabel"></div>
-      <div class="strip week" id="weekStrip"></div>
+    <div class="daynav">
+      <button id="prevDay">‹</button>
+      <div id="dateLabel"></div>
+      <button id="nextDay">›</button>
+      <button id="todayBtn" data-i="today"></button>
     </div>
-    <div>
-      <div class="lbl" style="margin-bottom:6px" data-i="cycleLabel"></div>
-      <div class="strip cycle" id="cycleStrip"></div>
-    </div>
-  </section>
+    <div class="strip days" id="weekStrip" role="group"></div>
+    <p class="meta" id="meta"></p>
+    <div id="notice" hidden class="notice"></div>
+    <section class="timebar">
+      <span class="lbl" data-i="timeLabel"></span>
+      <div class="tchips" id="timeChips"></div>
+    </section>
   </div>
 
   <main class="grid">
@@ -403,8 +410,8 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
   <section class="lib" id="lib" hidden></section>
 
   <section class="about">
-    <div class="panel"><h3 data-i="aboutT"></h3><ul id="aboutL"></ul></div>
-    <div class="panel safety"><h3 data-i="safeT"></h3><ul id="safeL"></ul></div>
+    <details class="panel"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
+    <details class="panel safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
   </section>
 </div>
 
@@ -455,8 +462,8 @@ const TU=()=>{const b=INST==='bass'?'bass'+STRINGS:GSTR===6?'guitar':'guitar'+GS
 // ключ упражнения в grif.bpmEx и grif.lvl: у баса с префиксом, чтобы не смешивать с гитарой
 const exKey=id=>INST==='bass'?'bass.'+id:id;
 const UI={
-  ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день'},
-  en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day'}
+  ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день',langLabel:'Язык',instLabel:'Инструмент',tuneLabel:'Строй',handLabel:'Правая рука',settings:'Настройки'},
+  en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day',langLabel:'Language',instLabel:'Instrument',tuneLabel:'Tuning',handLabel:'Right hand',settings:'Settings'}
 };
 const t=k=>UI[LANG][k];
 const ABOUT={
@@ -2107,6 +2114,7 @@ function fmtStart(min){const h=Math.floor(min/60),m=min%60;return h+':'+String(m
 function timeLabel(T){if(T<60)return T+L(' мин',' min');const h=Math.floor(T/60),m=T%60;return h+L(' ч',' h')+(m?' '+m:'');}
 
 /* ================= рендер ================= */
+const tuneShort=()=>{const t=TUNE[INST];return NOTES[mod(4+t.o,12)]+(t.d?' drop':'');};
 function renderStatic(){
   document.documentElement.lang=LANG;
   document.title='RiffGym'+GB('',L(' · бас',' · bass'));
@@ -2117,7 +2125,9 @@ function renderStatic(){
   $('instSw').setAttribute('aria-label',L('Инструмент','Instrument'));
   document.querySelectorAll('#instSw button').forEach(b=>{b.textContent=b.dataset.inst==='bass'?L('Бас','Bass'):L('Гитара','Guitar');b.setAttribute('aria-pressed',String(b.dataset.inst===INST));});
   $('bassBar').hidden=INST!=='bass';
-  $('instLbl').textContent=GB(L('Твоя гитара','Your guitar'),L('Твой бас','Your bass'));
+  $('instLbl').textContent=L('Струны','Strings');
+  $('setBtn').setAttribute('aria-label',t('settings'));
+  $('setSum').textContent=GB(L('Гитара','Guitar'),L('Бас','Bass'))+' · '+NSTR()+L(' стр.',' str.')+' · '+tuneShort()+' · '+LANG.toUpperCase();
   $('strChips').innerHTML=GB([6,7,8],[4,5,6]).map(n=>'<button data-str="'+n+'" aria-pressed="'+(n===NSTR())+'">'+n+L(n===4?' струны':' струн',' strings')+'</button>').join('');
   const tn=TUNE[INST];
   $('tuneKey').setAttribute('aria-label',L('Строй','Tuning'));
@@ -2134,24 +2144,28 @@ function renderStatic(){
   $('mSub').value=String(Mt.sub);$('mBurst').value=String(Mt.burst);
   $('mToggle').textContent=Mt.on?t('mOff'):t('mOn');
 }
+// Доступны только сегодня и 7 дней назад: будущие тренировки и старые не показываем.
+const DAYS_BACK=7;
+const dayOk=i=>i<=today&&i>=today-DAYS_BACK;
 function renderHeader(){
   const d=st.plan.d;
   $('dateLabel').textContent=dateText(d.date);
   $('todayBtn').hidden=(st.i===today);
-  const chips=[
-    [L('Цикл','Cycle'),d.pre?L('вводный','intro'):String(d.cycle+1)],
-    [L('Неделя','Week'),(d.week+1)+' · '+PH(d.week).name],
+  $('prevDay').disabled=!dayOk(st.i-1);$('nextDay').disabled=!dayOk(st.i+1);
+  const parts=[
+    [L('Неделя','Week'),d.pre?L('вводная','intro'):(d.week+1)+L(' из 4 · ',' of 4 · ')+PH(d.week).name],
     [L('Фокус','Focus'),GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')],
     [L('Лад цикла','Cycle scale'),matName(d.material)]
   ];
-  $('meta').innerHTML=chips.map(c=>'<span class="chip"><span>'+esc(c[0])+'</span>'+esc(c[1])+'</span>').join('');
+  $('meta').innerHTML=parts.map(c=>esc(c[0])+' <b>'+esc(c[1])+'</b>').join(' · ');
   const n=$('notice');
   if(d.pre){n.hidden=false;n.textContent=L('Первый цикл стартует в понедельник, 2 ноября. До старта идёт вводная неделя: в воскресенье, 1 ноября, — тестовый день. Сними исходные замеры, чтобы потом видеть прогресс.','The first cycle starts on Monday, November 2. Until then it is an intro week, and Sunday, November 1 is a test day. Take baseline measurements so you can see your progress later.');}
   else n.hidden=true;
   $('timeChips').innerHTML=TIMES.map(T=>'<button data-t="'+T+'" aria-pressed="'+(T===st.T)+'">'+timeLabel(T)+'</button>').join('');
-  const mon=st.i-d.dow;
-  $('weekStrip').innerHTML=DOWN[LANG].map((w,k)=>{const dd=dayInfo(mon+k);const cls=['cell'];if(k===d.dow)cls.push('cur');if(dd.isTest)cls.push('t');const tt=L('Тесты','Tests');return '<div class="'+cls.join(' ')+'"><div class="d">'+w+' '+dd.date.getDate()+'</div><div class="v"><span class="full">'+(dd.isTest?tt:GN(dd.focus))+'</span><span class="short">'+(dd.isTest?tt:GSHORTS[LANG][dd.focus])+'</span></div></div>';}).join('');
-  $('cycleStrip').innerHTML=PHASES.map((p,k)=>'<div class="cell'+(k===d.week?' cur':'')+'"><div class="d">'+L('Нед. ','Wk ')+(k+1)+'</div><div class="v">'+p[LANG].name+'</div></div>').join('');
+  const tt=L('Тесты','Tests');let h='';
+  for(let i=today-DAYS_BACK;i<=today;i++){const dd=dayInfo(i);const cls=['cell'];if(i===st.i)cls.push('cur');if(i===today)cls.push('today');if(dd.isTest)cls.push('t');
+    h+='<button class="'+cls.join(' ')+'" data-day="'+i+'" aria-pressed="'+(i===st.i)+'"><div class="d">'+(i===today?t('today'):DOWN[LANG][dd.dow]+' '+dd.date.getDate())+'</div><div class="v">'+(dd.isTest?tt:GSHORTS[LANG][dd.focus])+'</div></button>';}
+  $('weekStrip').innerHTML=h;
 }
 function renderPlan(){
   const {segs,d}=st.plan;
@@ -2711,7 +2725,7 @@ $('coach').addEventListener('click',e=>{
 
 /* ================= все упражнения ================= */
 // Раздел строится из активных EX/EXEN и GROUPS: новое упражнение попадает сюда само. Слово library в адресе открывает раздел.
-const LIB={on:hashWords().includes('library'),open:new Set(),sel:{}};
+const LIB={on:hashWords().includes('library'),open:new Set(),sel:{},q:'',g:'all'};
 const LIB_ORDER=[['W',()=>KIND('warm')],['B',()=>KIND('base')]].concat(['R','A','L','C'].map(g=>[g,()=>GN(g)]));
 const libNum=id=>EX[id].n!=null?EX[id].n:+id.replace(/\D/g,'');
 function libGroups(){
@@ -2757,8 +2771,30 @@ function renderLib(){
   $('libBtn').setAttribute('aria-pressed',String(LIB.on));
   if(!LIB.on){$('lib').innerHTML='';return;}
   const gs=libGroups(),n=gs.reduce((a,g)=>a+g.list.length,0);
-  $('lib').innerHTML='<div class="lib-hd"><h2>'+L('Все упражнения','All exercises')+GB('',L(' · бас',' · bass'))+'</h2><span class="lbl">'+n+L(' упражнений',' exercises')+'</span></div>'+
-    gs.map(g=>'<div class="lib-grp" data-libg="'+g.g+'"><h3>'+esc(g.name)+'</h3>'+g.list.map(libExHtml).join('')+'</div>').join('')+legendHtml();
+  if(LIB.g!=='all'&&!gs.some(g=>g.g===LIB.g))LIB.g='all';
+  const fb=(g,name,k)=>'<button data-libf="'+g+'" aria-pressed="'+(LIB.g===g)+'">'+esc(name)+'<span class="n">'+k+'</span></button>';
+  $('lib').innerHTML='<div class="lib-hd"><h2>'+L('Все упражнения','All exercises')+GB('',L(' · бас',' · bass'))+'</h2><span class="lbl" id="libN"></span></div>'+
+    '<div class="lib-tools"><input type="search" class="lib-q" id="libQ" placeholder="'+L('Поиск: название, цель, номер (B1, тремоло…)','Search: name, goal, number (B1, tremolo…)')+'" aria-label="'+L('Поиск упражнений','Search exercises')+'">'+
+    '<div class="tchips lib-f" role="group" aria-label="'+L('Группы','Groups')+'">'+fb('all',L('Все','All'),n)+gs.map(g=>fb(g.g,g.name,g.list.length)).join('')+'</div></div>'+
+    gs.map(g=>'<div class="lib-grp" data-libg="'+g.g+'"><h3>'+esc(g.name)+'</h3><div class="lib-cards">'+g.list.map(libExHtml).join('')+'</div></div>').join('')+
+    '<p class="lib-empty" id="libEmpty" hidden>'+L('Ничего не нашлось.','Nothing found.')+'</p>'+legendHtml();
+  $('libQ').value=LIB.q;
+  libFilter();
+}
+// Поиск и группа только скрывают карточки: раскрытые упражнения и плеер не перерисовываются.
+const libNorm=s=>String(s||'').toLowerCase().replace(/ё/g,'е');
+function libFilter(){
+  const q=libNorm(LIB.q).trim().split(/\s+/).filter(Boolean);let shown=0;
+  document.querySelectorAll('#lib .lib-grp').forEach(gr=>{
+    let k=0;const gOk=LIB.g==='all'||gr.dataset.libg===LIB.g;
+    gr.querySelectorAll('details[data-lib]').forEach(el=>{
+      const id=el.dataset.lib,hay=libNorm([id,X(id,'name'),X(id,'goal'),X(id,'how'),X(id,'tip')].join(' '));
+      const ok=gOk&&q.every(w=>hay.includes(w));el.hidden=!ok;if(ok)k++;
+    });
+    gr.hidden=!k;shown+=k;
+  });
+  $('libN').textContent=L('Показано ','Showing ')+shown+L(' из ',' of ')+document.querySelectorAll('#lib details[data-lib]').length;
+  $('libEmpty').hidden=!!shown;
 }
 function libRerender(id){const el=document.querySelector('#lib details[data-lib="'+id+'"]');if(el)el.outerHTML=libExHtml(id);}
 function setLib(on){on=!!on;if(on===LIB.on)return;plStop();LIB.on=on;writeHash();renderLib();window.scrollTo(0,0);}
@@ -2777,6 +2813,8 @@ $('lib').addEventListener('click',e=>{
   if(Pl.box&&el.contains(Pl.box))plStop();
   libRerender(id);
 });
+$('lib').addEventListener('input',e=>{if(e.target.id==='libQ'){LIB.q=e.target.value;libFilter();}});
+$('lib').addEventListener('click',e=>{const b=e.target.closest('button[data-libf]');if(!b)return;LIB.g=b.dataset.libf;document.querySelectorAll('#lib button[data-libf]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));libFilter();});
 $('lib').addEventListener('change',e=>{if(e.target.matches('input[data-loop]')){Pl.loop=e.target.checked;document.querySelectorAll('input[data-loop]').forEach(x=>{x.checked=Pl.loop;});}});
 
 /* ================= события ================= */
@@ -2827,8 +2865,13 @@ $('dropChips').addEventListener('click',e=>{const b=e.target.closest('button[dat
 $('tuneBtn').onclick=tuneUp;
 $('handChips').addEventListener('click',e=>{const b=e.target.closest('button[data-hand]');if(b)setHand(b.dataset.hand);});
 $('timeChips').addEventListener('click',e=>{const b=e.target.closest('button[data-t]');if(!b)return;st.T=+b.dataset.t;lsSet('time',st.T);rebuild();});
-$('prevDay').onclick=()=>{st.i--;rebuild();};
-$('nextDay').onclick=()=>{st.i++;rebuild();};
+function setDay(i){if(i===st.i)return;st.i=i;rebuild();}
+$('prevDay').onclick=()=>{if(dayOk(st.i-1))setDay(st.i-1);};
+$('nextDay').onclick=()=>{if(dayOk(st.i+1))setDay(st.i+1);};
+$('weekStrip').addEventListener('click',e=>{const b=e.target.closest('button[data-day]');if(b&&dayOk(+b.dataset.day))setDay(+b.dataset.day);});
+function setSettings(on){$('settings').hidden=!on;$('setBtn').setAttribute('aria-expanded',String(on));}
+$('setBtn').onclick=()=>setSettings($('settings').hidden);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('settings').hidden){setSettings(false);$('setBtn').focus();}});
 $('todayBtn').onclick=()=>{st.i=today;rebuild();};
 $('planList').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;goto(+li.dataset.k);if(window.innerWidth<=900)$('now').scrollIntoView({behavior:'smooth',block:'start'});});
 $('playBtn').onclick=()=>{audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}coachRun();renderClock();};
@@ -2895,7 +2938,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={setDay,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();

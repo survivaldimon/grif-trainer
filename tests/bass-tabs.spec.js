@@ -112,6 +112,7 @@ test('адрес и переключатель инструмента: #bass, #b
   let st = await page.evaluate(() => ({ inst: window.__grif.INST, title: document.title, hash: location.hash, bar: !document.getElementById('bassBar').hidden }));
   expect(st).toEqual({ inst: 'bass', title: 'RiffGym · bass', hash: '#bass-en', bar: true });
   // язык меняется — инструмент в адресе остаётся
+  await page.click('#setBtn');
   await page.click('.lang button[data-lang="ru"]');
   expect(await page.evaluate(() => location.hash)).toBe('#bass-ru');
   // гитара: адрес без bass, полоса баса скрыта, план строится из гитарных упражнений
@@ -132,7 +133,7 @@ test('адрес и переключатель инструмента: #bass, #b
 
 test('число струн и техника меняют таб и указания, не трогая таймер', async ({ page }) => {
   const errors = await openApp(page, 'bass-en');
-  for (let k = 0; k < 5; k++) await page.click('#nextDay'); // день 0: пул вариантов 0, у B1 «Открытая E» есть t5
+  await page.evaluate(() => window.__grif.setDay(0)); // день 0: пул вариантов 0, у B1 «Открытая E» есть t5
   await page.click('#timeChips button[data-t="60"]');
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B1'));
   await page.locator('#planList li').nth(k).click();
@@ -142,6 +143,7 @@ test('число струн и техника меняют таб и указа�
   await expect(page.locator('#nowBody .tabhd')).toContainText('EADG');
   await expect(page.locator('#nowBody')).toContainText('Fingers:');
   const before = await page.evaluate(() => ({ cur: window.__grif.st.cur, running: window.__grif.st.running }));
+  await page.click('#setBtn');
   await page.click('#strChips button[data-str="5"]');
   expect(await rows()).toBe('GDAEB');
   await expect(page.locator('#nowBody .tabhd')).toContainText('BEADG');
@@ -179,6 +181,7 @@ test('версии на низкую B и высокую C есть во все�
 test('бас, EN: план 5 часов на 6 струнах с медиатором прокликан без кириллицы', async ({ page }) => {
   test.setTimeout(300000);
   const errors = await openApp(page, 'bass-en');
+  await page.click('#setBtn');
   await page.click('#strChips button[data-str="6"]');
   await page.click('#handChips button[data-hand="pick"]');
   await page.click('#timeChips button[data-t="300"]');
@@ -195,7 +198,7 @@ test('бас, EN: план 5 часов на 6 струнах с медиато�
   const days = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 27];
   let cur = -5;
   for (const day of days) {
-    while (cur < day) { await page.click('#nextDay'); cur++; }
+    if (cur !== day) { await page.evaluate(d => window.__grif.setDay(d), day); cur = day; }
     const items = page.locator('#planList li'), n = await items.count();
     for (let k = 0; k < n; k++) { await items.nth(k).click(); await scan(`day ${day}, item ${k}`); }
     await page.click('#shareBtn');

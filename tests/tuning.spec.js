@@ -70,6 +70,7 @@ test('разметка нот: нота, бемоль, струна, откры�
 
 test('строй и число струн гитары: переключатели, localStorage, таб и заголовок, отдельно для инструментов', async ({ page }) => {
   const errors = await openApp(page);
+  await page.click('#setBtn');
   await page.selectOption('#tuneKey', '-5');
   await page.click('#dropChips button[data-drop="true"]');
   await page.click('#strChips button[data-str="7"]');
@@ -94,6 +95,7 @@ test('строй и число струн гитары: переключател
   const hd = await page.evaluate(() => window.__grif.tabHtml('', ['E0'], 1, '4/4', window.__grif.TU()));
   expect(hd).toContain('B drop');
   // кнопка «Настроиться» не падает
+  await page.click('#setBtn');
   await page.click('#tuneBtn');
   await page.waitForTimeout(200);
   expect(errors).toEqual([]);
