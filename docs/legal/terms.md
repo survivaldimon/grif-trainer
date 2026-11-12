@@ -17,6 +17,7 @@
 2.3. Вы можете удалить аккаунт в настройках в любой момент; данные аккаунта удаляются в соответствии с Политикой конфиденциальности.
 
 ## 3. Платные функции
+*[Раздел на будущее: платные функции пока не внедрены. До их появления раздел не публиковать.]*
 3.1. Отдельные функции (например, сохранение и синхронизация темпа упражнений) могут быть платными. Цена, срок и порядок оплаты указываются перед покупкой.
 3.2. Оплату принимает [платёжный провайдер]. [Если провайдер — Merchant of Record: продавцом выступает провайдер, применяются его условия.]
 3.3. Возврат: [условия возврата; для потребителей ЕС — право отказа в течение 14 дней, которое утрачивается при начале оказания цифровой услуги с вашего явного согласия].
@@ -61,6 +62,7 @@ Version of [date].
 2.3. You can delete your account in the settings at any time; its data is deleted as described in the Privacy Policy.
 
 ## 3. Paid features
+*[Future section: there are no paid features yet. Do not publish it until there are.]*
 3.1. Some features (e.g. saving and syncing exercise tempo) may be paid. Price, term and payment method are shown before purchase.
 3.2. Payments are processed by [payment provider]. [If a Merchant of Record: the provider is the seller and its terms apply.]
 3.3. Refunds: [refund terms; for EU consumers — 14-day right of withdrawal, which is lost once the digital service starts with your express consent].

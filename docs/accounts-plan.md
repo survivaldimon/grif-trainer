@@ -57,6 +57,7 @@ create table public.test_results (
   created_at timestamptz not null default now()
 );
 
+-- ОТЛОЖЕНО (платные функции не внедряем): в первую миграцию не входит
 -- права на платные функции; пишет только сервер (вебхук оплаты)
 create table public.entitlements (
   user_id    uuid not null references auth.users(id) on delete cascade,
@@ -93,7 +94,9 @@ create policy own_r on public.entitlements for select to authenticated
 
 Роль `anon` не получает ни одной политики — без входа API отдаёт пусто. Проверка: Supabase Security Advisor без предупреждений.
 
-### Платная функция «запоминание темпа»
+### Платная функция «запоминание темпа» — ОТЛОЖЕНО
+
+Решение автора от 2026-11-12: платные функции пока не внедряем. В первой версии нет таблицы `entitlements`, политики `own_r` на неё, триггера на `bpm`, вебхука оплаты и платёжного провайдера; темп синхронизируется бесплатно, как остальные поля. Ниже — заметки на будущее.
 
 Клиентской проверке доверять нельзя (код открыт). Поэтому серверная граница:
 - колонку `bpm` в `exercise_state` можно писать только при наличии права: отдельная политика/триггер `before insert or update` — если `new.bpm is not null` и нет действующей строки `entitlements(feature='tempo_memory')`, то `new.bpm := old.bpm` (или ошибка);
@@ -126,7 +129,7 @@ create policy own_r on public.entitlements for select to authenticated
 - `index.html`: раздел «аккаунт» (клиент, вход, sync), блок в `#settings`, тексты RU/EN (EN без кириллицы), ссылки на Terms/Privacy в подвале и в форме входа (с фразой «Входя, вы принимаете…»).
 - `docs/legal/*` → опубликовать как `terms.html`/`privacy.html` или рендерить markdown — GitHub Pages отдаёт `.md` как текст, поэтому нужны HTML-версии.
 - `supabase/migrations/0001_init.sql` — схема и RLS из раздела 3 (без секретов).
-- `supabase/functions/delete-account`, `supabase/functions/payment-webhook`.
+- `supabase/functions/delete-account` (`payment-webhook` — когда появятся платные функции).
 - Тесты: синхронизация с замоканным `fetch` (без реального Supabase), ключи `localStorage`, EN без кириллицы в блоке аккаунта. CLAUDE.md обновить (архитектура, инварианты, ключи).
 - Cloudflare Web Analytics: менять не нужно, но упомянуть в политике (уже сделано в черновике).
 

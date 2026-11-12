@@ -16,7 +16,7 @@
 | Настройки, уровни, темп, результаты тестов в `localStorage` браузера | без аккаунта | работа приложения на вашем устройстве | к нам не передаются |
 | Email, идентификатор аккаунта, при входе через Google — имя и аватар из Google [если запрашиваем] | при входе | аккаунт и вход | договор, ст. 6(1)(b) |
 | Настройки, уровни, темп, результаты тестов | с аккаунтом | синхронизация между устройствами | договор, ст. 6(1)(b) |
-| Сведения о покупках (без данных карты) | при оплате | предоставление платных функций, бухучёт | договор и закон, ст. 6(1)(b),(c) |
+| [будущее] Сведения о покупках (без данных карты) | при оплате | предоставление платных функций, бухучёт | договор и закон, ст. 6(1)(b),(c) |
 | Технические журналы (IP, время, браузер) у Supabase | при обращении к серверу | безопасность | законный интерес, ст. 6(1)(f) |
 | Обезличенная статистика посещений (Cloudflare Web Analytics) | всегда | понимать, как используется сайт | законный интерес, ст. 6(1)(f) |
 
@@ -28,7 +28,7 @@
 - **GitHub, Inc.** — хостинг страниц (GitHub Pages); может вести технические журналы запросов.
 - **Google** — только если вы выбрали вход через Google.
 - **[Почтовый сервис]** — отправка писем со ссылкой для входа.
-- **[Платёжный провайдер]** — приём оплаты; данные карты получает только он.
+- **[Платёжный провайдер — когда появятся платные функции]** — приём оплаты; данные карты получает только он.
 
 Часть обработчиков находится за пределами РК и ЕС (в т. ч. США). Трансграничная передача осуществляется [на основании согласия по ст. 16 Закона РК / стандартных договорных условий ЕС]. [ВАЖНО: требование ст. 12 Закона РК о хранении персональных данных граждан РК в базе на территории РК — проверить у юриста.]
 
@@ -69,7 +69,7 @@ Controller (owner and operator of the personal data database under Kazakhstan La
 | Settings, levels, tempo, test results in browser `localStorage` | without an account | running the app on your device | not sent to us |
 | Email, account ID; with Google sign-in — name and avatar from Google [if requested] | on sign-in | account and sign-in | contract, Art. 6(1)(b) |
 | Settings, levels, tempo, test results | with an account | sync across devices | contract, Art. 6(1)(b) |
-| Purchase records (no card data) | on payment | paid features, accounting | contract and law, Art. 6(1)(b),(c) |
+| [future] Purchase records (no card data) | on payment | paid features, accounting | contract and law, Art. 6(1)(b),(c) |
 | Technical logs (IP, time, browser) at Supabase | on server requests | security | legitimate interest, Art. 6(1)(f) |
 | Anonymous visit statistics (Cloudflare Web Analytics) | always | understanding how the site is used | legitimate interest, Art. 6(1)(f) |
 
@@ -81,7 +81,7 @@ We do not sell data, run ads or profile you. We do not collect health data.
 - **GitHub, Inc.** — page hosting (GitHub Pages); may keep technical request logs.
 - **Google** — only if you choose Google sign-in.
 - **[Email service]** — sending sign-in links.
-- **[Payment provider]** — payment processing; only the provider receives card data.
+- **[Payment provider — once paid features exist]** — payment processing; only the provider receives card data.
 
 Some processors are outside Kazakhstan and the EU (including the USA). Transfers rely on [consent under Art. 16 of the Kazakhstan law / EU Standard Contractual Clauses]. [IMPORTANT: check with a lawyer the Kazakhstan requirement (Art. 12) to store personal data of Kazakhstan citizens in a database located in Kazakhstan.]
 
