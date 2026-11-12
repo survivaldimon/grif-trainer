@@ -158,12 +158,13 @@ test(`${inst}: табы: стандартный строй, корректные
       });
       const box = document.createElement('div');
       box.innerHTML = G.renderTab(systems, sub, meter, tu);
-      const svgs = box.querySelectorAll('svg');
+      const svgs = box.querySelectorAll('.tsys');
       if (svgs.length !== systems.length) errs.push(`${where}: систем ${svgs.length}`);
-      svgs.forEach(svg => {
-        const rows = [...svg.querySelectorAll('text.sl')].map(x => x.textContent).join('');
-        if (rows !== ROWS.join('')) errs.push(`${where}: строки ${rows}`);
-        if (/NaN|undefined|Infinity/.test(svg.outerHTML)) errs.push(`${where}: NaN в SVG`);
+      const T = G.TUN(tu), LAB = ROWS.map(s => { const n = G.NOTES[((T.open[s] % 12) + 12) % 12]; return s === 'e' ? n.toLowerCase() : n; }).join('');
+      svgs.forEach(sy => {
+        const rows = [...sy.querySelectorAll('text.sl')].map(x => x.textContent).join('');
+        if (rows !== LAB) errs.push(`${where}: строки ${rows}`);
+        if (/NaN|undefined|Infinity/.test(sy.outerHTML)) errs.push(`${where}: NaN в SVG`);
       });
     };
     for (const [id, ex] of Object.entries(G.EX)) (ex.v || []).forEach((v, k) => {
