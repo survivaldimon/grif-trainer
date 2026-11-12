@@ -126,6 +126,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tabbox{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .tabhd{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
 .tabsc{overflow-x:auto;padding:4px 4px 0;display:flex;flex-direction:column;gap:2px;-webkit-overflow-scrolling:touch}
+.tsys{display:flex;flex-wrap:wrap;row-gap:2px}
 .tabsc svg{display:block;flex:none}
 .tabft{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:6px 10px;border-top:1px solid var(--line)}
 .tplay{padding:4px 12px;font-size:13px}
@@ -142,7 +143,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tb text{font-family:var(--f-mono)}
 .tb .ln{stroke:var(--muted);stroke-opacity:.45}
 .tb .br{stroke:var(--muted);stroke-width:1.2}
-.tb .sl{fill:var(--muted);font-size:10px}
+.tb .sl{fill:var(--muted);font-size:11px}
 .tb .nb{fill:var(--surface-2)}
 .tb .nt{fill:var(--fg);font-size:12px;font-weight:600}
 .tb .lt{fill:var(--muted);font-size:9px}
@@ -254,7 +255,6 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
   .plan{grid-area:plan}
   .about{grid-area:about}
   .tchips button{padding:6px 10px}
-  .tabsc{zoom:1.2}
   #nowBody>.lvl,#nowBody>.tabbox{order:-1}
 }
 @media (min-width:1440px){
@@ -264,9 +264,6 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
   .now>.coach,.now>.metro{grid-column:2}
   .now>.metro{border-top:0;padding-top:0}
   .clock{font-size:56px}
-}
-@media (min-width:1800px){
-  .tabsc{zoom:1.35}
 }
 @media (max-width:900px){
   .grid{grid-template-columns:minmax(0,1fr)}
@@ -603,22 +600,30 @@ const BEND_TXT={1:'½',2:'full',3:'1½',4:'2'};
 function renderSystem(sys,meter,si,tu){
   const STR=TUN(tu).strs,LG=13,TOP=32,X0=24,SB=TOP+(STR.length-1)*LG,S2=SB+26,H=S2+14,den=tabDen(meter);
   const yS=s=>TOP+STR.indexOf(s)*LG,f1=v=>Math.round(v*10)/10,T=TUN(tu),ftx=nt=>nt.x?'x':nt.f+dsh(T,nt.s);
-  let x=X0+6;const cols=[];
-  sys.items.forEach(it=>{
-    if(it.bar){cols.push({bar:true,x:x+3});x+=8;return;}
+  // система режется на куски по тактам (без тактов — по 4 долям), куски переносятся по ширине (flex-wrap)
+  const CH=4/den*4,chunks=[[]];let x=X0+6,cs=0;const cols=[];
+  sys.items.forEach((it,ii)=>{
+    const cur=chunks[chunks.length-1];
+    if(it.bar){cols.push({bar:true,x:x+3});cur.push(cols.length-1);x+=8;
+      if(ii<sys.items.length-1){chunks.push([]);x=6;}return;}
+    if(!sys.items.some(q=>q.bar)&&cur.length&&it.pos>=cs+CH-EPS&&isInt(it.pos)){chunks.push([]);x=6;cs=it.pos;}
     const cw=Math.max(1,...it.notes.map(nt=>String(ftx(nt)).length))*7.4+4;
     const ex=(it.notes.some(nt=>nt.b!=null)?(it.notes.some(nt=>nt.r!=null)?22:13):0)+(it.notes.some(nt=>nt.vib)?14:0);
     const w=Math.max(cw+ex+6,34*Math.pow(it.dur*4/den,0.75));
-    cols.push({it,x,w,cw,cx:x+3+cw/2});x+=w;
+    cols.push({it,x,w,cw,cx:x+3+cw/2});chunks[chunks.length-1].push(cols.length-1);x+=w;
   });
-  const W=Math.ceil(x+10);
+  // подписи струн — реальные ноты строя (сдвиг и drop), верхняя гитарная — строчной
+  const lab=s=>{const n=NOTES[mod(T.open[s],12)];return s==='e'?n.toLowerCase():n;};
+  return '<div class="tsys">'+chunks.filter(ch=>ch.length).map((ch,k)=>{
+  const first=!k,last=ch[ch.length-1],endBar=cols[last].bar&&k<chunks.length-1;
+  const W=Math.ceil(endBar?cols[last].x+1:(cols[last].bar?cols[last].x:cols[last].x+cols[last].w)+(k===chunks.length-1||!chunks[k+1]||!chunks[k+1].length?10:0)),R=k===chunks.length-1?W-4:W-1,L0=first?X0:0;
   let back='',lines='',body='',ann='',rh='';
-  STR.forEach((s,i)=>{const y=TOP+i*LG;lines+='<line class="ln" x1="'+X0+'" x2="'+(W-4)+'" y1="'+y+'" y2="'+y+'"/><text class="sl" x="'+(X0-10)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+s+'</text>';});
-  [X0,W-4].forEach(bx=>{lines+='<line class="br" x1="'+bx+'" x2="'+bx+'" y1="'+TOP+'" y2="'+SB+'"/>';});
+  STR.forEach((s,i)=>{const y=TOP+i*LG;lines+='<line class="ln" x1="'+L0+'" x2="'+R+'" y1="'+y+'" y2="'+y+'"/>'+(first?'<text class="sl" x="'+(X0-11)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+lab(s)+'</text>':'');});
+  (first?[X0,R]:[R]).forEach(bx=>{lines+='<line class="br" x1="'+bx+'" x2="'+bx+'" y1="'+TOP+'" y2="'+SB+'"/>';});
   const groups=new Map();let prev=null,pm=null;
   const pmEnd=()=>{if(!pm)return;ann+='<text class="an" x="'+f1(pm.x0)+'" y="10">P.M.</text>';if(pm.x1-pm.x0>34)ann+='<path class="dsh" d="M'+f1(pm.x0+26)+' 7H'+f1(pm.x1)+'V11"/>';pm=null;};
-  cols.forEach((c,ci)=>{
-    if(c.bar){lines+='<line class="br" x1="'+f1(c.x)+'" x2="'+f1(c.x)+'" y1="'+TOP+'" y2="'+SB+'"/>';return;}
+  ch.forEach(ci=>{const c=cols[ci];
+    if(c.bar){if(ci===last)return;lines+='<line class="br" x1="'+f1(c.x)+'" x2="'+f1(c.x)+'" y1="'+TOP+'" y2="'+SB+'"/>';return;}
     const it=c.it,id=si+'.'+ci;
     back+='<rect class="hl ev" data-e="'+id+'" x="'+f1(c.x)+'" y="'+(TOP-9)+'" width="'+f1(c.w)+'" height="'+(S2-TOP+12)+'" rx="4"/>';
     if(it.pm){if(!pm)pm={x0:c.x+2};pm.x1=c.x+c.w-4;}else pmEnd();
@@ -671,8 +676,11 @@ function renderSystem(sys,meter,si,tu){
     const tn=gr.find(c=>!isP2(c.it.n));
     if(tn&&gr.length>1)rh+='<text class="tu" x="'+f1((gr[0].cx+gr[gr.length-1].cx)/2)+'" y="'+(S2+11)+'" text-anchor="middle">'+tn.it.n+'</text>';
   });
-  return '<svg class="tb" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
+  return '<svg class="tb" width="'+f1(W*TAB_K)+'" height="'+f1(H*TAB_K)+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
+  }).join('')+'</div>';
 }
+// масштаб рисунка таба
+const TAB_K=.8;
 const renderTab=(systems,sub,meter,tu)=>parseTab(systems,sub,tu).map((s,si)=>renderSystem(s,meter||'4/4',si,tu)).join('');
 
 /* ================= лады ================= */
@@ -2953,7 +2961,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={setDay,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={NOTES,setDay,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();

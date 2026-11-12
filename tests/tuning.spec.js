@@ -49,6 +49,31 @@ test('drop: ноты нижней струны в табе на 2 лада вы�
   expect(r.pDrop).toEqual(r.pStd);
 });
 
+test('подписи струн на табе — ноты выбранного строя, длинный таб переносится по тактам', async ({ page }) => {
+  await openApp(page);
+  const r = await page.evaluate(() => {
+    const G = window.__grif, lab = tu => { const b = document.createElement('div'); b.innerHTML = G.renderTab(['E0 E0 E0 E0'], 4, '4/4', tu); return [...b.querySelectorAll('text.sl')].map(t => t.textContent).join(' '); };
+    const b = document.createElement('div'); b.innerHTML = G.renderTab(['E0 E0 E0 E0 | E0 E0 E0 E0 | E0 E0 E0 E0'], 4, '4/4', 'guitar');
+    return { std: lab('guitar'), eb: lab('guitar@-1'), dropD: lab('guitar@0d'), dk: lab('guitar@-2dk'), g7: lab('guitar7@-1'), g8: lab('guitar8'),
+      b4: lab('bass4@-5d'), b6: lab('bass6'), chunks: b.querySelectorAll('.tsys svg').length, labs: b.querySelectorAll('text.sl').length };
+  });
+  expect(r.std).toBe('e B G D A E');
+  expect(r.eb).toBe('d# A# F# C# G# D#');
+  expect(r.dropD).toBe('e B G D A D');
+  expect(r.dk).toBe('d A F C G C');
+  expect(r.g7).toBe('d# A# F# C# G# D# A#');
+  expect(r.g8).toBe('e B G D A E B F#');
+  expect(r.b4).toBe('D A E A');
+  expect(r.b6).toBe('C G D A E B');
+  expect(r.chunks).toBe(3);
+  expect(r.labs).toBe(6); // подписи только у первого куска
+  // в приложении: смена строя меняет подписи на табе
+  await page.evaluate(() => { const G = window.__grif; G.setDay(0); const k = G.st.plan.segs.findIndex(s => s.id === 'B1'); document.querySelectorAll('#planList li')[k].click(); G.setTuning(-1, true); });
+  const app = await page.evaluate(() => [...document.querySelectorAll('.tabbox .tsys')[0].querySelectorAll('text.sl')].map(t => t.textContent).join(' '));
+  await page.evaluate(() => window.__grif.setTuning(0, false));
+  expect(app).toBe('d# A# F# C# G# C#');
+});
+
 test('разметка нот: нота, бемоль, струна, открытая струна в drop', async ({ page }) => {
   await openApp(page);
   const r = await page.evaluate(() => {
