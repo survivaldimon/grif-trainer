@@ -122,3 +122,40 @@ test('раздел: поиск и фильтр групп скрывают ка�
   expect(await visible()).toEqual(all);
   expect(errors).toEqual([]);
 });
+
+// Нумерация: сквозной номер по порядку раздела, 1..N без пропусков, тот же в плане; id не меняются.
+for (const inst of ['guitar', 'bass']) test('нумерация упражнений: ' + inst, async ({ page }) => {
+  const errors = await openApp(page, inst + '-library');
+  const r = await page.evaluate(() => {
+    const nums = [...document.querySelectorAll('#lib details[data-lib] .lib-id')].map(e => +e.textContent);
+    const ids = [...document.querySelectorAll('#lib details[data-lib]')].map(e => e.dataset.lib);
+    return { nums, ids, n: Object.keys(window.__grif.EX).length };
+  });
+  expect(r.nums).toEqual(Array.from({ length: r.n }, (_, i) => i + 1));
+  await page.click('#libBtn');
+  const plan = await page.evaluate(() => [...document.querySelectorAll('#planList li b')].map(b => b.textContent));
+  const segs = await page.evaluate(() => window.__grif.st.plan.segs.filter(s => s.id && window.__grif.EX[s.id]).map(s => s.id));
+  segs.forEach(id => expect(plan.some(t => t.startsWith((r.ids.indexOf(id) + 1) + '. '))).toBe(true));
+  expect(errors).toEqual([]);
+});
+
+// Память темпа (в будущем платная функция): рабочий темп подставляется при старте упражнения, чистый записывается кнопкой.
+test('память рабочего и чистого темпа по упражнению', async ({ page }) => {
+  const errors = await openApp(page, 'guitar');
+  const r = await page.evaluate(() => {
+    const G = window.__grif, segs = G.st.plan.segs;
+    const ks = segs.map((s, k) => k).filter(k => segs[k].id && G.EX[segs[k].id] && segs[k].kind !== 'warm');
+    const [a, b] = [ks[0], ks.find(k => segs[k].id !== segs[ks[0]].id)];
+    const go = k => document.querySelectorAll('#planList li')[k].click();
+    const bpm = document.getElementById('bpm');
+    const set = v => { bpm.value = v; bpm.dispatchEvent(new Event('change')); };
+    go(a); set(133); document.querySelector('[data-clean]').click(); set(120);
+    go(b); set(90); go(a);
+    return { bpm: +bpm.value, txt: document.getElementById('tempoMem').textContent, clean: JSON.parse(localStorage.getItem('grif.bpmClean')) };
+  });
+  expect(r.bpm).toBe(120);
+  expect(r.txt).toContain('120');
+  expect(r.txt).toContain('133');
+  expect(Object.values(r.clean)[0].bpm).toBe(133);
+  expect(errors).toEqual([]);
+});

@@ -2104,7 +2104,7 @@ function segTitle(s,d){
   if(s.kind==='pause')return KIND('pause');
   if(s.kind==='test')return L('Тесты цикла','Cycle tests');
   if(s.kind==='music')return MUSIC[s.mid][LANG];
-  return X(s.id,'name');
+  return numTitle(s.id);
 }
 
 /* ================= состояние ================= */
@@ -2185,8 +2185,7 @@ function renderPlan(){
   const {segs,d}=st.plan;
   $('planList').innerHTML=segs.map((s,k)=>{
     const cls=[s.kind==='pause'?'pause':''];if(k===st.cur)cls.push('cur');if(st.done.has(k))cls.push('done');
-    const num=(s.id&&EX[s.id]&&EX[s.id].n)?'<span class="legend"> · '+EX[s.id].n+'</span>':'';
-    return '<li class="'+cls.join(' ')+'" data-k="'+k+'" style="--kc:var(--k-'+s.kind+')"><span class="tm">'+fmtStart(s.start)+'–'+fmtStart(s.start+s.min)+'</span><span class="nm"><span class="kind" style="--kc:var(--k-'+s.kind+')">'+KIND(s.kind)+(s.focus?' · '+GN(d.focus):'')+'</span><b>'+esc(segTitle(s,d))+num+'</b></span><span class="mn">'+s.min+'′</span></li>';
+    return '<li class="'+cls.join(' ')+'" data-k="'+k+'" style="--kc:var(--k-'+s.kind+')"><span class="tm">'+fmtStart(s.start)+'–'+fmtStart(s.start+s.min)+'</span><span class="nm"><span class="kind" style="--kc:var(--k-'+s.kind+')">'+KIND(s.kind)+(s.focus?' · '+GN(d.focus):'')+'</span><b>'+esc(segTitle(s,d))+'</b></span><span class="mn">'+s.min+'′</span></li>';
   }).join('');
   const r=riffText(st.plan.riff);
   const inPlan=st.plan.segs.some(s=>s.mid==='riff');
@@ -2242,6 +2241,7 @@ function renderNow(){
     h+='<div class="sect"><p class="goal">'+esc(X(s.id,'goal'))+'</p><p>'+esc(X(s.id,'how'))+'</p>'+(r.v&&r.v.note?'<p class="note">'+esc(r.v.note)+'</p>':'')+handHtml(s.id)+'<p class="tip">'+esc(X(s.id,'tip'))+'</p></div>';
     if(!r.ex.gen&&r.ex.v&&r.ex.v.length>1)h+=varHtml(s,d);
     if(r.nl)h+=lvlHtml(s.id,r.lv,r.nl);
+    if(s.kind!=='warm')h+=tempoMemHtml(s.id);
     if(r.v)h+=tabHtml(L('Вариант: ','Variant: ')+r.v.l,r.v.t,r.sub,r.meter,r.tu)+legendHtml();
   }
   $('nowBody').innerHTML=h;
@@ -2325,11 +2325,21 @@ function renderDots(){const gs=groupStarts();$('dots').innerHTML=Array.from({len
 function metroStart(at){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=at!=null?at:c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
 function metroStop(){Mt.on=false;clearInterval(Mt.timer);Mt.timer=null;$('mToggle').textContent=t('mOn');$('mState').textContent='';$('mState').className='mstate';[...$('dots').children].forEach(el=>el.classList.remove('on','r'));}
 function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?exKey(s.id):null;}
+// В будущем платная функция (сейчас доступна всем): память темпа по упражнению.
+// grif.bpmEx — рабочий темп {exKey: bpm}, сохраняется при любой смене bpm на упражнении и подставляется при его старте;
+// grif.bpmClean — последний чистый темп {exKey: {bpm, date}}, записывается кнопкой в панели «Сейчас».
 function setBpm(v){
   Mt.bpm=clamp(Math.round(v)||Mt.bpm,30,320);
   $('bpm').value=Mt.bpm;$('bpmRange').value=Mt.bpm;
   lsSet('bpm',Mt.bpm);const k=curExKey();if(k){const m=lsGet('bpmEx',{});m[k]=Mt.bpm;lsSet('bpmEx',m);}
+  renderTempoMem();
 }
+function tempoMemHtml(id){
+  const k=exKey(id),w=lsGet('bpmEx',{})[k],c=lsGet('bpmClean',{})[k];
+  return '<div class="lvl tempo-mem"><span class="lbl">'+L('Темп','Tempo')+'</span><span class="lvld" id="tempoMem">'+tempoMemText(w,c)+'</span><button class="btn" data-clean="1">'+L('Записать как чистый','Save as clean')+'</button></div>';
+}
+function tempoMemText(w,c){return esc(L('рабочий: ','working: ')+(w?w+' bpm':'—')+' · '+L('последний чистый: ','last clean: ')+(c?c.bpm+' bpm ('+c.date+')':'—'));}
+function renderTempoMem(){const el=$('tempoMem'),k=curExKey();if(el&&k)el.innerHTML=tempoMemText(lsGet('bpmEx',{})[k],lsGet('bpmClean',{})[k]);}
 function setMeter(m){Mt.meter=METERS[m]?m:'4/4';$('mMeter').value=Mt.meter;Mt.pulse=0;Mt.bc=0;renderDots();}
 function setSub(n){Mt.sub=[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=String(Mt.sub);}
 function applyMetroDefaults(){
@@ -2342,7 +2352,7 @@ function applyMetroDefaults(){
 
 /* ================= плеер ================= */
 // Синтез гитары: Karplus–Strong в буфер (кэш по высоте) → перегруз WaveShaper → «кабинет». Время в долях метронома, темп — Mt.bpm.
-// Бас: те же буферы на его открытых струнах, свой тракт (чистый низ + перегруженная середина); пальцы — мягкий щипок, медиатор — яркий.
+// Бас: те же буферы на его открытых струнах, свой чистый тракт без перегруза; пальцы — мягкий щипок, медиатор — яркий.
 const Pl={on:false,once:false,key:null,box:null,ev:[],i:0,next:0,pos:0,bar:4,loop:true,timer:null,bus:null,bbus:null,bufs:{},voices:[],q:[],lit:'',tu:'guitar',hand:'fingers'};
 function plLabel(on){return on?'■ '+L('Стоп','Stop'):'▶ '+L('Послушать','Listen');}
 function plShaper(c,k){
@@ -2363,15 +2373,12 @@ function plBus(c){
 }
 function plBassBus(c){
   if(Pl.bbus)return Pl.bbus;
-  const inp=c.createGain(),out=c.createGain();out.gain.value=0.32;
-  const lo=c.createBiquadFilter();lo.type='lowpass';lo.frequency.value=250;
-  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=250;
-  const drive=c.createGain();drive.gain.value=5;
-  const cab=c.createBiquadFilter();cab.type='lowpass';cab.frequency.value=2500;cab.Q.value=0.7;
-  const mix=c.createGain();mix.gain.value=0.35;
-  inp.connect(lo).connect(out);
-  inp.connect(hp).connect(drive).connect(plShaper(c,2)).connect(cab).connect(mix).connect(out);
-  out.connect(c.destination);
+  // чистый бас без перегруза: срез гула, лёгкий подъём низа, мягкий верх (яркость задаёт щипок: пальцы/медиатор)
+  const inp=c.createGain(),out=c.createGain();out.gain.value=0.5;
+  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=30;
+  const low=c.createBiquadFilter();low.type='lowshelf';low.frequency.value=120;low.gain.value=3;
+  const top=c.createBiquadFilter();top.type='lowpass';top.frequency.value=4000;top.Q.value=0.5;
+  inp.connect(hp).connect(low).connect(top).connect(out).connect(c.destination);
   return Pl.bbus=inp;
 }
 function plBuf(c,midi,pm,soft){
@@ -2742,6 +2749,10 @@ $('coach').addEventListener('click',e=>{
 const LIB={on:hashWords().includes('library'),open:new Set(),sel:{},q:'',g:'all'};
 const LIB_ORDER=[['W',()=>KIND('warm')],['B',()=>KIND('base')]].concat(['R','A','L','C'].map(g=>[g,()=>GN(g)]));
 const libNum=id=>EX[id].n!=null?EX[id].n:+id.replace(/\D/g,'');
+// Сквозной номер упражнения: порядок раздела «Все упражнения». Только отображение, id не меняются.
+const NUMC={};
+function exNum(id){const m=NUMC[INST]||(NUMC[INST]=(()=>{const o={};let n=0;libGroups().forEach(g=>g.list.forEach(x=>o[x]=++n));return o;})());return m[id]||0;}
+function numTitle(id){const n=exNum(id);return (n?n+'. ':'')+X(id,'name');}
 function libGroups(){
   const ids=Object.keys(EX),seen=new Set(),out=[];
   LIB_ORDER.forEach(([g,name])=>{
@@ -2759,7 +2770,7 @@ function libSel(id){
 }
 function libExHtml(id){
   const ex=EX[id],d=st.plan.d,{lv,k}=libSel(id),open=LIB.open.has(id);
-  let h='<details class="lib-ex" data-lib="'+id+'"'+(open?' open':'')+'><summary><span class="lib-id">'+id+'</span><span><b>'+esc(X(id,'name'))+'</b><br><span class="lib-goal">'+esc(X(id,'goal'))+'</span></span></summary>';
+  let h='<details class="lib-ex" data-lib="'+id+'"'+(open?' open':'')+'><summary><span class="lib-id" title="'+id+'">'+exNum(id)+'</span><span><b>'+esc(X(id,'name'))+'</b><br><span class="lib-goal">'+esc(X(id,'goal'))+'</span></span></summary>';
   if(!open)return h+'</details>';
   h+='<div class="lib-body"><div class="sect"><h4>'+L('Как играть','How to play')+'</h4><p>'+esc(X(id,'how'))+'</p></div>';
   // бас: оба указания правой руки, выбранная техника — первой
@@ -2897,6 +2908,7 @@ $('nowBody').addEventListener('click',e=>{
   if(sv){const id=sv.dataset.save;const inp=$('ti-'+id);const v=Math.round(+inp.value);if(!v||v<20||v>400){toast(L('Введи темп в bpm, например 140','Enter a tempo in bpm, e.g. 140'));return;}
     const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
   const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
+  if(e.target.closest('button[data-clean]')){const k=curExKey();if(k){const m=lsGet('bpmClean',{});m[k]={bpm:Mt.bpm,date:dateOfIndex(st.i).toISOString().slice(0,10)};lsSet('bpmClean',m);renderTempoMem();toast(L('Чистый темп: ','Clean tempo: ')+Mt.bpm+' bpm');}return;}
   const lb=e.target.closest('button[data-lvl]');if(lb)changeLvl(+lb.dataset.lvl);
   const vb=e.target.closest('button[data-var]');if(vb)changeVar(+vb.dataset.var);
 });
