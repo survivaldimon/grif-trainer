@@ -1946,7 +1946,7 @@ const TIMES=[15,30,45,60,90,120,180,240,300];
 
 function dayInfo(i){
   const cycle=Math.floor(i/28), dic=mod(i,28), week=Math.floor(dic/7), dow=dic%7;
-  return {i,cycle,week,dow,focus:FOCUS_BY_DOW[dow],occ:(dow===6||dow<3)?0:1,gweek:Math.floor(i/7),pool:i<0?0:mod(cycle,6),material:i<0?MATERIALS[0]:MATERIALS[mod(cycle,6)],isTest:week===3&&dow===6,pre:i<0,date:dateOfIndex(i)};
+  return {i,cycle,week,dow,focus:FOCUS_BY_DOW[dow],occ:(dow===6||dow<3)?0:1,gweek:Math.floor(i/7),pool:mod(Math.floor(i/7),6),material:i<0?MATERIALS[0]:MATERIALS[mod(cycle,6)],isTest:week===3&&dow===6,pre:i<0,date:dateOfIndex(i)};
 }
 
 const RIFF_METERS={ru:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 поверх 4/4'],en:['4/4','3/4','5/8','7/8','9/8','11/8','13/16','6/8 over 4/4']};
