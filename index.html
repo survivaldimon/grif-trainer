@@ -230,7 +230,6 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
 .coname span{font-size:13px}
 .cost.t-set .coname b{color:var(--k-music)}
 .cost.t-rest .coname b,.cost.t-free .coname b{color:var(--muted)}
-.cost.t-prep .coname b{color:var(--accent)}
 .coclock{font-family:var(--f-mono);font-weight:600;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
 .costrip{display:flex;gap:2px;height:8px}
 .costrip i{display:block;min-width:2px;border-radius:2px;overflow:hidden;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
@@ -2333,7 +2332,7 @@ function setBpm(v){
 function setMeter(m){Mt.meter=METERS[m]?m:'4/4';$('mMeter').value=Mt.meter;Mt.pulse=0;Mt.bc=0;renderDots();}
 function setSub(n){Mt.sub=[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=String(Mt.sub);}
 function applyMetroDefaults(){
-  const s=st.plan.segs[st.cur];const d=st.plan.d;
+  if(co.base!=null)coBpm(null);const s=st.plan.segs[st.cur];const d=st.plan.d;
   if(s.id&&EX[s.id]){const r=resolveEx(s,d);setSub(r.sub);setMeter(r.meter);const m=lsGet('bpmEx',{});if(m[exKey(s.id)])setBpm(m[exKey(s.id)]);}
   else setMeter('4/4');
   const fast=s.kind==='focus'||s.kind==='base'||s.kind==='combo';
@@ -2437,10 +2436,22 @@ function plDraw(){
   requestAnimationFrame(plDraw);
 }
 function plButtons(){document.querySelectorAll('.tabbox [data-play]').forEach(b=>{const on=Pl.on&&b.closest('.tabbox')===Pl.box;b.textContent=plLabel(on);b.setAttribute('aria-pressed',String(on));});}
-function plStart(box,once){
+// Пример другого ритма: таб в делении from переписывается в деление to, нота меняется только на долю.
+// Табы с /n или :k не переписываются — играются с делением to как есть.
+function rhythmTab(systems,from,to){
+  return systems.map(sys=>{
+    const tk=sys.trim().split(/\s+/);if(tk.some(t=>/^\/|:/.test(t)))return sys;
+    const out=[];let beat=[];
+    const flush=()=>{if(!beat.length)return;for(let i=0;i<to;i++)out.push(beat[Math.min(beat.length-1,Math.floor(i*beat.length/to))]);beat=[];};
+    tk.forEach(t=>{if(t==='|'){flush();out.push('|');return;}beat.push(t);if(beat.length===from)flush();});
+    flush();return out.join(' ');
+  });
+}
+function plStart(box,once,re){
   plStop();Pl.once=!!once;
   const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}
-  const [systems,sub,meter,tu]=JSON.parse(box.dataset.tab);
+  let [systems,sub,meter,tu]=JSON.parse(box.dataset.tab);
+  if(re&&re.to&&re.to!==(sub||1)){systems=rhythmTab(systems,re.from||sub||1,re.to);sub=re.to;}
   Pl.tu=tu||'guitar';
   Pl.ev=[];parseTab(systems,sub,Pl.tu).forEach((s,si)=>{let ci=0;s.items.forEach(it=>{if(!it.bar)Pl.ev.push(Object.assign({id:si+'.'+ci},it));ci++;});});
   if(!Pl.ev.length)return;
@@ -2468,10 +2479,10 @@ $('nowBody').addEventListener('click',e=>{const b=e.target.closest('button[data-
 $('nowBody').addEventListener('change',e=>{if(e.target.matches('input[data-loop]')){Pl.loop=e.target.checked;document.querySelectorAll('input[data-loop]').forEach(x=>{x.checked=Pl.loop;});}});
 
 /* ================= тренер ================= */
-// Ведение внутри сегмента: подготовка → подходы и отдых по протоколу недели (PHASES[].co) или поддержки (MAINT_CO),
+// Ведение внутри сегмента: подходы и отдых по протоколу недели (PHASES[].co) или поддержки (MAINT_CO),
 // плюс указания упражнений из COACH. Длительности кратны 5 с, их сумма равна минутам сегмента.
-// Тренер сам включает метроном, деление, размер и рывки, но bpm не меняет: только подсказывает.
-const CO_PREP=10;
+// Тренер сам включает метроном, деление, размер и рывки. bpm только подсказывает (TEMPO), кроме подходов с bpmMul:
+// на них тренер временно ставит bpm×bpmMul и возвращает прежний bpm на отдыхе.
 const WARM_CO={set:[40,120,60],rest:[10,20,15],n:[2,3]};
 const TEST_CO={set:{T1:[30,30,30],T3:[60,60,60]},def:[15,30,20],rest:[20,30,20]};
 const TEMPO={
@@ -2485,24 +2496,28 @@ const TEMPO={
   work:['Рабочий темп: на 10% ниже чистого.','Working tempo: 10% below clean.'],
   deload:['На 20% ниже чистого темпа.','20% below your clean tempo.'],
   maint:['Рабочий темп: на 10–15% ниже чистого.','Working tempo: 10–15% below clean.'],
-  half:['Половина темпа: 32-е, по две ноты на щелчок.','Half tempo: 32nds, two notes per click.'],
-  back:['Верни прежний темп.','Go back to your previous tempo.'],
+  half:['Тренер ставит половину темпа: 32-е, по две ноты на щелчок.','The coach sets half tempo: 32nds, two notes per click.'],
+  back:['Тренер вернул прежний темп.','The coach has restored your previous tempo.'],
   warm:['Половина рабочего темпа.','Half your working tempo.'],
+  mul:['Тренер меняет темп на этот подход.','The coach changes the tempo for this set.'],
   ladder0:['Начни на комфортном темпе.','Start at a comfortable tempo.'],
   ladder:['Прошлый проход чистый — прибавь 4 bpm. Ошибка или зажим — стоп: результат — последний чистый темп, запиши его.','Last run clean: add 4 bpm. A mistake or tension: stop. Your result is the last clean tempo, save it.']
 };
 const COMBO_STAGES=[['Каждая техника отдельно','Each technique on its own'],['Стык: две ноты на границе техник','The joint: the two notes where techniques meet'],['Вся фраза','The whole phrase']];
 // Указания упражнений: cyc — по кругу на подходы, v — только для варианта с этим индексом, stages — этапы от первого подхода к последнему.
+// Поля подхода в cyc: sub — деление метронома, tag — подпись, bpmMul — множитель темпа на подходе (тренер ставит bpm×bpmMul,
+// на отдыхе возвращает), play — деление, в котором звучит пример этого ритма (таб переписывается из деления упражнения:
+// нота меняется только на долю). Перед первым подходом с play или bpmMul тренер играет пример в новом ритме и темпе.
 const COACH_GUITAR={
   W0:{free:60},
-  B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
+  B1:{cyc:[{},{},{sub:6,play:6,tag:['Секстоли','Sextuplets']},{sub:4,play:8,bpmMul:0.5,tag:['32-е на половине темпа','32nds at half tempo']}]},
   B2:{v:{1:{cyc:[{tag:['Начни апстроком: переход «внутри»','Start on an upstroke: inside change']},{tag:['Начни даунстроком: переход «снаружи»','Start on a downstroke: outside change']}]}}},
   L31:{v:{1:{cyc:[{sub:2,tag:['Вибрато восьмыми','Vibrato in 8ths']},{sub:3,tag:['Вибрато триолями','Vibrato in triplets']},{sub:4,tag:['Вибрато 16-ми','Vibrato in 16ths']}]}}},
   C36:{stages:[['Фрагмент 1 отдельно','Fragment 1 on its own'],['Фрагмент 2 отдельно','Fragment 2 on its own'],['Фрагмент 3 отдельно','Fragment 3 on its own'],['Фрагмент 4 отдельно','Fragment 4 on its own'],['Пара 1+2','Pair 1+2'],['Пара 2+3','Pair 2+3'],['Пара 3+4','Pair 3+4'],['Целиком','The whole étude']],v:{2:{stageMeter:{0:'7/8'}},4:{stageMeter:{0:'5/8'}},5:{stageMeter:{1:'6/8'}}}}
 };
 const COACH_BASS={
   W0:{free:60},
-  B1:{cyc:[{},{},{sub:6,tag:['Секстоли','Sextuplets']},{sub:4,half:true,tag:['32-е на половине темпа','32nds at half tempo']}]},
+  B1:{cyc:[{},{},{sub:6,play:6,tag:['Секстоли','Sextuplets']},{sub:4,play:8,bpmMul:0.5,tag:['32-е на половине темпа','32nds at half tempo']}]},
   B2:{v:{1:{cyc:[{tag:['Начни со среднего пальца или апстроком','Start with the middle finger or an upstroke']},{tag:['Начни с указательного или даунстроком','Start with the index finger or a downstroke']}]}}},
   L31:{v:{1:{cyc:[{sub:2,tag:['Вибрато восьмыми','Vibrato in 8ths']},{sub:3,tag:['Вибрато триолями','Vibrato in triplets']},{sub:4,tag:['Вибрато 16-ми','Vibrato in 16ths']}]}}},
   C36:{stages:COACH_GUITAR.C36.stages,v:{2:{stageMeter:{0:'7/8'}},4:{stageMeter:{0:'5/8'}},5:{stageMeter:{1:'6/8'}}}},
@@ -2549,9 +2564,10 @@ function coachPlan(s,d,lv){
     const mins=splitInt(s.min,TESTS.map(()=>1));const out=[];
     TESTS.forEach((tt,j)=>{
       if(!mins[j])return;
+      // между тестами — отдых в начале следующего теста (подготовки нет)
       const base={blk:j,test:tt.id,tag:[[tt.ru[0],tt.en[0]]],sub:tt.sub,meter:'4/4',burst:0};
       const sr=rng3(TEST_CO.set[tt.id.replace(/^B/,'')]||TEST_CO.def); // у баса BT1…BT5 — те же длительности, что у T1…T5
-      out.push(...coLayout(mins[j]*60,[fixed('prep',CO_PREP,base)],k=>Object.assign({},base,sr,{tempo:[k?'ladder':'ladder0']}),()=>Object.assign({blk:j},rng3(TEST_CO.rest)),null));
+      out.push(...coLayout(mins[j]*60,out.length&&out[out.length-1].type==='set'?[fixed('rest',20,{blk:j})]:[],k=>Object.assign({},base,sr,{tempo:[k?'ladder':'ladder0']}),()=>Object.assign({blk:j},rng3(TEST_CO.rest)),null));
     });
     return out;
   }
@@ -2560,7 +2576,7 @@ function coachPlan(s,d,lv){
   const r=resolveEx(s,d,lv);const c=COACH[s.id]||{};
   const vi=(EX[s.id].v&&EX[s.id].v.length)?varIdx(s,d):-1;
   const cv=(c.v&&c.v[vi])||{};const cyc=cv.cyc||c.cyc;const stages=cv.stages||c.stages||(s.kind==='combo'?COMBO_STAGES:null);
-  const head=[];if(c.free)head.push(fixed('free',c.free));head.push(fixed('prep',CO_PREP));
+  const head=c.free?[fixed('free',c.free)]:[];
   let co,nPref=null;
   if(s.kind==='warm'){co=WARM_CO;nPref=WARM_CO.n;}
   else if(s.kind==='maint'){co=MAINT_CO;nPref=MAINT_CO.n;}
@@ -2578,8 +2594,11 @@ function coachPlan(s,d,lv){
     }
     else{x.tempo=['deload'];if(n>=2&&k===Math.floor(n/2))x.tag.push(['Чистым звуком, без перегруза','Clean tone, no gain']);}
     if(stages){const g=n===1?stages.length-1:Math.round(k*(stages.length-1)/(n-1));x.tag.unshift(stages[g]);if(cv.stageMeter&&cv.stageMeter[g])stageMeter(x,cv.stageMeter[g],r.v.t[g]);}
-    if(cyc){const o=cyc[k%cyc.length];if(o.sub)x.sub=o.sub;if(o.tag)x.tag.push(o.tag);if(o.half){x.burst=0;x.tempo=['half'];}
-      if(k>0&&cyc[(k-1)%cyc.length].half)x.tempo.unshift('back');}
+    if(cyc){const o=cyc[k%cyc.length];if(o.sub)x.sub=o.sub;if(o.tag)x.tag.push(o.tag);
+      if(o.play){x.play=o.play;x.from=r.sub||1;}
+      if(o.bpmMul){x.bpmMul=o.bpmMul;x.burst=0;x.tempo=[o.bpmMul===0.5?'half':'mul'];}
+      if(o.play||o.bpmMul)x.demo=(o.play||'')+'x'+(o.bpmMul||1);
+      if(k>0&&cyc[(k-1)%cyc.length].bpmMul&&!o.bpmMul)x.tempo.unshift('back');}
     return x;
   };
   const rest=()=>rng3(co.rest);
@@ -2588,12 +2607,12 @@ function coachPlan(s,d,lv){
 
 // hold — таймер стоит в начале (или посреди) подхода k: ph 'listen' — играет пример, 'ready' — ждём «Готов», 'count' — идёт отсчёт.
 // arm — отсчёт, запланированный по часам Web Audio: подход и метроном вступают в goAt. heard — первые подходы, где пример уже был.
-const co={on:true,key:'',iv:null,idx:-1,hold:null,arm:null,heard:{}};
+const co={on:true,key:'',iv:null,idx:-1,hold:null,arm:null,heard:{},base:null};
 const coActive=()=>co.on&&!!co.iv;
 // Смена уровня пересчитывает указания, но не позицию: раскладка подходов от уровня не зависит.
 function coSync(){
   const s=st.plan.segs[st.cur],key=st.i+'|'+st.T+'|'+st.cur,lk=s.id?getLvl(s.id)+'|'+s.pick:'';
-  if(co.key!==key){coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;co.heard={};co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;}
+  if(co.key!==key){coCancel();coBpm(null);if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;co.heard={};co.key=key;co.lk=lk;co.iv=coachPlan(s,st.plan.d);co.idx=-1;}
   else if(co.lk!==lk){co.lk=lk;co.iv=coachPlan(s,st.plan.d);}
 }
 // Где мы внутри сегмента: индекс интервала и сколько секунд до его конца.
@@ -2607,10 +2626,18 @@ function cue(){
   [0,0.16].forEach(dt=>{const o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=440;
     g.gain.setValueAtTime(0.0001,t0+dt);g.gain.exponentialRampToValueAtTime(0.35,t0+dt+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.12);o.connect(g).connect(c.destination);o.start(t0+dt);o.stop(t0+dt+0.14);});
 }
-function coMetro(x){setSub(x.sub);setMeter(x.meter);Mt.burst=x.burst;Mt.bc=0;$('mBurst').value=String(x.burst);}
+function coMetro(x){coBpm(x.bpmMul);setSub(x.sub);setMeter(x.meter);Mt.burst=x.burst;Mt.bc=0;$('mBurst').value=String(x.burst);}
 const coStart=k=>co.iv.slice(0,k).reduce((a,y)=>a+y.sec,0);
 // Перед первым подходом упражнения (у тестов — каждого теста) тренер играет пример и ждёт «Готов».
-const coFirst=k=>co.iv[k].type==='set'&&co.iv[k].k===0&&!co.heard[k];
+// Подход с новым ритмом или темпом (demo) тоже слушается заранее, один раз на ритм.
+const coFirst=k=>{const x=co.iv[k];return x.type==='set'&&((x.k===0&&!co.heard[k])||(!!x.demo&&!co.heard['d:'+x.demo]));};
+// Темп подхода: bpm×bpmMul на время подхода, без сохранения; null — вернуть прежний bpm.
+function coBpm(mul){
+  if(mul&&mul!==1){if(co.base==null)co.base=Mt.bpm;Mt.bpm=clamp(Math.round(co.base*mul),30,320);}
+  else if(co.base!=null){Mt.bpm=co.base;co.base=null;}
+  else return;
+  $('bpm').value=Mt.bpm;$('bpmRange').value=Mt.bpm;
+}
 const coBar=x=>METERS[METERS[x.meter]?x.meter:'4/4'].reduce((a,b)=>a+b,0)*60/Mt.bpm;
 // Отсчёт — один такт размера подхода в темпе метронома (доля = пульс метронома, в x/8 — восьмая), сильная доля с акцентом.
 // Метроном запускается сразу на goAt — следующую сильную долю, поэтому сетка не сбивается.
@@ -2635,13 +2662,13 @@ function coListen(){
   co.hold.ph='listen';coCancel();if(Mt.on)metroStop();
   const x=co.iv[co.hold.k];coMetro(x);
   const box=x.blk!=null?(document.querySelectorAll('#nowBody .test')[x.blk]||document).querySelector('.tabbox[data-tab]'):document.querySelector('#nowBody .tabbox[data-tab]');
-  if(box)plStart(box,true);
+  if(box)plStart(box,true,x.play?{from:x.from,to:x.play}:null);
   if(!Pl.on)co.hold.ph='ready';
 }
 function coHoldCount(){co.hold.ph='count';co.arm=coCount(co.hold.k);if(!co.arm)co.hold=null;}
 function coReady(){
   if(!co.hold||co.hold.ph==='count')return;
-  co.heard[co.hold.k]=true;plStop();coHoldCount();renderCoach();
+  co.heard[co.hold.k]=true;const x=co.iv[co.hold.k];if(x.demo)co.heard['d:'+x.demo]=true;plStop();coHoldCount();renderCoach();
 }
 function coachTick(){
   coSync();if(!coActive())return;
@@ -2663,7 +2690,7 @@ function coachTick(){
       if(co.arm&&co.arm.k===p.k){if(Mt.ctx.currentTime<co.arm.goAt)co.hold={k:p.k,ph:'count'};else co.arm=null;}
       else{coCancel();co.hold={k:p.k};if(coFirst(p.k))coListen();else coHoldCount();}
     }else{
-      coCancel();if(Mt.on)metroStop();
+      coCancel();if(Mt.on)metroStop();coBpm(null);
       if(prev&&prev.type==='set')cue();
     }
     renderCoach();
@@ -2678,7 +2705,7 @@ function coachTick(){
 function coachRun(){
   if(!coActive())return;
   if(st.running)co.idx=-1;
-  else{coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;metroStop();}
+  else{coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;metroStop();coBpm(null);}
 }
 function coSkipTo(sec){
   coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;
@@ -2696,7 +2723,6 @@ document.addEventListener('keydown',e=>{
 });
 function coName(x){
   if(co.hold&&x.type==='set'){const ph=co.hold.ph;if(ph==='listen')return L('Пример','Example');if(ph==='ready')return L('Готов к подходу?','Ready for the set?');return L('Отсчёт','Count-in');}
-  if(x.type==='prep')return L('Приготовься','Get ready');
   if(x.type==='free')return GB(L('Без гитары','No guitar'),L('Без баса','No bass'));
   if(x.type==='rest')return L('Отдых','Rest');
   return(x.test?L('Проход ','Run '):L('Подход ','Set '))+(x.k+1)+L(' из ',' of ')+x.n;
@@ -2729,7 +2755,7 @@ function renderCoachClock(p){
   const cell=$('coStrip').children[p.k];if(cell)cell.firstChild.style.width=(100*(1-p.left/co.iv[p.k].sec))+'%';
 }
 $('coach').addEventListener('click',e=>{
-  if(e.target.closest('#coToggle')){co.on=!co.on;co.idx=-1;coCancel();if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;if(co.on&&st.running)coachTick();renderCoach();return;}
+  if(e.target.closest('#coToggle')){co.on=!co.on;co.idx=-1;coCancel();coBpm(null);if(co.hold&&co.hold.ph==='listen')plStop();co.hold=null;if(co.on&&st.running)coachTick();renderCoach();return;}
   if(!coActive())return;
   if(e.target.closest('#coReady')){coReady();return;}
   const p=coPos();
@@ -2953,7 +2979,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={setDay,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();

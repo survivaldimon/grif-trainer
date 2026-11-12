@@ -21,8 +21,10 @@ async function openApp(page, lang) {
 // Первый подход упражнения: тренер играет пример (здесь глушим его сразу), ждёт «Готов», затем отсчёт в один такт.
 async function readySet(page) {
   await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await page.waitForFunction(() => !!window.__grif.co.hold); // подход начинается сразу с примера или отсчёта
   await page.evaluate(() => { const P = window.__grif.Pl; if (P.on && P.box) P.box.querySelector('[data-play]').click(); });
   await expect(page.locator('#coReady')).toBeVisible();
+  await page.evaluate(() => document.activeElement && document.activeElement.blur && document.activeElement.blur());
   await page.keyboard.press('Space');
   await page.waitForFunction(() => !window.__grif.co.hold, null, { timeout: 10000 });
 }
@@ -52,11 +54,11 @@ test(`${inst}: тренер: подходы и отдых ровно уклад�
           plans++;
           const sum = iv.reduce((a, x) => a + x.sec, 0);
           if (sum !== s.min * 60) errs.push(`${where}: сумма ${sum} с вместо ${s.min * 60}`);
-          if (!['prep', 'free'].includes(iv[0].type)) errs.push(`${where}: начинается с ${iv[0].type}`);
+          if (!(iv[0].type === 'set' || (iv[0].type === 'free' && iv[1].type === 'set'))) errs.push(`${where}: начинается с ${iv[0].type}, а не с подхода`);
           if (!iv.some(x => x.type === 'set')) errs.push(`${where}: нет подходов`);
           iv.forEach((x, k) => {
             if (!(x.sec > 0) || x.sec % 5) errs.push(`${where}: интервал ${k} = ${x.sec} с`);
-            if (!['prep', 'free', 'set', 'rest'].includes(x.type)) errs.push(`${where}: тип ${x.type}`);
+            if (!['free', 'set', 'rest'].includes(x.type)) errs.push(`${where}: тип ${x.type}`);
             if (x.type === 'rest' && iv[k + 1] && iv[k + 1].type === 'rest') errs.push(`${where}: отдых подряд`);
             if (x.type === 'set') {
               if (iv[k + 1] && iv[k + 1].type === 'set') errs.push(`${where}: подходы без отдыха`);
@@ -91,7 +93,7 @@ test(`${inst}: тренер: указания упражнений и недел
     const G = window.__grif;
     const sets = (i, s) => G.coachPlan(s, G.dayInfo(i)).filter(x => x.type === 'set');
     return {
-      b1: sets(0, { kind: 'base', id: 'B1', min: 8 }).map(x => x.sub + (x.tempo.includes('half') ? 'h' : '')),
+      b1: sets(0, { kind: 'base', id: 'B1', min: 8 }).map(x => x.sub + (x.bpmMul === 0.5 ? 'h' : '') + (x.play ? 'p' + x.play : '') + (x.tempo.includes('back') ? 'b' : '')),
       speed: sets(14, { kind: 'focus', id: 'R8', min: 8 }).map(x => x.burst),
       maint: sets(14, { kind: 'maint', id: 'R8', min: 4 }).map(x => x.burst),
       l31: sets(1, { kind: 'focus', id: 'L31', variant: 1, min: 6 }).map(x => x.sub),
@@ -102,7 +104,7 @@ test(`${inst}: тренер: указания упражнений и недел
       c36: [2, 3].map(lv => [...new Set(G.coachPlan({ kind: 'combo', id: 'C36', variant: 2, min: 20 }, G.dayInfo(0), lv).filter(x => x.type === 'set' && x.meter === '7/8').map(x => x.sub))])
     };
   });
-  expect(r.b1.slice(0, 4)).toEqual(['4', '4', '6', '4h']);
+  expect(r.b1.slice(0, 5)).toEqual(['4', '4', '6p6', '4hp8', '4b']);
   expect(r.speed.slice(0, 5)).toEqual([1, 2, 4, 0, 1]);
   expect(r.maint.every(b => b === 0)).toBe(true);
   expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
@@ -120,7 +122,6 @@ test('тренер: метроном включается на подходе и
   await page.locator('#planList li').nth(1).click(); // база B1
   const bpm = await page.inputValue('#bpm');
   await page.click('#playBtn');
-  await page.click('#coSkip'); // подготовка → подход 1
   await readySet(page);
   await expect(page.locator('#mToggle')).toHaveText('Stop');
   await page.click('#coSkip'); // подход → отдых
@@ -147,13 +148,14 @@ test(`${inst}: готовность и отсчёт: пример перед 1-�
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4')); // база с уровнями
   await page.locator('#planList li').nth(k).click();
   await page.click('#playBtn');
-  await page.click('#coSkip'); // подготовка → подход 1
   await expect(page.locator('.cost')).toHaveClass(/t-set/);
+  await page.waitForFunction(() => !!window.__grif.co.hold); // пример начинается сразу, без подготовки
   // пример играет один раз, метроном тренера молчит, таймер стоит в начале подхода
   const w0 = await page.evaluate(() => { const G = window.__grif; return { ph: G.co.hold && G.co.hold.ph, pl: G.Pl.on, once: G.Pl.once, remain: G.st.remain }; });
   expect(w0).toMatchObject({ ph: 'listen', pl: true, once: true });
   await expect(page.locator('#mToggle')).toHaveText('Start');
   await expect(page.locator('#coReady')).toHaveCount(0);
+  await page.evaluate(() => document.activeElement.blur()); // фокус на кнопке старта: пробел нажал бы её
   await page.keyboard.press('Space'); // пока играет пример, пробел ничего не делает
   expect(await page.evaluate(() => window.__grif.co.hold.ph)).toBe('listen');
   // смена уровня во время ожидания перезапускает пример
@@ -201,7 +203,6 @@ test('отсчёт в x/8: число долей = числитель разме
   await page.click('#timeChips button[data-t="60"]');
   await page.locator('#planList li').nth(1).click();
   await page.click('#playBtn');
-  await page.click('#coSkip');
   await expect(page.locator('.cost')).toHaveClass(/t-set/);
   // подменяем размер подхода и жмём пробел в состоянии «Готов»
   const r = await page.evaluate(() => {
@@ -217,6 +218,45 @@ test('отсчёт в x/8: число долей = числитель разме
   expect(errors).toEqual([]);
 });
 
+for (const inst of INSTS)
+test(`${inst}: B1: секстоли и 32-е на половине темпа — пример нового ритма, bpm×0,5 на подходе и возврат на отдыхе`, async ({ page }) => {
+  const errors = await openApp(page, H(inst, 'en'));
+  await page.evaluate(() => window.__grif.setDay(0));
+  await page.click('#timeChips button[data-t="300"]');
+  const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B1'));
+  await page.locator('#planList li').nth(k).click();
+  await page.fill('#bpm', '120'); await page.press('#bpm', 'Enter');
+  const bpm0 = await page.evaluate(() => window.__grif.Mt.bpm);
+  const ls0 = await page.evaluate(() => localStorage.getItem('grif.bpm'));
+  // таб с переписанным ритмом: 16 нот по 4 на долю → 6 на долю, смена ноты только на долю
+  const rt = await page.evaluate(() => { const G = window.__grif; return G.rhythmTab(['E0 E0 E0 E0 A1 A1 A1 A1 | E0 E0 E0 E0'], 4, 6)[0]; });
+  expect(rt).toBe('E0 E0 E0 E0 E0 E0 A1 A1 A1 A1 A1 A1 | E0 E0 E0 E0 E0 E0');
+  await page.click('#playBtn');
+  await readySet(page); // подход 1
+  const sets = await page.evaluate(() => window.__grif.co.iv.map((x, j) => [j, x]).filter(([, x]) => x.type === 'set').map(([j]) => j));
+  expect(sets.length).toBeGreaterThanOrEqual(4);
+  const go = j => page.evaluate(j => { const G = window.__grif; G.st.remain = G.st.plan.segs[G.st.cur].min * 60 - G.co.iv.slice(0, j).reduce((a, y) => a + y.sec, 0); }, j);
+  // подход 3 — секстоли: пример в новом ритме, темп прежний
+  await go(sets[2]);
+  await page.waitForFunction(j => { const G = window.__grif; return G.co.idx === j && G.co.hold && G.co.hold.ph === 'listen'; }, sets[2]);
+  let r = await page.evaluate(() => { const G = window.__grif; return { bpm: G.Mt.bpm, sub: JSON.parse(G.Pl.key)[1], ev: G.Pl.ev.length }; });
+  expect(r.bpm).toBe(bpm0);
+  await readySet(page);
+  expect(await page.evaluate(() => window.__grif.Mt.sub)).toBe(6);
+  // подход 4 — 32-е на половине темпа: пример и подход в bpm×0,5
+  await go(sets[3]);
+  await page.waitForFunction(j => { const G = window.__grif; return G.co.idx === j && G.co.hold && G.co.hold.ph === 'listen'; }, sets[3]);
+  expect(await page.evaluate(() => window.__grif.Mt.bpm)).toBe(Math.round(bpm0 / 2));
+  await readySet(page);
+  r = await page.evaluate(() => ({ bpm: window.__grif.Mt.bpm, ui: +document.getElementById('bpm').value, sub: window.__grif.Mt.sub }));
+  expect(r).toEqual({ bpm: Math.round(bpm0 / 2), ui: Math.round(bpm0 / 2), sub: 4 });
+  expect(await page.evaluate(() => localStorage.getItem('grif.bpm'))).toBe(ls0); // временный темп не сохраняется
+  await page.click('#coSkip'); // последний подход → следующий сегмент: прежний bpm
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__grif.Mt.bpm)).toBe(bpm0);
+  expect(errors).toEqual([]);
+});
+
 test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
   const errors = await openApp(page, 'en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
@@ -226,7 +266,6 @@ test('уровень: переключение на подходе не сбив
   await page.locator('#planList li').nth(k).click();
   await expect(page.locator('.lvlb button[aria-pressed="true"]')).toHaveText('2'); // по умолчанию 2
   await page.click('#playBtn');
-  await page.click('#coSkip'); // подготовка → подход 1
   await readySet(page);
   await expect(page.locator('#mToggle')).toHaveText('Stop');
   const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
@@ -280,7 +319,6 @@ test(`${inst}: вариант: ручной выбор на подходе не 
   await expect(page.locator('.lvlb button[data-var][aria-pressed="true"]')).toHaveText(String(day + 1)); // по умолчанию вариант дня
   await expect(page.locator('.lvlb button[data-var].day')).toHaveText(String(day + 1));
   await page.click('#playBtn');
-  await page.click('#coSkip'); // подготовка → подход 1
   await readySet(page);
   const before = await page.evaluate(() => { const G = window.__grif; return { idx: G.co.idx, secs: G.co.iv.map(x => x.sec), remain: G.st.remain, cur: G.st.cur }; });
   const tab0 = await page.locator('#nowBody .tabbox').innerHTML();
