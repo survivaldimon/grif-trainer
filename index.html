@@ -2627,16 +2627,34 @@ let COACH=COACH_GUITAR;
 
 /* ================= блюз ================= */
 // Библиотеки блюза: та же схема id, групп, тестов и указаний тренера, что у метала (buildSession общий).
-/*@BLUES_GUITAR@*/
-/*@BLUES_ACOUSTIC@*/
-/*@BLUES_BASS@*/
-// Наборы по жанру и инструменту. Пока библиотека блюза не написана, на её месте набор метала.
+// Каждая библиотека — две части: 1 — W, B, R, тесты цикла и условия риффа дня (TESTS, RIFF); 2 — A, L, C.
+// Часть: {EX:{id:…}, EXEN:{id:…}, COACH:{id:…}, TESTS?, RIFF?}. Чего в частях нет, берётся из метала того же инструмента.
+/*@BLUES_GUITAR_1@*/
+const BLG1={EX:{},EXEN:{},COACH:{}};
+/*@BLUES_GUITAR_2@*/
+const BLG2={EX:{},EXEN:{},COACH:{}};
+/*@BLUES_ACOUSTIC_1@*/
+const BLA1={EX:{},EXEN:{},COACH:{}};
+/*@BLUES_ACOUSTIC_2@*/
+const BLA2={EX:{},EXEN:{},COACH:{}};
+/*@BLUES_BASS_1@*/
+const BLB1={EX:{},EXEN:{},COACH:{}};
+/*@BLUES_BASS_2@*/
+const BLB2={EX:{},EXEN:{},COACH:{}};
 const LIBS={
   metal:{guitar:{EX:EX_GUITAR,EXEN:EXEN_GUITAR,GROUPS:GROUPS_GUITAR,TESTS:TESTS_GUITAR,COACH:COACH_GUITAR,RIFF:RIFF_RULES},
          bass:{EX:EX_BASS,EXEN:EXEN_BASS,GROUPS:GROUPS_BASS,TESTS:TESTS_BASS,COACH:COACH_BASS,RIFF:RIFF_RULES_BASS}},
   blues:{}
 };
-['guitar','acoustic','bass'].forEach(k=>{if(!LIBS.blues[k])LIBS.blues[k]=LIBS.metal[k==='bass'?'bass':'guitar'];});
+// библиотека блюза: метал того же инструмента, поверх — обе части; указания тренера метала для переписанных id убираются
+function bluesLib(base,p1,p2){
+  const EX=Object.assign({},base.EX,p1.EX,p2.EX),EXEN=Object.assign({},base.EXEN,p1.EXEN,p2.EXEN),COACH=Object.assign({},base.COACH);
+  [p1,p2].forEach(p=>{Object.keys(p.EX).forEach(id=>delete COACH[id]);Object.assign(COACH,p.COACH);});
+  return {EX,EXEN,COACH,GROUPS:base.GROUPS,TESTS:p1.TESTS||base.TESTS,RIFF:p1.RIFF||base.RIFF};
+}
+LIBS.blues.guitar=bluesLib(LIBS.metal.guitar,BLG1,BLG2);
+LIBS.blues.acoustic=bluesLib(LIBS.metal.guitar,BLA1,BLA2);
+LIBS.blues.bass=bluesLib(LIBS.metal.bass,BLB1,BLB2);
 const LIB_NOW=()=>LIBS[GENRE][INST];
 function riffRules(){return LIB_NOW().RIFF;}
 // Активный инструмент подменяет наборы данных; план дня, тренер и рендер работают с EX/EXEN/GROUPS/TESTS/COACH.
