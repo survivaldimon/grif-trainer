@@ -2631,8 +2631,221 @@ let COACH=COACH_GUITAR;
 // Часть: {EX:{id:…}, EXEN:{id:…}, COACH:{id:…}, TESTS?, RIFF?}. Чего в частях нет, берётся из метала того же инструмента.
 /*@BLUES_GUITAR_1@*/
 const BLG1={EX:{},EXEN:{},COACH:{}};
+// Блюз, электрогитара, часть 2: A16–A23, A38, A39, L24–L31, L40, C32–C36.
+// Табы записаны в {A} (5-я позиция) и переносятся сдвигом ладов: вариант = тональность (или позиция у A38, этюд у C36).
+const BLG2=(()=>{
+  // сдвиг всех ладов (и бендов) на k; длительности :k и деления /n не трогаются
+  const sh=(t,k)=>k?t.replace(/(^|[^:\/\d])(\d+)/g,(a,p,n)=>p+(+n+k)):t;
+  const KEYS=[['{A}',0],['{E}',7],['{D}',5],['{G}',-2],['{C}',3],['{B}',2]];
+  // аккорды для шаблонов
+  const a9='E5+A4+D5+G4',d9='A5+D4+G5+B5',e9='A7+D6+G7+B7',X9='Dx+Gx+Bx';
+  const a7=['D5+G6+B5+e5','D7+G6+B8+e5','D11+G12+B10+e12','D14+G14+B14+e15'],d7a='D4+G5+B3+e5',d7b='D12+G11+B13+e10',e7a='D6+G7+B5+e7',e7b='D9+G9+B9+e10',X7='Dx+Gx+Bx+ex';
+  const sh4=(c,m)=>{const q=c+(m||'');return `${c}:2 ${q} ${c}:2 ${q} ${c}:2 ${q} ${c}:2 ${q}`;};
+  const P=(sub,t)=>({sub,t});
+  // ---------- шаблоны уровней (в {A}) ----------
+  const L={
+    A16:[P(2,'E5 A4 A7 D5 A7 A4 E5 .'),
+         P(2,'E5 A4 A7 D5 D7 G6 D7 D5 | A7 A4 E5 A4 A7 D5 D7 .'),
+         P(2,'E5 A4 A7 D5 D7 G6 B5 B8 | e5 B8 B5 G6 D7 D5 A7 A4'),
+         P(2,'E5 A4 A7 D5 D7 G6 D7 D5 | A5 D4 D7 G5 G7 B7 G7 G5'),
+         P(3,'E5 A4 A7 D5 D7 G6 D7 D5 A7 A4 E5 . | A5 D4 D7 G5 G7 B7 G7 G5 D7 D4 A5 . | A7 D6 D9 G7 G9 B9 G9 G7 D9 D6 A7 . | E5 A4 A7 D5 E5:2 .:6')],
+    A17:[P(3,`.:3 ${a9}:2 . .:3 ${a9}:2 .`),
+         P(3,sh4(a9)),
+         P(3,sh4(a9,'m')+' | '+sh4(d9,'m')),
+         P(3,[a9,d9,a9,e9].map(c=>`${c}:2 ${X9} ${c}:2 ${X9} .:3 ${c}:2 ${X9}`).join(' | ')),
+         P(3,[a9,d9,a9,e9].map(c=>`${sh(c,-1)} ${c}:2 ${X9} ${c}:2 .:3 ${c}:2 ${X9}`).join(' | '))],
+    A18:[P(2,'G6+e5:2 G7+e7:2 G9+e9:2 G7+e7:2'),
+         P(2,'G6+e5 G7+e7 G9+e9 G11+e10 G9+e9 G7+e7 G6+e5 G4+e3'),
+         P(3,'G5+e5 Gh6+e5:2 G7+e7:2 G7+e7 G9+e9:2 G7+e7 G6+e5:2 .'),
+         P(3,'G6+B5:2 G6+B5 G7+B7:2 G7+B7 G9+B8:2 G9+B8 G7+B7:2 G6+B5 | G6+e5:2 G7+e7 G9+e9:2 G11+e10 G9+e9:2 G7+e7 G6+e5:3'),
+         P(3,'B8+e8:2 B8+e8 B8+e8:2 B8+e8 B8b10+e8:3 G6+e5:3 | G7+e7:2 G6+e5 G4+e3:2 G6+e5 G5+e5 Gh6+e5:2 G6+e5:3')],
+    A19:[P(2,'E5 E7 A4 A5 A7 D4 D5 D7 | D7 D5 D4 A7 A5 A4 E7 E5'),
+         P(2,'E5 E7 A4 A5 A7 D4 D5 D7 | G4 G6 G7 B5 B7 B8 e5 . | e5 B8 B7 B5 G7 G6 G4 D7 | D5 D4 A7 A5 A4 E7 E5 .'),
+         P(2,'E5 A4 E7 A5 A4 A7 A5 D4 | A7 D5 D4 D7 D5 G4 D7 G6'),
+         P(3,'E5 E7 A4 E7 A4 A5 A4 A5 A7 A5 A7 D4 | D4 D5 D7 D5 D7 G4 D7 G4 G6 G4 G6 G7 | G6 G7 B5 G7 B5 B7 B5 B7 B8 e5:3'),
+         P(3,'G5 Gh6 B5 G7 G6 D7 D5 D4 A7 A5 A4 E5 | E8 Eh9 A7 D5 D4 D7 G5 Gh6 B5 e5:3')],
+    A20:[P(2,'E5 E7 A4 A7 D4 D7 G4 G6 | G6 G4 D7 D4 A7 A4 E7 E5'),
+         P(2,'E5 E7 A4 A7 D4 D7 G4 G6 | B5 B7 e5 B7 B5 G6 G4 D7'),
+         P(3,'E5 E7 A4 E7 A4 A7 A4 A7 D4 A7 D4 D7 | D4 D7 G4 D7 G4 G6 G4 G6 B5 G6 B5 B7'),
+         P(3,'E8 Eh9 A7 A4:2 E5 G5 Gh6 B5 e5:2 . | B8b9 B5 G7:2 G6 D7:2 D5 D4 A7:3'),
+         P(3,'E8 Eh9 A7 A4:2 E5 G5 Gh6 B5 e5:2 . | B8b9 B5 G7:2 G6 D7:2 D5 D4 A7:3 | e8b9r8 e5 B8 B5:2 G7 G5 Gh6 D7 E5:3')],
+    A21:[P(3,'G8+e5:3 G7+e5:3 G6+e5:3 G5+e5:3 | A7+D6+G7+B5:6 .:6'),
+         P(3,'e5 B5 G8 e5 B5 G7 e5 B5 G6 e5 B5 G5 | A7+D6+G7+B5:6 .:6'),
+         P(3,'e5 B5 G8 e5 B5 G7 e5 B5 G6 e5 B5 G5 | A7 D6 D9 G7 D9 D6 A7:6'),
+         P(3,'e5 B5 G8 e5 B5 G7 e5 B5 G6 e5 B5 G5 | E5+D7:3 E6+D6:3 E7+D5:3 E8+D4:3 | A7 D6 D9 G7 D9 D6 A7:6'),
+         P(3,'B8b10:2 e5 B8b10r8 e5 G7 G5 Gh6 D7 E5:3 | e5 B5 G8 e5 B5 G7 e5 B5 G6 e5 B5 G5 | E5+D7:3 E6+D6:3 E7+D5:3 E8+D4:3 | A7 D6 D9 G7 D9 D6 A7:6')],
+    A22:[P(2,`${a7[0]}:4 ${a7[1]}:4 | ${a7[2]}:4 ${a7[1]}:4`),
+         P(2,`${a7[0]}:2 ${a7[1]}:2 ${a7[2]}:2 ${a7[3]}:2 | ${a7[3]}:2 ${a7[2]}:2 ${a7[1]}:2 ${a7[0]}:2`),
+         P(2,`${a7[0]}:4 ${d7a}:4 | ${a7[1]}:4 ${d7b}:4 | ${a7[0]}:4 ${e7a}:4`),
+         P(3,[a7[0],d7a,a7[0],e7a].map(c=>sh4(c)).join(' | ')),
+         P(3,[[a7[0],a7[1]],[d7a,d7b],[a7[0],a7[1]],[e7a,e7b]].map(([c,u])=>`${c}:2 ${c} ${u}:2 ${u} ${c}:2 ${X7} ${c}:3`).join(' | '))],
+    A23:[P(2,'E5 E8 A5 A6 A7 D5 D7 . | D7 D5 A7 A6 A5 E8 E5 .'),
+         P(2,'E5 E8 A5 A6 A7 D5 D7 G5 | G7 G8 B5 B8 e5 B8 B5 G8 | G7 G5 D7 D5 A7 A6 A5 E8 | E5:8'),
+         P(3,'A5 A6 A7 A6 A5 E8 E5:3 .:3 | G5 G7 G8 G7 G5 D7 D5:3 .:3'),
+         P(3,'B8 B5 G7b8:2 G7 G5 D7:2 D5 A7:3 | A5 A6 A7 A6 A5 E8 E5:3 .:3'),
+         P(3,'B8 B5 G7b8:2 G7 G5 D7:2 D5 A7:3 | A5 A6 A7 A6 A5 E8 E5:3 .:3 | E8 E10 E11 A7 A10 D7 D10 G7 G8 G9 B8 B10 | e8:3 B10 B8 G9 G8 G7 D10 D7:3')],
+    A39:[P(3,'A5:2 Ah7 A5:2 E8 E5:3 .:3 | B8b10:3 B8b10r8:2 e5 B8:3 .:3'),
+         P(3,'A5:2 Ah7 A5:2 E8 E5:3 .:3 | B8b10:3 B8b10r8:2 e5 B8:3 .:3 | A5:2 Ah7 A5:2 E8 E5:3 .:3 | G7b9:3 G7b9r7:2 G5 D7:3 .:3'),
+         P(3,'A5:2 Ah7 A5:2 E8 E5~:3 .:3 | e8b10:3 e8b10r8:2 e5 B8 B5 G7 D7~:3 | A5:2 Ah7 A5:2 E8 E5~:3 .:3 | G7b9:3 G7b9r7:2 G5 D7 D5 A7 A5~:3'),
+         P(3,'A5:2 Ah7 A5:2 E8 E5~:3 .:3 | e15b17:3 e15b17r15:2 e12 B15 B13 G12 G14~:3 | A5:2 Ah7 A5:2 E8 E5~:3 .:3 | G7b9:3 G7b9r7:2 G5 D7 D5 A7 A5~:3'),
+         P(3,'A5:2 Ah7 A5:2 E8 E5~:3 .:3 | e15b17:3 e15b17r15:2 e12 B15 B13 G12 G14~:3 | G5+B5:2 Gh7+B8 G7+B8:2 G5 D7:3 .:3 | B8b10+e8:3 B8b10r8+e8:2 B5 G7 D7 A7 A5~:3')],
+    L24:[P(2,'B10:2 B8b10:2 B10:2 B8b10r8:2'),
+         P(2,'G9:2 G7b9:2 G9:2 G7b9r7:2 | B10:2 B8b10:2 e5:2 B8b10r8:2'),
+         P(3,'B8b10:3 B8b10r8:2 B5 G7b9:3 G7b9r7:2 G5 | D7:2 D5 A7:2 A5 E8:2 E5 .:3'),
+         P(3,'G7b9+B5:3 G7b9r7+B5:3 B8b10+e5:3 B8b10r8+e5:3 | e8b10:3 e8b10r8 e5 B8 G7b9:3 D7:3'),
+         P(3,'B8b10~:6 B8b10r8 B5 G7 G7b9~:3 | e8b10~:3 e8b10r8:2 e5 B8 B5 G7b9r7 D7~:3')],
+    L25:[P(2,'G8:2 G7b8:2 G8:2 G7b8r7:2'),
+         P(2,'B9:2 B8b9:2 B8b9r8:2 B5:2 | G8:2 G7b8:2 G7b8r7:2 G5:2'),
+         P(3,'B5b8:3 B5b8r5:2 G7 G7b8:3 G7b8r7 G5 D7 | B8b9:3 B8b9r8 B5 G7 D7:2 D5 A7:3'),
+         P(3,'G7b8:2 G7b9 B8b9:2 B8b10 B5b8:3 e5:3 | e8b10:2 e8b11 e8b10r8:2 e5 B8b9r8 B5 G7 G7b9~:3'),
+         P(3,'G7b8:2 G7b9 B8b9:2 B8b10 B5b8:3 e5:3 | e8b10:2 e8b11 e8b10r8:2 e5 B8b9r8 B5 G7 G7b9~:3 | e15b17:3 e15b16:3 e12 B15 B13 G14~:3')],
+    L26:[P(2,'e5~:4 e8~:4 B8~:4 B5~:4'),
+         P(2,'B8b10~:4 B8b10r8:2 B5:2 G7b9~:4 G7:2 G5:2'),
+         P(2,'e5~:2 e7~:2 e8~:2 e7~:2 | B5~:2 B7~:2 B8~:2 B7~:2'),
+         P(3,'e8b10:3 e8b10r8 e5 B8 B5:2 G7 D7~:3 | B8b10~:6 G7b9~:6'),
+         P(3,'B5 B8 e5 e8b10~:9 | e8b10r8 e5 B8 B5 G7 G7b9~:4 .:3 | D7 D5 A7 A5~:9')],
+    L27:[P(3,'A5 Ah7 . D5 Dh7 . G5 Gh7 . B5 Bh8 .'),
+         P(3,'E5 Eh8 A5 Ah7 D5 Dh7 G5 Gh7 B5 Bh8 e5 eh8 | e8 ep5 B8 Bp5 G7 Gp5 D7 Dp5 A7 Ap5 E8 Ep5'),
+         P(3,'e5 eh8 ep5 B5 Bh8 Bp5 G5 Gh7 Gp5 D5 Dh7 Dp5 | A5 Ah7 Ap5 E5 Eh8 Ep5 A5:3 .:3'),
+         P(3,'A5 Ah6 Ah7 Ap5 E8 Ep5 G5 Gh7 Gh8 Gp7 Gp5 D7 | B5 Bh8 Bp5 G7 Gp5 D7 Dp5 A7 Ap6 Ap5 E8 E5'),
+         P(4,'e8 ep5 B8 Bp5 G7 Gp5 D7 Dp5 A7 Ap5 E8 Ep5 E5 Eh8 A5 Ah7 | D5 Dh7 G5 Gh7 B5 Bh8 e5 eh8 eh10 ep8 ep5 B8 Bp5 G7:3')],
+    L28:[P(2,'G5 G7 B5 B8 G7 G9 B8 B10'),
+         P(2,'D5 D7 G5 G7 B5 B8 e5 e8 | e10 e8 B10 B8 G9 G7 D10 D7'),
+         P(3,'B5 B8 e5 e8 B8 B10 e8 e10 B10 B13 e10 e12 | e12 B13 B10 e10 B10 B8 e8 B8 B5 e5:3'),
+         P(3,'G5 G7 Gh9 B8 B10 Bp8 G9 Gp7 Gp5 D7:3 | B5 B8 e5 e8 B8 B10 e8 e10 B10 B13 e10 e12 | e12 B13 B10 e10 B10 B8 e8 B8 B5 e5:3'),
+         P(4,'e5 e8 B5 B8 e8 e10 B8 B10 e10 e12 B10 B13 e12 e15 B13 B15 | e17 e15 B17 B15 e15 e12 B15 B13 e12 e10 B13 B10 e10 e8 B10:2')],
+    L29:[P(3,'B10+e5:3 B8b10+e5:3 B10+e5:3 B8b10r8+e5:3'),
+         P(3,'B10+e5:3 B8b10+e5:3 B10+e5:3 B8b10r8+e5:3 | G9+B5:3 G7b9+B5:3 G7b9r7+B5:3 G5+B5:3'),
+         P(3,'B8b10+e8:3 B8b10r8+e8:3 B8+e8 B5 G7 G7b9+B8:3'),
+         P(3,'B8b10+e5~:6 B8b10r8+e5:3 B5 G7 G5 | G7b9+B8:3 G7b9r7+B8:3 D7 D5 A7 A5~:3'),
+         P(3,'B8b10+e5~:6 B8b10r8+e5:3 B5 G7 G5 | G7b9+B8:3 G7b9r7+B8:3 D7 D5 A7 A5~:3 | B15b17+e12:6 B15b17r15+e12:3 B13 G14 G12')],
+    L30:[P(3,'A5 A6 A7:2 . . D5 D6 D7:2 . .'),
+         P(3,'G5 G6 G7 B5 B6 B7 B8 e5 e6 e7 e8 . | e8 e7 e6 e5 B8 B7 B6 B5 G7 G6 G5 .'),
+         P(3,'E5 E6 E7 E8 A5 A6 A7 D5 D6 D7:3 | G5 G6 G7 G8 G7 G5 D7 D6 D5 A7:3'),
+         P(3,'B8 B7 B6 B5 G7 G6 G5 D7 D6 D5 A7 A5 | E8 E7 E6 E5:3 .:6'),
+         P(3,'E5 E6 E7 E8 A5 A6 A7 D5 D6 D7:3 | G5 G6 G7 G8 G7 G5 D7 D6 D5 A7:3 | B8 B7 B6 B5 G7 G6 G5 D7 D6 D5 A7 A5 | E8 E7 E6 E5:3 .:6')],
+    L31:[P(3,'E5+A7:2 E5+A7 E5+A9:2 E5+A9 E5+A7:2 E5+A7 E5+A9:2 E5+A9'),
+         P(3,'E5+A7:2 E5+A7 E5+A9:2 E5+A9 E5+A10:2 E5+A10 E5+A9:2 E5+A9'),
+         P(3,'E5+A7m:2 E5+A7m E5+A9m:2 E5+A9m E5+A10m:2 E5+A10m E5+A9m:2 E5+A9m | A5+D7m:2 A5+D7m A5+D9m:2 A5+D9m A5+D10m:2 A5+D10m A5+D9m:2 A5+D9m'),
+         P(3,'E5:2 A4 A7:2 A9 A10:2 A9 A7:2 A4 | A5:2 D4 D7:2 D9 D10:2 D9 D7:2 D4 | A7:2 D6 D9:2 D11 D12:2 D11 D9:2 D6 | E5:2 A4 A7:2 A9 A10:2 A9 A7:2 A4'),
+         P(3,'E5+A7:2 E5+A7 E5+A9:2 E5+A9 E5+A10:2 E5+A10 E5+A9:2 E5+A9 | A5+D7:2 A5+D7 A5+D9:2 A5+D9 A5+D10:2 A5+D10 A5+D9:2 A5+D9 | E5:2 A4 A7:2 A9 A10:2 A9 A7:2 A4 | A7:2 D6 D9:2 D11 D12:2 D11 D9:2 D6 | A5:2 D4 D7:2 D9 D10:2 D9 D7:2 D4 | E5:2 A4 A7:2 A9 A10:2 A9 A7:2 A4')],
+    L40:[P(2,'E5+D7:2 E8+D10:2 A5+G7:2 A7+G9:2'),
+         P(2,'E5+D7 E5+D7 E8+D10 E8+D10 A5+G7 A5+G7 A7+G9 A7+G9 | A5+G7 . E8+D10 . E5+D7:4'),
+         P(2,'E5+D7:2 E8+D10:2 A5+G7:2 A7+G9:2 | D7+B10 D10+B13 G7+e10 G9+e12 G7+e10 D10+B13 D7+B10:2'),
+         P(3,'E5+D7:2 E5+D7 E8+D10:2 E8+D10 A5+G7:2 A7+G9 A5+G7 E8+D10:2 | E5+D7:6 .:6'),
+         P(3,'E5+D7:2 E5+D7 E8+D10:2 E8+D10 A5+G7:2 A7+G9 A5+G7 E8+D10:2 | D7+B10:2 D10+B13 G7+e10:2 G9+e12 G7+e10 D10+B13:2 D7+B10:3')]
+  };
+  // связки
+  const r1='E5+A7:2 E5+A7 E5+A9:2 E5+A9 E5+A7:2 E5+A7 E5+A9:2 E5+A9',r2='E5+A7:2 E5+A7 E5+A9:2 E5+A9 E5+A10:2 E5+A10 E5+A9:2 E5+A9',r4='A5+D7:2 A5+D7 A5+D9:2 A5+D9 A5+D10:2 A5+D10 A5+D9:2 A5+D9';
+  const l1='A5:2 Ah7 A5:2 E8 E5:3 .:3',l2='B8b10:3 B8b10r8:2 B5 G7 G5 D7 D5:3',l3='G7b9:3 G7b9r7:2 G5 D7 D5 A7 A5~:3';
+  const cA='E5+A7+D5+G6',cD='A5+D7+G5+B7',cE='A7+D9+G7+B9';
+  Object.assign(L,{
+    C32:[P(3,`${r1} | ${l1}`),P(3,`${r2} | ${l2}`),P(3,`${r2} | ${r2} | ${l2} | ${l3}`),P(3,`${r2} | ${l2} | ${r4} | ${l3}`),P(3,`${r2} | ${l1} | ${r4} | ${l3} | ${r2} | ${l2}`)],
+    C33:[P(3,'B8b10:3 B8b10r8:2 B5 G7 Gp5 D7 D5:3'),
+         P(3,'B8b10:3 B8b10r8:2 B5 G7 Gp5 D7 D5:3 | A5 Ah7 Ap5 E8 Ep5 . A7~:6'),
+         P(3,'G7b9+B5:3 G7b9r7 Gp5 D7 D5 Dh7 Dp5 A7~:3 | A5 Ah7 Ap5 E8 Ep5 . A7~:6'),
+         P(4,'e8 ep5 B8 Bp5 G7 Gp5 D7 Dp5 A7 Ap5 E8 Ep5 E5:4 | B8b10:8 B8b10r8:2 B5:2 G7~:4'),
+         P(3,'G7b9+B5:3 G7b9r7 Gp5 D7 D5 Dh7 Dp5 A7~:3 | /4 e8 ep5 B8 Bp5 G7 Gp5 D7 Dp5 A7 Ap5 E8 Ep5 E5:4 | B8b10:8 B8b10r8:2 B5:2 G7~:4')],
+    C34:[P(2,'G7 Gx G7 Gx B8 Bx B8 Bx'),
+         P(4,'G7 Gx B8 . G7 Gx B8 . G6 Gx B5 . G6 Gx B5 .'),
+         P(4,'D7 G6+e5 . D7 G7+e7 . D7 G9+e9 . D7 G7+e7 . D7:4'),
+         P(4,'Bx B8 Bp5 G7 Gx G7 Gp5 D7 Dx D7 Dp5 A7 A5:4 | D7 G6+e5 . D7 G7+e7 . D7 G9+e9 . D7 G7+e7 . D7:4'),
+         P(4,'Bx B8 Bp5 G7 Gx G7 Gp5 D7 Dx D7 Dp5 A7 A5:4 | D7 G6+e5 . D7 G7+e7 . D7 G9+e9 . D7 G7+e7 . D7:4 | e5 Bx B8 e5 Bx B8 e5 Bx B8b10:4 B8b10r8 B5 G7 .')],
+    C35:[P(3,`${cA}:3 .:9 | ${l1}`),
+         P(3,`${cA}:3 .:3 A5:2 Ah7 E8 E5:2 | ${cA}:3 .:3 G7b9:3 G7b9r7 G5 D7`),
+         P(3,`${cA}:2 ${cA} .:3 A5:2 Ah7 E8 E5:2 | ${cD}:2 ${cD} .:3 B8b10:3 B8b10r8 B5 G7 | ${cA}:3 .:9`),
+         P(3,`${cA}:3 .:3 A5:2 Ah7 E8 E5:2 | ${cD}:3 .:3 B8b10:3 B8b10r8 B5 G7 | ${cA}:3 .:3 G7b9:3 G7b9r7 G5 D7 | ${cE}:3 .:3 A7 D6 D9 G7:3`),
+         P(3,`${cA}:3 A5:2 Ah7 A5:2 E8 E5 Eh8 Ep5 | ${cD}:3 B8b10:3 B8b10r8:2 B5 G7 Gp5 D7 | ${cA}:3 G7b9:3 G7b9r7 G5 D7 D5 Dh7 A7 | ${cE}:3 A7 D6 D9 G7 D9 D6 A7:3`)]
+  });
+  // этюды: 4 фрагмента = уровни четырёх упражнений; каждый фрагмент — одна система со своим делением
+  const ET=[['L31','L24','A18','A21'],['A23','L26','L27','A21'],['A19','A39','L40','A21']];
+  const etude=(e,k)=>[0,1,2,3,4].map(j=>({t:ET[e].map(id=>sh(`/${L[id][j].sub} ${L[id][j].t}`,k))}));
+  // ---------- тексты ----------
+  const KEY=['Тональность ','Key of '];
+  const T={
+    A16:[{name:'Септаккорд: арпеджио',goal:'Слышать доминантсептаккорд — основу блюза — нота за нотой.',how:'Тоника, терция, квинта, малая септима по очереди, без звона соседних нот. Дальше — вторая октава, смена I7 → IV7 и весь квадрат I7–IV7–V7.',tip:'Пой ноту перед тем, как сыграть: септима — это и есть «блюзовый» цвет аккорда.',lvl:['Четыре ноты аккорда восьмыми','Октава вверх и вниз','Две октавы','Смена I7 → IV7','Квадрат I7–IV7–V7 триолями']},
+          {name:'Dominant 7th arpeggio',goal:'Hear the dominant 7th, the core of the blues, note by note.',how:'Root, third, fifth and flat seventh one at a time, with no neighbouring strings ringing. Then the second octave, the I7 → IV7 change and the whole I7–IV7–V7 progression.',tip:'Sing each note before you play it: the seventh is the bluesy colour of the chord.',lvl:['Four chord tones in eighths','An octave up and down','Two octaves','I7 → IV7 change','I7–IV7–V7 in triplets']}],
+    A17:[{name:'Девятые аккорды: шаффл-аккомпанемент',goal:'Ритм-гитара в духе T-Bone и Freddie King: девятые аккорды на шаффле.',how:'Четырёхзвучные девятые аккорды. Сначала удары на 2 и 4, потом ровный шаффл «долгая-короткая», мёртвые удары между аккордами и подъезд на полтона снизу.',tip:'Левая рука ослабляет хват сразу после удара — так получаются и короткие аккорды, и мёртвые удары.',lvl:['Удары на 2 и 4','Шаффл на одном аккорде','Смена I9 → IV9, приглушение','Квадрат I–IV–I–V, мёртвые удары','Подъезд на полтона снизу']},
+          {name:'Ninth chords: shuffle comping',goal:'Rhythm guitar in the style of T-Bone Walker and Freddie King: ninth chords over a shuffle.',how:'Four-note ninth chords. First hits on 2 and 4, then an even long-short shuffle, dead strums between chords and a half-step approach from below.',tip:'Release the left-hand pressure right after each hit: that gives you both short chords and dead strums.',lvl:['Hits on 2 and 4','Shuffle on one chord','I9 → IV9, palm muted','I–IV–I–V with dead strums','Half-step approach from below']}],
+    A18:[{name:'Двойные ноты: сексты и терции',goal:'Мелодия двумя нотами сразу, как у Chuck Berry и в соуле.',how:'Сексты через струну и терции на соседних струнах идут по миксолидийскому ладу. Глуши среднюю струну пальцем, который играет нижнюю ноту. На старших уровнях — хаммер в сексту и двойной бенд.',tip:'Обе ноты должны звучать одинаково громко. Если одна тише — проверь угол медиатора или пальцев.',lvl:['Четыре сексты','Сексты вверх и вниз по ладу','Хаммер в сексту, шаффл','Терции, потом сексты','Двойные ноты с бендом']},
+          {name:'Double stops: sixths and thirds',goal:'A melody in two notes at once, like Chuck Berry and soul guitar.',how:'Sixths across a skipped string and thirds on adjacent strings follow the Mixolydian mode. Mute the middle string with the finger that plays the lower note. Higher levels add a hammer-on into the sixth and a double-stop bend.',tip:'Both notes should be equally loud. If one is quieter, check the angle of your pick or fingers.',lvl:['Four sixths','Sixths up and down the mode','Hammer into the sixth, shuffle','Thirds, then sixths','Double stops with a bend']}],
+    A19:[{name:'Миксолидийский лад',goal:'Звукоряд доминантсептаккорда: мажор с малой септимой.',how:'Лад в одной позиции: октава, две октавы, терции, группы по три. На последнем уровне малая терция уходит хаммером в большую — главный приём смешения мажора и минора.',tip:'Играя, держи в ушах аккорд I7: каждая нота должна «садиться» на него.',lvl:['Одна октава','Две октавы','Терции','Группы по три триолями','Фраза: малая терция → большая']},
+          {name:'Mixolydian mode',goal:'The scale of the dominant 7th: major with a flat seventh.',how:'The mode in one position: one octave, two octaves, thirds, groups of three. The last level hammers the minor third into the major third, the key move for mixing major and minor.',tip:'Keep the I7 chord in your ears while you play: every note should sit on it.',lvl:['One octave','Two octaves','Thirds','Groups of three in triplets','Phrase: minor third → major third']}],
+    A20:[{name:'Мажорная пентатоника и смесь',goal:'Светлый блюз в духе B.B. King и кантри-блюза.',how:'Мажорная пентатоника в позиции, затем группы по три. Дальше фразы, где малая терция поднимается в большую, а бенд на полтона ведёт в терцию аккорда.',tip:'Мажорная пентатоника звучит хорошо на I7, а на IV7 вернись к минорной.',lvl:['Октава вверх и вниз','Позиция целиком','Группы по три','Смешение мажора и минора','Длинная фраза с бендом на полтона']},
+          {name:'Major pentatonic and the mix',goal:'Bright blues in the style of B.B. King and country blues.',how:'The major pentatonic in one position, then groups of three. Then phrases where the minor third rises into the major third and a half-step bend leads into the chord’s third.',tip:'Major pentatonic sounds good over I7; over IV7 go back to the minor one.',lvl:['An octave up and down','The whole position','Groups of three','Mixing major and minor','Long phrase with a half-step bend']}],
+    A21:[{name:'Тёрнэраунды',goal:'Последние два такта квадрата, которые возвращают к началу.',how:'Хроматический спуск под высокой тоникой, затем аккорд или арпеджио V7. На старших уровнях — встречное движение двух голосов и бенд перед спуском.',tip:'Тёрнэраунд — это сигнал группе. Играй его уверенно и ровно, даже на медленном темпе.',lvl:['Спуск двойными нотами','Спуск триолями с тоникой','Арпеджио V7 в конце','Встречное движение голосов','Бенд, спуск, встречное движение, V7']},
+          {name:'Turnarounds',goal:'The last two bars of the progression that lead back to the top.',how:'A chromatic descent under the high root, then a V7 chord or arpeggio. Higher levels add two voices in contrary motion and a bend before the descent.',tip:'A turnaround is a signal to the band. Play it with confidence and even timing, even at a slow tempo.',lvl:['Descent in double stops','Triplet descent with the root','V7 arpeggio at the end','Voices in contrary motion','Bend, descent, contrary motion, V7']}],
+    A22:[{name:'Септаккорды по грифу',goal:'Один аккорд I7 в четырёх местах грифа и ближние IV7 и V7.',how:'Четыре формы септаккорда на четырёх верхних струнах. Переходи между ними без паузы, потом ищи ближайшие IV7 и V7 и играй квадрат шаффлом.',tip:'Смотри на тот палец, который остаётся на месте или сдвигается меньше всего, — он ведёт руку.',lvl:['Две формы','Четыре формы вверх и вниз','I7 → IV7 и I7 → V7 рядом','Квадрат шаффлом','Смена форм внутри такта']},
+          {name:'Seventh chords up the neck',goal:'One I7 chord in four places on the neck, and the nearest IV7 and V7.',how:'Four seventh-chord shapes on the top four strings. Move between them without a gap, then find the nearest IV7 and V7 and play the progression as a shuffle.',tip:'Watch the finger that stays put or moves the least: it guides the hand.',lvl:['Two shapes','Four shapes up and down','I7 → IV7 and I7 → V7 nearby','The progression as a shuffle','Changing shapes within the bar']}],
+    A23:[{name:'Блюзовая гамма',goal:'Минорная пентатоника с блюзовой нотой — пониженной квинтой.',how:'Гамма в первой позиции: нижняя октава, обе октавы, триольные фразы. Блюзовая нота — проходящая: не останавливайся на ней. На старших уровнях — бенд в блюзовую ноту и вторая позиция.',tip:'Блюзовая нота звучит, когда разрешается на соседнюю. Задержишься — будет фальшь.',lvl:['Нижняя октава','Две октавы','Триольные фразы','Бенд в блюзовую ноту','Две позиции']},
+          {name:'Blues scale',goal:'The minor pentatonic with the blue note, the flat fifth.',how:'The scale in the first position: the lower octave, both octaves, triplet phrases. The blue note is a passing note: do not stop on it. Higher levels add a bend into the blue note and the second position.',tip:'The blue note works when it resolves to its neighbour. Linger on it and it sounds wrong.',lvl:['Lower octave','Two octaves','Triplet phrases','Bend into the blue note','Two positions']}],
+    A38:[{name:'Пять позиций пентатоники',goal:'Минорная пентатоника по всему грифу.',how:'Вариант — позиция. Сначала половина позиции, потом целиком вверх и вниз, группы по три и по четыре, затем через ноту (терции пентатоники).',tip:'Запоминай, где в позиции тоника: на неё опирается любая фраза.',lvl:['Нижняя половина позиции','Вся позиция вверх и вниз','Группы по три','Группы по четыре','Через ноту']},
+          {name:'Five pentatonic positions',goal:'The minor pentatonic across the whole neck.',how:'The variant is the position. First half of it, then the whole thing up and down, groups of three and of four, then skipping a note (pentatonic thirds).',tip:'Remember where the root is in each position: every phrase leans on it.',lvl:['Lower half of the position','The whole position up and down','Groups of three','Groups of four','Skipping a note']}],
+    A39:[{name:'Вызов и ответ',goal:'Строить соло как разговор: фраза — ответ.',how:'Низкая фраза задаёт вопрос, высокая с бендом отвечает. На старших уровнях ответ уходит на октаву выше, появляются двойные ноты и бенд двух струн.',tip:'Оставляй паузы. Ответ без паузы перед ним — это не ответ, а продолжение.',lvl:['Одна пара','Две пары','Вибрато на концах фраз','Ответ октавой выше','Пары с двойными нотами']},
+          {name:'Call and response',goal:'Build a solo like a conversation: a phrase and its answer.',how:'A low phrase asks, a high phrase with a bend answers. Higher levels move the answer an octave up and add double stops and a two-string bend.',tip:'Leave space. An answer with no gap before it is not an answer, just more of the same.',lvl:['One pair','Two pairs','Vibrato at phrase ends','Answer an octave up','Pairs with double stops']}],
+    L24:[{name:'Бенд на тон',goal:'Попадать бендом точно в ноту.',how:'Сначала сыграй целевую ноту двумя ладами выше, потом подтяни к ней бенд. Тяни тремя пальцами, кисть поворачивается. Дальше — бенды в фразах и унисонные бенды.',tip:'Сверяй высоту с эталоном. Недотянутый бенд — самая частая фальшь в блюзе.',lvl:['Эталон и бенд','Бенды на двух струнах','Бенды в фразе','Унисонный бенд','Бенд с вибрато наверху']},
+          {name:'Whole-step bend',goal:'Bend exactly to the target note.',how:'Play the target note two frets higher first, then bend up to match it. Push with three fingers while the wrist turns. Then bends inside phrases and unison bends.',tip:'Check the pitch against the reference. An under-bent note is the most common bad note in blues.',lvl:['Reference and bend','Bends on two strings','Bends in a phrase','Unison bend','Bend with vibrato at the top']}],
+    L25:[{name:'Бенды на полтона и полтора тона',goal:'Управлять шириной бенда.',how:'Полтона — из малой терции в большую или в блюзовую ноту. Полтора тона — с квинты на септиму. На старших уровнях ширина меняется в одной фразе.',tip:'Полтона легко перетянуть. Сравни с эталоном ладом выше, прежде чем играть фразу.',lvl:['Полтона с эталоном','Полтона на двух струнах','Полтора тона в фразе','Разная ширина подряд','Октавой выше']},
+          {name:'Half-step and step-and-a-half bends',goal:'Control how far you bend.',how:'A half step goes from the minor third to the major third or to the blue note. A step and a half goes from the fifth to the seventh. Higher levels change the width inside one phrase.',tip:'A half step is easy to overshoot. Compare it with the reference one fret up before playing the phrase.',lvl:['Half step with a reference','Half steps on two strings','Step and a half in a phrase','Different widths in a row','An octave higher']}],
+    L26:[{name:'Вибрато',goal:'Ровное, певучее вибрато каждым пальцем.',how:'Вибрато на длинных нотах: указательный, средний, безымянный, мизинец. Потом вибрато на вершине бенда и в конце фраз.',tip:'Движение идёт из кисти, а не из пальца. Держи одну ширину и одну скорость, как метроном.',lvl:['Длинные ноты','Вибрато на вершине бенда','Каждым пальцем','В конце фраз','Длинная фраза']},
+          {name:'Vibrato',goal:'Even, singing vibrato with every finger.',how:'Vibrato on long notes with the index, middle, ring finger and pinky. Then vibrato at the top of a bend and at phrase ends.',tip:'The motion comes from the wrist, not the finger. Keep one width and one speed, like a metronome.',lvl:['Long notes','Vibrato at the top of a bend','With each finger','At phrase ends','A long phrase']}],
+    L27:[{name:'Легато в пентатонике',goal:'Хаммеры и пулл-оффы в духе Stevie Ray Vaughan.',how:'Пары нот на струне хаммером вверх и пулл-оффом вниз, потом тройки «хаммер-пулл», блюзовая нота хаммером. На последнем уровне — шестнадцатые через всю позицию.',tip:'Пулл-офф — это щипок пальцем вниз, а не просто снятие пальца. Иначе нота пропадает.',lvl:['Хаммеры на четырёх струнах','Вверх хаммерами, вниз пулл-оффами','Тройки хаммер-пулл','Блюзовая нота хаммером','Шестнадцатые через позицию']},
+          {name:'Pentatonic legato',goal:'Hammer-ons and pull-offs in the style of Stevie Ray Vaughan.',how:'Pairs of notes on one string, hammer up and pull down, then hammer-pull triplets and the blue note by hammer-on. The last level is sixteenths through the whole position.',tip:'A pull-off is a downward pluck with the finger, not just lifting it. Otherwise the note dies.',lvl:['Hammer-ons on four strings','Up by hammer, down by pull-off','Hammer-pull triplets','Blue note by hammer-on','Sixteenths through the position']}],
+    L28:[{name:'Переходы между позициями',goal:'Двигаться по грифу, а не сидеть в одной коробке.',how:'Пентатоника на двух-трёх верхних струнах из позиции в позицию. Переход — хаммером или сменой пальца. На последнем уровне — по двум струнам от первой позиции до пятой и обратно.',tip:'Смещай руку на ноте, сыгранной указательным: так переход незаметен на слух.',lvl:['Две позиции на двух струнах','Две позиции на четырёх струнах','Три позиции триолями','Переход хаммером','Весь гриф шестнадцатыми']},
+          {name:'Moving between positions',goal:'Travel along the neck instead of staying in one box.',how:'The pentatonic on the top two or three strings, from position to position. The shift happens on a hammer-on or a finger change. The last level runs from the first position to the fifth and back on two strings.',tip:'Shift the hand on a note played with the index finger: that hides the shift from the ear.',lvl:['Two positions on two strings','Two positions on four strings','Three positions in triplets','Shift on a hammer-on','The whole neck in sixteenths']}],
+    L29:[{name:'Унисонные бенды и бенды двух струн',goal:'Бенд одной струны против неподвижной соседней.',how:'Унисон: подтянутая нота догоняет соседнюю до одной высоты. Потом бенд под удержанной верхней нотой и унисон на октаву выше.',tip:'Неподвижный палец не должен сдвинуться вслед за бендом. Если струна уходит, ставь палец чуть ближе к ладу.',lvl:['Унисон с эталоном','Унисон на двух парах струн','Бенд под верхней нотой','Унисон с вибрато в фразе','Октавой выше']},
+          {name:'Unison and two-string bends',goal:'Bend one string against a still neighbour.',how:'Unison: the bent note catches up with the neighbour to the same pitch. Then a bend under a held top note, and a unison an octave higher.',tip:'The still finger must not follow the bend. If its string slides, put the finger a bit closer to the fret.',lvl:['Unison with a reference','Unison on two string pairs','Bend under a top note','Unison with vibrato in a phrase','An octave higher']}],
+    L30:[{name:'Хроматические проходы',goal:'Проходящие ноты между ступенями пентатоники: палец на лад.',how:'Хроматика заполняет промежутки: блюзовая нота, большая терция, секста. Каждый лад — свой палец, рука не сдвигается.',tip:'Хроматика — это движение, а не остановка. Последняя нота фразы — всегда из пентатоники.',lvl:['Короткие проходы','Хроматика на трёх струнах','Палец на лад, вверх','Спуск от септимы','Длинная фраза']},
+          {name:'Chromatic passing notes',goal:'Passing notes between pentatonic degrees, one finger per fret.',how:'Chromatic notes fill the gaps: the blue note, the major third, the sixth. Each fret gets its own finger, the hand stays put.',tip:'Chromatic notes are motion, not a place to stop. The last note of a phrase is always from the pentatonic.',lvl:['Short passages','Chromatics on three strings','Finger per fret, going up','Descent from the seventh','A long phrase']}],
+    L31:[{name:'Бугги: растяжка',goal:'Классический бугги-рифф: квинта, секста, септима.',how:'Две ноты на нижних струнах: квинта, секста, малая септима на растяжке мизинцем. Потом однонотная бугги-линия на I, IV и V.',tip:'Указательный не отрывается от тоники. Растяжку делай от кисти, большой палец опусти на шею грифа.',lvl:['Квинта и секста','Септима мизинцем','Приглушение, смена на IV','Однонотная линия по квадрату','Шесть тактов квадрата']},
+          {name:'Boogie stretch',goal:'The classic boogie riff: fifth, sixth, seventh.',how:'Two notes on the low strings: fifth, sixth, and the flat seventh with a pinky stretch. Then a single-note boogie line on I, IV and V.',tip:'Keep the index finger on the root. Stretch from the wrist, with the thumb low on the back of the neck.',lvl:['Fifth and sixth','Seventh with the pinky','Palm muted, change to IV','Single-note line through the progression','Six bars of the progression']}],
+    L40:[{name:'Октавы',goal:'Мелодия октавами с заглушенной средней струной.',how:'Две ноты через струну: нижняя — указательным, верхняя — безымянным или мизинцем. Указательный глушит струну между ними, бей по всем трём.',tip:'Если звенит средняя струна, положи указательный чуть площе.',lvl:['Четыре октавы','Повторы и паузы','Октавы на верхних струнах','Шаффл-рифф октавами','Рифф и ответ на верхних струнах']},
+          {name:'Octaves',goal:'A melody in octaves with the middle string muted.',how:'Two notes with a string between them: the lower one with the index finger, the upper one with the ring finger or pinky. The index mutes the middle string; strike all three.',tip:'If the middle string rings, lay the index finger a little flatter.',lvl:['Four octaves','Repeats and rests','Octaves on the top strings','Shuffle riff in octaves','Riff and answer on the top strings']}],
+    C32:[{name:'Ритм → соло',goal:'Переход из аккомпанемента в фразу и обратно без потери грува.',how:'Такт бугги-риффа, такт фразы. Потом два такта ритма и два соло, на последнем уровне — смена через такт по квадрату.',tip:'Грув держит правая рука: её движение не меняется, когда левая переходит с риффа на фразу.',lvl:['Рифф и фраза','Рифф с септимой и бенд','Два такта ритма, два соло','Рифф на IV, фраза отвечает','Шесть тактов через один']},
+          {name:'Rhythm → lead',goal:'Go from comping to a phrase and back without losing the groove.',how:'A bar of boogie riff, a bar of phrase. Then two bars of rhythm and two of lead; the last level switches every bar through the progression.',tip:'The right hand holds the groove: its motion does not change when the left hand moves from riff to phrase.',lvl:['Riff and phrase','Riff with the seventh, and a bend','Two bars rhythm, two lead','Riff on IV, phrase answers','Six bars, switching every bar']}],
+    C33:[{name:'Бенд → легато → вибрато',goal:'Три приёма левой руки в одной фразе.',how:'Бенд с возвратом, пулл-офф вниз по позиции, вибрато на последней ноте. На старших уровнях — унисонный бенд и спуск шестнадцатыми.',tip:'После возврата бенда струна должна встать точно на высоту лада, прежде чем начнётся легато.',lvl:['Бенд и пулл-офф','Плюс легато на нижних струнах','Начало с унисонного бенда','Спуск шестнадцатыми и бенд','Три такта целиком']},
+          {name:'Bend → legato → vibrato',goal:'Three left-hand techniques in one phrase.',how:'A bend and release, pull-offs down the position, vibrato on the last note. Higher levels add a unison bend and a sixteenth-note descent.',tip:'After the release, the string must land exactly on the fret pitch before the legato starts.',lvl:['Bend and pull-off','Plus legato on the low strings','Start with a unison bend','Sixteenth descent and a bend','All three bars']}],
+    C34:[{name:'Чикен-пикинг',goal:'Щелчок пальцами правой руки и мёртвые ноты в духе Albert Lee и кантри-блюза.',how:'Мёртвая нота медиатором, звучащая — средним пальцем щипком. Потом гибридный пикинг: бас медиатором, двойная нота пальцами.',tip:'Щипок пальцем идёт от грифа, струна шлёпает по ладам — так получается «куриный» щелчок.',lvl:['Мёртвая и звучащая восьмыми','Шестнадцатыми на двух струнах','Гибридный: бас и двойные ноты','Чикен-фраза с пулл-оффами','Плюс бенд из мёртвой ноты']},
+          {name:'Chicken picking',goal:'A finger snap of the picking hand and dead notes, in the style of Albert Lee and country blues.',how:'The dead note with the pick, the ringing one snapped with the middle finger. Then hybrid picking: bass note with the pick, double stop with the fingers.',tip:'The finger pulls the string away from the neck and it slaps the frets: that is the chicken snap.',lvl:['Dead and ringing in eighths','Sixteenths on two strings','Hybrid: bass and double stops','Chicken phrase with pull-offs','Plus a bend out of a dead note']}],
+    C35:[{name:'Стоп-тайм',goal:'Аккорд на первую долю, тишина, фраза в паузе.',how:'Группа бьёт аккорд и замолкает, ты заполняешь паузу. Сначала один удар и фраза в следующем такте, потом фраза в том же такте, на IV и V.',tip:'Тишина в стоп-тайме — часть ритма. Отсчитывай её так же точно, как ноты.',lvl:['Удар и фраза','Фраза в том же такте','Двойной удар, I и IV','Четыре такта I–IV–I–V','Фразы на три доли']},
+          {name:'Stop time',goal:'A chord on beat one, silence, a phrase in the gap.',how:'The band hits a chord and stops; you fill the gap. First one hit and a phrase in the next bar, then a phrase in the same bar, on IV and V.',tip:'Silence in stop time is part of the rhythm. Count it as precisely as the notes.',lvl:['Hit and phrase','Phrase in the same bar','Double hit, I and IV','Four bars I–IV–I–V','Three-beat phrases']}],
+    C36:[{name:'Блюзовый этюд',goal:'Четыре приёма подряд, как в настоящем блюзе.',how:'Четыре фрагмента подряд. Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон на телефон. Слабое место почти всегда на стыке фрагментов.',lvl:['Короткие фрагменты','Фрагменты длиннее','Больше струн и приёмов','Смена гармонии внутри фрагмента','Длинные фрагменты']},
+          {name:'Blues étude',goal:'Four techniques in a row, like a real blues.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always at the joint between fragments.',lvl:['Short fragments','Longer fragments','More strings and techniques','Harmony changes within a fragment','Long fragments']}]
+  };
+  const EX={},EXEN={};
+  Object.keys(T).forEach(id=>{
+    const [ru,en]=T[id],n=+id.slice(1);
+    let v,ve;
+    if(id==='A38'){
+      // позиции минорной пентатоники {A}; шестой вариант — первая позиция в {E}
+      const POS=[['E5 E8 A5 A7 D5 D7 G5 G7 B5 B8 e5 e8',1],['E8 E10 A7 A10 D7 D10 G7 G9 B8 B10 e8 e10',2],['E10 E12 A10 A12 D10 D12 G9 G12 B10 B13 e10 e12',3],['E12 E15 A12 A15 D12 D14 G12 G14 B13 B15 e12 e15',4],['E3 E5 A3 A5 D2 D5 G2 G5 B3 B5 e3 e5',5],['E12 E15 A12 A14 D12 D14 G12 G14 B12 B15 e12 e15',1]];
+      const lv=s=>{const a=s.split(' '),d=a.slice(0,11).reverse(),r=[];
+        r.push({sub:2,t:[a.slice(0,8).concat(a.slice(0,7).reverse(),['.']).join(' ')]});
+        r.push({sub:2,t:[a.concat(d,['.']).join(' ')]});
+        const g3=[];for(let i=0;i<10;i++)g3.push(a[i],a[i+1],a[i+2]);r.push({sub:3,t:[g3.join(' ')]});
+        const g4=[];for(let i=0;i<9;i++)g4.push(a[i],a[i+1],a[i+2],a[i+3]);r.push({sub:4,t:[g4.join(' ')]});
+        const th=[];for(let i=0;i<9;i++)th.push(a[i],a[i+2]);r.push({sub:3,t:[th.join(' ')]});
+        return r;};
+      v=POS.map(([s,p],k)=>({l:`{${k<5?'A':'E'}}m, позиция ${p}`,lv:lv(s)}));
+      ve=POS.map(([s,p],k)=>`{${k<5?'A':'E'}}m, position ${p}`);
+    }else if(id==='C36'){
+      const NM=[['шаффл, бенд, двойные ноты, тёрнэраунд','shuffle, bend, double stops, turnaround'],['блюзовая гамма, вибрато, легато, тёрнэраунд','blues scale, vibrato, legato, turnaround'],['миксолидийский, вызов-ответ, октавы, тёрнэраунд','Mixolydian, call and response, octaves, turnaround']];
+      const EV=[[0,0],[1,7],[2,5],[0,-2],[1,3],[2,2]];
+      v=EV.map(([e,k],i)=>({l:`Этюд ${e+1} в ${KEYS.find(x=>x[1]===k)[0]}: ${NM[e][0]}`,lv:etude(e,k)}));
+      ve=EV.map(([e,k])=>`Étude ${e+1} in ${KEYS.find(x=>x[1]===k)[0]}: ${NM[e][1]}`);
+    }else{
+      v=KEYS.map(([nm,k])=>({l:KEY[0]+nm,lv:L[id].map(x=>({sub:x.sub,t:[sh(x.t,k)]}))}));
+      ve=KEYS.map(([nm])=>KEY[1]+nm);
+    }
+    EX[id]=Object.assign({n},ru,{sub:v[0].lv[0].sub||2,v});
+    EXEN[id]=Object.assign({},en,{v:ve});
+  });
+  // L31: бугги-рифф под метроном с разным делением — восьмые, триоли (шаффл), шестнадцатые
+  const L31C={cyc:[{sub:2,tag:['Метроном восьмыми','Metronome in 8ths']},{sub:3,tag:['Метроном триолями: шаффл','Metronome in triplets: shuffle']},{sub:4,tag:['Метроном 16-ми','Metronome in 16ths']}]};
+  const COACH={L31:{v:{0:L31C,1:L31C,2:L31C,3:L31C,4:L31C,5:L31C}},C36:{stages:COACH_GUITAR.C36.stages}};
+  return {EX,EXEN,COACH};
+})();
 /*@BLUES_GUITAR_2@*/
-const BLG2={EX:{},EXEN:{},COACH:{}};
 /*@BLUES_ACOUSTIC_1@*/
 const BLA1={EX:{},EXEN:{},COACH:{}};
 /*@BLUES_ACOUSTIC_2@*/
