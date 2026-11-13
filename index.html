@@ -127,6 +127,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tabhd{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
 .tabsc{overflow-x:auto;padding:4px 4px 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:2px 0;-webkit-overflow-scrolling:touch}
 .tsys{display:contents}
+.tabsc{zoom:var(--tabz,1)}
 .tabsc svg{display:block;flex:none;overflow:visible}
 .tabsc svg.se{margin-right:10px}
 .tabsc svg.ls{margin-left:18px}
@@ -325,6 +326,8 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
     <div class="setrow"><span class="lbl" data-i="langLabel"></span>
       <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
     </div>
+    <div class="setrow"><span class="lbl" data-i="tabzLabel"></span>
+      <div class="lang" id="tabzSw" role="group"><button data-tabz="0.75">75%</button><button data-tabz="1">100%</button><button data-tabz="1.25">125%</button><button data-tabz="1.5">150%</button></div></div>
     <div class="setrow"><span class="lbl" data-i="themeLabel"></span>
       <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
     </div>
@@ -465,8 +468,8 @@ const TU=()=>{const b=INST==='bass'?'bass'+STRINGS:GSTR===6?'guitar':'guitar'+GS
 // ключ упражнения в grif.bpmEx и grif.lvl: у баса с префиксом, чтобы не смешивать с гитарой
 const exKey=id=>INST==='bass'?'bass.'+id:id;
 const UI={
-  ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день',langLabel:'Язык',instLabel:'Инструмент',tuneLabel:'Строй',handLabel:'Правая рука',themeLabel:'Тема',settings:'Настройки'},
-  en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day',langLabel:'Language',instLabel:'Instrument',tuneLabel:'Tuning',handLabel:'Right hand',themeLabel:'Theme',settings:'Settings'}
+  ru:{tag:'тренировка дня · техничный дэт-метал',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день',langLabel:'Язык',instLabel:'Инструмент',tuneLabel:'Строй',handLabel:'Правая рука',themeLabel:'Тема',tabzLabel:'Масштаб табов',settings:'Настройки'},
+  en:{tag:'daily workout · technical death metal',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day',langLabel:'Language',instLabel:'Instrument',tuneLabel:'Tuning',handLabel:'Right hand',themeLabel:'Theme',tabzLabel:'Tab size',settings:'Settings'}
 };
 const t=k=>UI[LANG][k];
 const ABOUT={
@@ -2161,6 +2164,13 @@ function applyTheme(){
   const r=document.documentElement;if(THEME==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',THEME);
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(r).getPropertyValue('--bg').trim()||'#0e1115';
 }
+// Масштаб табов (grif.tabz): CSS zoom на .tabsc, перенос пересчитывает layTabs
+const TABZ=[0.75,1,1.25,1.5];
+let TABZOOM=(x=>TABZ.includes(x)?x:1)(lsGet('tabz',1));
+function applyTabz(){document.documentElement.style.setProperty('--tabz',String(TABZOOM));
+  document.querySelectorAll('#tabzSw button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.tabz===TABZOOM)));
+  document.querySelectorAll('.tabsc').forEach(layTabs);}
+function setTabz(x){x=+x;if(!TABZ.includes(x))return;TABZOOM=x;lsSet('tabz',x);applyTabz();}
 function setTheme(x){if(!THEMES.includes(x)||x===THEME)return;THEME=x;lsSet('theme',x);applyTheme();renderStatic();}
 applyTheme();
 const tuneShort=()=>{const t=TUNE[INST];return NOTES[mod(4+t.o,12)]+(t.d?' drop':'');};
@@ -2948,6 +2958,8 @@ function toast(msg){let el=document.querySelector('.toast');if(!el){el=document.
 document.querySelectorAll('.lang button[data-lang]').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
 window.addEventListener('hashchange',()=>{const h=hashWords();const i=h.includes('bass')?'bass':'guitar';if(i!==INST)setInst(i);const l=h.includes('en')?'en':h.includes('ru')?'ru':LANG;if(l!==LANG)setLang(l);setLib(h.includes('library'));});
 document.querySelectorAll('#themeSw button').forEach(b=>b.onclick=()=>setTheme(b.dataset.themeSet));
+document.querySelectorAll('#tabzSw button').forEach(b=>b.onclick=()=>setTabz(b.dataset.tabz));
+applyTabz();
 document.querySelectorAll('#instSw button').forEach(b=>b.onclick=()=>setInst(b.dataset.inst));
 $('strChips').addEventListener('click',e=>{const b=e.target.closest('button[data-str]');if(b)setStrings(+b.dataset.str);});
 $('tuneKey').onchange=e=>setTuning(+e.target.value,TUNE[INST].d);
@@ -3029,7 +3041,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE})[k]}));
 })();

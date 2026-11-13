@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass'];
 const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
@@ -330,6 +330,17 @@ test('дни: доступны только сегодня и 7 дней наз�
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
   expect(errors).toEqual([]);
+});
+
+test('масштаб табов: 4 размера, запоминается в grif.tabz', async ({ page }) => {
+  await openApp(page);
+  await page.click('#setBtn');
+  await page.click('#tabzSw button[data-tabz="1.5"]');
+  await expect(page.locator('#tabzSw button[data-tabz="1.5"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tabz').trim())).toBe('1.5');
+  expect(await page.evaluate(() => localStorage.getItem('grif.tabz'))).toBe('1.5');
+  await page.reload();
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tabz').trim())).toBe('1.5');
 });
 
 test('тема: авто, светлая, тёмная — запоминается в grif.theme', async ({ page }) => {
