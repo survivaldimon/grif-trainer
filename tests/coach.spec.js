@@ -104,13 +104,15 @@ test(`${inst}: тренер: указания упражнений и недел
       c36: [2, 3].map(lv => [...new Set(G.coachPlan({ kind: 'combo', id: 'C36', variant: 2, min: 20 }, G.dayInfo(0), lv).filter(x => x.type === 'set' && x.meter === '7/8').map(x => x.sub))])
     };
   });
-  expect(r.b1.slice(0, 5)).toEqual(['4', '4', '6p6', '4hp8', '4b']);
   expect(r.speed.slice(0, 5)).toEqual([1, 2, 4, 0, 1]);
   expect(r.maint.every(b => b === 0)).toBe(true);
-  expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
-  expect(r.b2pick.every(n => n > 0)).toBe(true);
-  expect(r.b2day.every(n => n === 0)).toBe(true);
-  expect(r.c36).toEqual([[1], [2]]);
+  if (inst === 'guitar' || inst === 'bass') { // указания конкретных упражнений — у библиотек метала
+    expect(r.b1.slice(0, 5)).toEqual(['4', '4', '6p6', '4hp8', '4b']);
+    expect(r.l31.slice(0, 3)).toEqual([2, 3, 4]);
+    expect(r.b2pick.every(n => n > 0)).toBe(true);
+    expect(r.b2day.every(n => n === 0)).toBe(true);
+    expect(r.c36).toEqual([[1], [2]]);
+  }
 });
 
 }
@@ -218,7 +220,7 @@ test('отсчёт в x/8: число долей = числитель разме
   expect(errors).toEqual([]);
 });
 
-for (const inst of INSTS)
+for (const inst of ['guitar', 'bass'])
 test(`${inst}: B1: секстоли и 32-е на половине темпа — пример нового ритма, bpm×0,5 на подходе и возврат на отдыхе`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
   await page.evaluate(() => window.__grif.setDay(0));
