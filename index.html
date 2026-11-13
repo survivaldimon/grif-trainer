@@ -2630,7 +2630,277 @@ let COACH=COACH_GUITAR;
 // Каждая библиотека — две части: 1 — W, B, R, тесты цикла и условия риффа дня (TESTS, RIFF); 2 — A, L, C.
 // Часть: {EX:{id:…}, EXEN:{id:…}, COACH:{id:…}, TESTS?, RIFF?}. Чего в частях нет, берётся из метала того же инструмента.
 /*@BLUES_GUITAR_1@*/
-const BLG1={EX:{},EXEN:{},COACH:{}};
+const BLG1=(function(){
+// Блюз, электрогитара, часть 1. Табы риффов пишутся в {E} и переносятся в тональность варианта сдвигом ладов (sh).
+const sh=(s,d)=>d?s.replace(/([A-Za-z])([hpt]?)(\d+)(?:b(\d+))?(?:r(\d+))?/g,(m,a,te,f,b,r)=>a+te+(+f+d)+(b?'b'+(+b+d):'')+(r?'r'+(+r+d):'')):s;
+const KEYS=[0,5,3,7,8,10],KN=['{E}','{A}','{G}','{B}','{C}','{D}'];
+const lvs=a=>a.map(x=>Array.isArray(x)?{t:x}:x);
+// 6 вариантов-тональностей: lev() — 5 уровней в {E}, каждый — массив систем или {t,sub}
+const keyV=lev=>KEYS.map((d,k)=>({l:'Тональность '+KN[k],lv:lvs(lev()).map(x=>Object.assign({},x,{t:x.t.map(s=>sh(s,d))}))}));
+const keyEN=KN.map(n=>'Key of '+n);
+// аккорды квадрата в {E}: r — струна тоники, f — лад, n — соседняя струна
+const CH={I:{r:'E',f:0,n:'A'},IV:{r:'A',f:0,n:'D'},V:{r:'A',f:2,n:'D'}};
+const Q12=['I','I','I','I','IV','IV','I','I','V','IV','I','V'];
+const sys4=bars=>{const o=[];for(let i=0;i<bars.length;i+=4)o.push(bars.slice(i,i+4).join(' | '));return o;};
+const sw=(a,b)=>a+':2 '+(b||a); // свинг: долгая-короткая
+// шаффл 5–6: ступени над тоникой по долям, mute — доли под ладонью
+const shufBar=(c,steps,mute)=>steps.map((k,i)=>{const x=c.n+(c.f+k)+'+'+c.r+c.f+(mute&&mute.includes(i)?'m':'');return sw(x);}).join(' ');
+const v7=c=>c.r==='E'?'E'+c.f+'+D'+c.f+'+G'+(c.f+1):'A'+c.f+'+G'+c.f+'+B'+(c.f+2);
+const vx=c=>c.r==='E'?'Ex+Dx+Gx':'Ax+Gx+Bx';
+const arp=c=>c.r==='E'?['E'+c.f,'D'+c.f,'G'+(c.f+1)]:['A'+c.f,'G'+c.f,'B'+(c.f+2)];
+const boogie=c=>[c.r+c.f,c.r+(c.f+4),c.n+(c.f+2),c.n+(c.f+4),c.n+(c.f+5),c.n+(c.f+4),c.n+(c.f+2),c.r+(c.f+4)];
+const pairs=a=>a.map((t,i)=>i%2?t:t+':2').join(' ');
+// пентатоника {A}m по позициям (снизу вверх) и открытая {E}m
+const POS={1:'E5 E8 A5 A7 D5 D7 G5 G7 B5 B8 e5 e8',2:'E8 E10 A7 A10 D7 D10 G7 G9 B8 B10 e8 e10',3:'E10 E12 A10 A12 D10 D12 G9 G12 B10 B13 e10 e12',4:'E12 E15 A12 A15 D12 D14 G12 G14 B13 B15 e12 e15',5:'E3 E5 A3 A5 D2 D5 G2 G5 B3 B5 e3 e5',o:'E0 E3 A0 A2 D0 D2 G0 G2 B0 B3 e0 e3'};
+const PORD=[1,2,3,4,5,'o'];
+const PRU=['{A}m, 1-я позиция','{A}m, 2-я позиция','{A}m, 3-я позиция','{A}m, 4-я позиция','{A}m, 5-я позиция','{E}m, открытая позиция'];
+const PEN=['{A} minor, position 1','{A} minor, position 2','{A} minor, position 3','{A} minor, position 4','{A} minor, position 5','{E} minor, open position'];
+const BEND={1:'B8',2:'G7',3:'B13',4:'G12',5:'G5',o:'G2'};
+const bnd=(t,s)=>{const m=t.match(/^([A-Za-z])(\d+)$/);return m[1]+m[2]+'b'+(+m[2]+(s||2));};
+const rel=t=>{const m=t.match(/^([A-Za-z])(\d+)b(\d+)/);return t+'r'+m[2];};
+const rng=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(i);return o;};
+
+// ---- B1: пентатоника шестнадцатыми ----
+const b1=n=>[
+  [J(...[0,1,2,3,2,1,0,1,0,1,2,3,2,1,0,1].map(i=>n[i]))],
+  [J(...rng(0,7).map(i=>n[i]),...rng(0,7).reverse().map(i=>n[i]))],
+  [J(...rng(0,11).map(i=>n[i]),...rng(0,11).reverse().map(i=>n[i]))],
+  [J(...rng(0,9).flatMap(i=>[n[i],n[i+1],n[i+2]]),n[11],n[10])],
+  [J(...rng(0,8).flatMap(i=>[n[i],n[i+1],n[i+2],n[i+3]])),J(...rng(3,11).reverse().flatMap(i=>[n[i],n[i-1],n[i-2],n[i-3]]))]
+];
+// ---- B5: паузы в лид-фразах ----
+const b5=(n,bt)=>{const B=bnd(bt),Rl=rel(B);
+  const l2=[J(n[2],n[3],'.',n[4],n[5],'.',n[6]+':2'),J(n[6],n[5],'.',n[4],n[3],'.',n[2]+':2')];
+  const l4=[J(n[9],n[8],B+':2','.:2',n[6]+':2'),J(n[10],n[9],B+':2',Rl,n[8],'.:2')];
+  return [
+    [J(n[0]+':2','.:2',n[1]+':2','.:2','|',n[2]+':2','.:2',n[3]+':2','.:2')],
+    [l2.join(' | ')],
+    [J(n[0],n[4],'.',n[2],n[6],'.',n[4]+':2','|',n[8],n[4],'.',n[10],n[6],'.',n[8]+':2')],
+    [l4.join(' | ')],
+    [J(l2[0],'|',l4[0],'|',l4[1],'|',n[5],n[4],'.',n[2],n[0]+':4')]
+  ];};
+// ---- B2: бенды ----
+const B2D=[
+  {b:'G7b9',tg:'G9',u:'B5',p1:'B5',p2:'G5'},
+  {b:'B8b10',tg:'B10',u:'e5',p1:'e5',p2:'B5'},
+  {b:'B15b17',tg:'B17',u:'e12',p1:'e12',p2:'B13'},
+  {b:'e8b10',tg:'e10',u:'B8',p1:'B8',p2:'e5'},
+  {b:'G12b14',tg:'G14',u:'B10',p1:'B13',p2:'D14'},
+  {b:'G7b8',tg:'G8',u:'B4',p1:'B5',p2:'G5'}
+];
+const b2=x=>{const base=x.b.replace(/b\d+$/,''),R_=rel(x.b),U=x.b+'+'+x.u;return [
+  [J(x.tg+':4',x.b+':4','|',x.tg+':4',x.b+':4')],
+  [J(x.tg+':2',x.b+':2',R_+':2',base+':2','|',x.b+':2',R_+':2',x.b+':2',R_+':2')],
+  [J(x.p1,x.p2,x.b+':2',R_,base,x.p1+':2','|',x.p2,x.p1,x.b+':2',R_,base,x.p2+':2')],
+  [J(x.u+':2',U+':4',R_,base,'|',x.p1,x.p2,U+':4',base+':2')],
+  [J(x.p1,x.p2,x.b+'~:4',R_,base,'|',x.p1,U+':3',x.p2,base+'~:3')]
+];};
+// ---- B3: вибрато ----
+const B3D=[
+  {n:'G7',p:'B5',q:'G5',n2:'D7',b:'G7b9'},
+  {n:'B8',p:'e5',q:'B5',n2:'G7',b:'B8b10'},
+  {n:'e5',p:'e8',q:'B8',n2:'B5',b:'G5b7'},
+  {n:'D7',p:'G5',q:'D5',n2:'A7',b:'G7b9'},
+  {n:'G14',p:'B13',q:'G12',n2:'D14',b:'G12b14'},
+  {n:'e8',p:'B8',q:'e5',n2:'B10',b:'e8b10'}
+];
+const b3=x=>{const l3=[J(x.p,x.q,x.n+'~:2',x.q,x.n2+'~:3'),J(x.p,x.n+'~:7')],l4=[J(x.p,x.q,x.b+'~:6'),J(rel(x.b),x.q,x.n+'~:6')];return [
+  [J(x.p+':2',x.n+'~:6','|',x.q+':2',x.n+'~:6')],
+  [J(x.p,x.q,x.n+'~:6','|',x.n2+':2',x.n+'~:6')],
+  [l3.join(' | ')],
+  [l4.join(' | ')],
+  [J(l3[0],'|',l3[1],'|',l4[0],'|',l4[1])]
+];};
+// ---- B4: шаффл 5–6 ----
+const b4=()=>[
+  [J(shufBar(CH.I,[2,2,4,4]),'|',shufBar(CH.I,[2,2,4,4]))],
+  [[CH.I,CH.I,CH.IV,CH.IV].map(c=>shufBar(c,[2,2,4,4])).join(' | ')],
+  sys4(['I','IV','I','I','IV','IV','I','I'].map(c=>shufBar(CH[c],[2,4,2,4]))),
+  sys4(Q12.map(c=>shufBar(CH[c],[2,4,2,4]))),
+  sys4(Q12.map(c=>shufBar(CH[c],[2,4,5,4])))
+];
+// ---- R6: бугги-линия ----
+const r6=()=>{const bar=c=>pairs(boogie(c));
+  const l5=Q12.map((c,i)=>{const a=boogie(CH[c]),nx=CH[Q12[(i+1)%12]];if(nx!==CH[c]){a[7]=nx.f>0?nx.r+(nx.f-1):(nx.r==='A'?'E4':a[7]);}return pairs(a);});
+  return [
+    {t:[J(...boogie(CH.I).slice(0,4),'|',...boogie(CH.I).slice(4))],sub:1},
+    [J(bar(CH.I),'|',bar(CH.I))],
+    [['I','IV','I','I'].map(c=>bar(CH[c])).join(' | ')],
+    sys4(Q12.map(c=>bar(CH[c]))),
+    sys4(l5)
+  ];};
+// ---- R7: аккомпанемент септаккордами ----
+const r7=()=>{const a=c=>{const x=v7(c);return J(sw(x),'.:3',sw(x),'.:3');},b=c=>{const x=v7(c);return J(sw(x),sw(x),sw(x),sw(x));},e=c=>{const x=v7(c),s=vx(c);return J(x+':2',s,'.:2',x,x+':2',s,'.:3');};
+  return [
+    {t:[J(...Array(4).fill(v7(CH.I)),'|',...Array(4).fill(v7(CH.I)))],sub:1},
+    [['I','I','IV','IV'].map(c=>a(CH[c])).join(' | ')],
+    [['I','IV','I','I'].map(c=>b(CH[c])).join(' | ')],
+    sys4(Q12.map((c,i)=>i%2?b(CH[c]):a(CH[c]))),
+    sys4(Q12.map(c=>e(CH[c])))
+  ];};
+// ---- R8: стоп-тайм ----
+const FILL1='G2:2 G0 D2:2 D0 A2:2 A0 E3:2 E0',FILL2='B3:2 B0 G2:2 G0 D2:2 D0 E0:3';
+const r8=()=>{const h=c=>v7(CH[c])+':3 .:9',h2=c=>J(v7(CH[c])+':3','.:5',v7(CH[c]),'.:3');
+  return [
+    [J(h('I'),'|',h('I'))],
+    [J(h2('I'),'|',h2('I'))],
+    [J(h('I'),'|',h('I'),'|',h('I'),'|',FILL1)],
+    sys4([h('I'),h('I'),h('I'),FILL1,h('IV'),h('IV'),h('I'),FILL2]),
+    sys4([h2('I'),h2('I'),h2('I'),FILL1].concat(Q12.slice(4).map(c=>shufBar(CH[c],[2,4,2,4]))))
+  ];};
+// ---- R9: ладонь и акценты в шаффле ----
+const r9=()=>[
+  [J(shufBar(CH.I,[2,2,4,4],[0,1,2,3]),'|',shufBar(CH.I,[2,2,4,4],[0,1,2,3]))],
+  [J(shufBar(CH.I,[2,2,4,4],[0,1,2,3]),'|',shufBar(CH.I,[2,2,4,4]))],
+  [['I','IV','I','IV'].map(c=>shufBar(CH[c],[2,4,2,4],[0,2])).join(' | ')],
+  [['I','IV','I','V'].map(c=>shufBar(CH[c],[2,4,2,4],[0,1,2])).join(' | ')],
+  sys4(Q12.map((c,i)=>i===11?J(v7(CH.V)+':3','.:9'):shufBar(CH[c],[2,4,5,4],[0,2])))
+];
+// ---- R10: медленный блюз 12/8 ----
+const TURN='e0 B0 G4 e0 B0 G3 e0 B0 G2 e0 B0 G1';
+const r10=()=>{const up=c=>J(...arp(c)),dn=c=>J(...arp(c).slice().reverse()),ar=c=>J(up(c),dn(c),up(c),dn(c));
+  return [
+    [J(...Array(4).fill(v7(CH.I)+':3'),'|',...Array(4).fill(v7(CH.I)+':3'))],
+    [J(...Array(12).fill(v7(CH.I)),'|',...Array(12).fill(v7(CH.I)))],
+    [['I','IV','I','I'].map(c=>J(up(CH[c]),up(CH[c]),up(CH[c]),up(CH[c]))).join(' | ')],
+    sys4(Q12.map(c=>ar(CH[c]))),
+    sys4(Q12.slice(0,10).map(c=>J(v7(CH[c])+':3',dn(CH[c]),up(CH[c]),dn(CH[c]))).concat([TURN,J('E0:3',v7(CH.V)+':3','.:6')]))
+  ];};
+// ---- R11: гибридный пикинг ----
+const hyb=c=>c.r==='E'?{r:'E'+c.f,q:'A'+(c.f+2),d:'G'+(c.f+1)+'+B'+c.f}:{r:'A'+c.f,q:'E'+c.f,d:'G'+c.f+'+B'+(c.f+2)};
+const r11=()=>{const a=c=>{const x=hyb(c);return J(sw(x.r,x.d),sw(x.r,x.d),sw(x.r,x.d),sw(x.r,x.d));},b=c=>{const x=hyb(c);return J(sw(x.r,x.d),sw(x.q,x.d),sw(x.r,x.d),sw(x.q,x.d));};
+  return [
+    [J(a(CH.I),'|',a(CH.I))],
+    [J(b(CH.I),'|',b(CH.I))],
+    [['I','IV','I','I'].map(c=>b(CH[c])).join(' | ')],
+    sys4(['I','IV','I','I','IV','IV','I','V'].map(c=>b(CH[c]))),
+    sys4(Q12.map(c=>b(CH[c])))
+  ];};
+// ---- R12: чикен-пикинг ----
+const r12=()=>[
+  [J(R('Dx D2',8))],
+  [J(R('Dx D2 Gx G1',4))],
+  [J(R('Dx D2 Gx G1 Bx B0 Gx G1',2))],
+  [J('Ax A2 Dx D2 Gx G1 Dx D2 Ax A2 Dx D2 Gx G1 Bx B0','|','Gx G4 Bx B2 Gx G2 Dx D2 Ax A4 Dx D2 Ax A2 E0 .')],
+  [J('Gx+Bx G1+B0 Dx D2 Gx+Bx G1+B0 Ax A2 Gx+Bx G2+B2 Dx D2 Gx+Bx G1+B0 E0 .','|','Bx+ex B5+e4 Gx G4 Bx+ex B5+e4 Gx G2 Dx D2 Gx G1 Dx D2 E0:2')]
+];
+// ---- R13: сексты и терции ----
+const six=c=>c.r==='E'?{s:'G'+(c.f+1)+'+e'+c.f,n:'G'+(c.f+2)+'+e'+(c.f+2),t:'G'+(c.f+1)+'+B'+c.f}:{s:'G'+(c.f+6)+'+e'+(c.f+5),n:'G'+(c.f+7)+'+e'+(c.f+7),t:'G'+(c.f+2)+'+B'+(c.f+2)};
+const r13=()=>{const a=c=>{const x=six(c);return J(sw(x.s),sw(x.s),sw(x.s),sw(x.s));},b=c=>{const x=six(c);return J(x.s+':2',x.n,x.s+':2','.',x.s+':2',x.n,x.s+':3');},e=c=>{const x=six(c);return J(x.s+':2',x.n,x.s+':3',x.t+':2',x.t,x.t+':3');};
+  return [
+    [J(a(CH.I),'|',a(CH.I))],
+    [J(b(CH.I),'|',b(CH.I))],
+    [['I','IV','I','I'].map(c=>b(CH[c])).join(' | ')],
+    [['I','IV','I','V'].map(c=>e(CH[c])).join(' | ')],
+    sys4(Q12.map((c,i)=>i%2?e(CH[c]):b(CH[c])))
+  ];};
+// ---- R14: тёрнэраунды ----
+const V7END='E0:3 A2+D1+G2:3 .:6';
+const r14=()=>[
+  [J('G4+e0:3 G3+e0:3 G2+e0:3 G1+e0:3','|',V7END)],
+  [J('G4:2 e0 G3:2 e0 G2:2 e0 G1:2 e0','|',V7END)],
+  [J(TURN,'|',V7END)],
+  [J('D2+G4:2 e0 D3+G3:2 e0 D4+G2:2 e0 D5+G1:2 e0','|',V7END)],
+  [J('e0:2 B3 B0:2 G2 G0:2 D2 E0:3','|',TURN,'|','D2+G4:2 e0 D3+G3:2 e0 D4+G2:2 e0 D5+G1:2 e0','|',V7END)]
+];
+// ---- R15: вызов и ответ ----
+const RESP=['B3:2 B0 G2:2 G0','G2:2 G0 D2:3','e3:2 e0 B3:3'];
+const call=c=>J(sw(c.r+c.f,c.r+(c.f+3)),sw(c.n+c.f,c.n+(c.f+2)));
+const r15=()=>[
+  [J(call(CH.I),'.:6','|',call(CH.I),'.:6')],
+  [J(call(CH.I),RESP[0],'|',call(CH.I),RESP[1])],
+  [J(call(CH.I),RESP[0],'|',call(CH.I),RESP[1],'|',call(CH.I),RESP[2],'|',call(CH.I),'.:6')],
+  sys4(['I','IV','I','I','IV','IV','I','I'].map((c,i)=>J(call(CH[c]),RESP[i%3]))),
+  sys4(Q12.map((c,i)=>J(call(CH[c]),i===11?'.:6':RESP[i%3])))
+];
+// ---- R37: глухие удары шестнадцатыми ----
+const r37=()=>{const P2='c x x c x x c x c x x c x c x x',pat=(p,c)=>J(...p.split(' ').map(s=>s==='c'?v7(c):s==='x'?vx(c):'.'));
+  return [
+    [J(pat('c x x x c x x x c x x x c x x x',CH.I),'|',pat('c x x x c x x x c x x x c x x x',CH.I))],
+    [J(pat(P2,CH.I),'|',pat(P2,CH.I))],
+    [J(pat(P2,CH.I),'|',v7(CH.I),'Ex+Dx+Gx Ex+Dx+Gx Ex+Dx+Gx E0 E0 E3 Ex',v7(CH.I),'Ex+Dx+Gx Ex+Dx+Gx',v7(CH.I),'E0 . E2 E3')],
+    [J(pat(P2,CH.I),'|',pat(P2,CH.IV))],
+    [J(pat(P2,CH.I),'|',pat(P2,CH.IV),'|',pat(P2,CH.I),'|',pat('c . . c . . c . c . . . c . . .',CH.V))]
+  ];};
+
+const PENT1=POS[1].split(' ');
+const EX={
+W0:{name:'Разминка',goal:'Разогреть руки и включить слух.',how:'Без гитары минуту: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке медленно пентатоника {A}m в первой позиции вверх и вниз.',tip:'Только мягкие движения. Тянуть струны на холодные руки рано: бенды — позже.',sub:2,v:[{l:'Пентатоника {A}m, 1-я позиция',t:[J(...PENT1,...PENT1.slice().reverse())]}]},
+W1:{name:'Мобилизация без гитары',goal:'Разогнать кровь в кистях и предплечьях.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
+W2:{name:'Пентатоника по двум позициям',goal:'Включить синхронизацию рук и вспомнить гриф.',how:'Чистый звук, восьмые, темп заведомо низкий. Первая позиция {A}m вверх, вторая вниз.',tip:'Каждая нота звучит полную длительность, без обрывов на смене струны.',sub:2,v:[{l:'1-я и 2-я позиции',t:[J(...PENT1),J(...POS[2].split(' ').reverse())]}]},
+W3:{name:'Мягкие бенды',goal:'Подготовить пальцы и струны к бендам.',how:'Чистый звук, восьмые, половина рабочего темпа. Сначала полутон, потом тон: подтяни и верни. Тяни тремя пальцами вместе, а не одним.',tip:'Подушечки ещё холодные: не тяни выше тона и не дави сильнее, чем нужно.',sub:2,v:[{l:'Полутон и тон',t:['G7:2 G7b8:2 G7b8r7:2 G7:2 | G7:2 G7b9:2 G7b9r7:2 G7:2','B8:2 B8b9:2 B8b9r8:2 B8:2 | B8:2 B8b10:4 B8:2']}]},
+
+B1:{n:1,name:'Пентатоника шестнадцатыми',goal:'Ровный альтернейт в быстрых пентатонических фразах.',how:'Строго вниз-вверх, шестнадцатые. Каждый третий подход — секстоли, затем тридцать вторые на половине темпа. Позиция пентатоники своя у каждой недели.',tip:'На две ноты на струне медиатор не «застревает»: переход через струну такой же короткий, как удар по ней.',sub:4,lvl:['Две струны','Четыре струны','Вся позиция вверх и вниз','Секвенция тройками','Секвенция четвёрками вверх и вниз'],v:PORD.map((p,k)=>({l:PRU[k],lv:lvs(b1(POS[p].split(' ')))}))},
+B2:{n:2,name:'Бенды в точную ноту',goal:'Бенд попадает в высоту целевой ноты.',how:'Восьмые. Сначала сыграй целевую ноту на ладу, потом подтяни к ней. Возврат — тоже точно в исходную ноту. На четвёртом уровне — унисон: верхняя струна держит целевую ноту, бенд догоняет её до биений-ноль.',tip:'Тяни тремя пальцами, кисть поворачивается как ключ в замке. Свободные пальцы глушат соседние струны.',sub:2,lvl:['Целевая нота и бенд','Бенд и возврат','Бенд в лике','Унисон-бенд','Две фразы с вибрато на бенде'],v:[
+  {l:'Тон на {s:G}: {D}→{E}',lv:lvs(b2(B2D[0]))},
+  {l:'Тон на {s:B}: {G}→{A}',note:'Половину подходов сначала целевая нота, половину — бенд вслепую и проверка нотой после.',lv:lvs(b2(B2D[1]))},
+  {l:'Тон на {s:B} в 4-й позиции: {D}→{E}',lv:lvs(b2(B2D[2]))},
+  {l:'Тон на {s:e}: {C}→{D}',note:'Вместо унисона — бенд под нотой соседней струны.',lv:lvs(b2(B2D[3]))},
+  {l:'Тон на {s:G}: {G}→{A}',lv:lvs(b2(B2D[4]))},
+  {l:'Полутон: блюзовая нота {D#}',lv:lvs(b2(B2D[5]))}]},
+B3:{n:3,name:'Вибрато',goal:'Ровное, певучее вибрато в ритм.',how:'Восьмые. Вибрато в такт: два качания на долю. Высота качается вверх от ноты и возвращается точно в неё. На четвёртом и пятом уровнях — вибрато на подтянутом бенде.',tip:'Двигается кисть, а не палец: большой палец опирается на гриф или выходит над ним.',sub:2,lvl:['Длинная нота','Подход к ноте','Две ноты с вибрато','Вибрато на бенде','Четыре такта'],v:[
+  {l:'Вибрато на {s:G}',lv:lvs(b3(B3D[0]))},
+  {l:'Вибрато на {s:B}, мизинец',lv:lvs(b3(B3D[1]))},
+  {l:'Указательным пальцем',lv:lvs(b3(B3D[2]))},
+  {l:'Вибрато на {s:D}',lv:lvs(b3(B3D[3]))},
+  {l:'4-я позиция',lv:lvs(b3(B3D[4]))},
+  {l:'Широкое вибрато на {s:e}',lv:lvs(b3(B3D[5]))}]},
+B4:{n:4,name:'Шаффл 5–6',goal:'Ровный свинг и смена аккордов квадрата.',how:'Две нижние струны: тоника и квинта, потом тоника и секста. Свинг: каждая доля — долгая и короткая восьмая. На пятом уровне в фигуру добавляется малая септима.',tip:'Тоника звучит всё время, двигается только палец на верхней струне. Ладонь слегка касается струн у подставки.',sub:3,lvl:['Одна тоника','Смена тоники и субдоминанты','8 тактов с быстрой сменой','12-тактовый квадрат','Квадрат с септимой'],v:keyV(b4)},
+B5:{n:5,name:'Чистота пауз',goal:'Тишина в паузах лид-фраз.',how:'Восьмые. Точка в табе — пауза: обе руки глушат струны. После бенда струна возвращается и замолкает без скрипа.',tip:'Проверка: остановись на любой паузе — должна быть тишина, без гула соседних струн.',sub:2,lvl:['Длинные паузы','Фраза с паузами','Перескоки струн','Бенд и пауза','Четыре такта'],v:PORD.map((p,k)=>({l:PRU[k],lv:lvs(b5(POS[p].split(' '),BEND[p]))}))},
+
+R6:{name:'Бугги-линия',goal:'Однонотный бугги-рифф по квадрату.',how:'Тоника, терция, квинта, секста, септима и обратно. На первом уровне четвертями ровно, дальше свингом. На пятом перед сменой аккорда последняя нота — подход на полтона к новой тонике.',tip:'Короткая восьмая чуть тише долгой, но не проглатывается.',sub:3,lvl:['Четвертями','Свинг на тонике','Четыре такта','12-тактовый квадрат','Квадрат с подходами'],v:keyV(r6)},
+R7:{name:'Аккомпанемент септаккордами',goal:'Свинговый аккомпанемент квадрата.',how:'Аккорды из трёх нот: тоника, септима, терция. Паузы глушат обе руки. На пятом уровне на слабых долях глухой удар по заглушённым струнам.',tip:'Аккорд короткий и сухой: левая рука ослабляет нажим сразу после удара.',sub:3,lvl:['Четвертями','Удары через долю','Свинг на каждую долю','12-тактовый квадрат','Квадрат с глухими ударами'],v:keyV(r7)},
+R8:{name:'Стоп-тайм',goal:'Точный удар и тишина в стоп-тайме.',how:'Удар аккордом на первую долю, дальше тишина до конца такта. В четвёртом такте — сбивка по пентатонике. На пятом уровне после стоп-тайма — шаффл до конца квадрата.',tip:'Считай паузу вслух. Сбивка начинается ровно на долю, без спешки.',sub:3,lvl:['Удар и тишина','Два удара','Стоп-тайм со сбивкой','8 тактов','12-тактовый квадрат'],v:keyV(r8)},
+R9:{name:'Ладонь и акценты',goal:'Динамика шаффла: приглушение и открытый звук.',how:'Шаффл 5–6. Под ладонью — нота с m в табе, остальное звучит открыто. На третьем уровне ладонь снимается на вторую и четвёртую доли.',tip:'Громкость открытых долей растёт за счёт ладони, а не силы удара.',sub:3,lvl:['Всё под ладонью','Такт под ладонью, такт открыто','Открытые 2 и 4','Открыта только четвёртая доля','Квадрат с септимой'],v:keyV(r9)},
+R10:{name:'Медленный блюз 12/8',goal:'Триольная пульсация медленного блюза.',how:'Размер 12/8 записан как 4/4 с триолями: щелчок — четверть с точкой. Сначала аккорд на долю, потом триоли аккордом и перебором. На пятом уровне в конце квадрата — тёрнэраунд.',tip:'Три ноты доли ровные. Медленный темп — тяни звук, не торопи.',sub:3,lvl:['Аккорд на долю','Триоли аккордом','Перебор триолями','12-тактовый квадрат','Квадрат с тёрнэраундом'],v:keyV(r10)},
+R11:{name:'Гибридный пикинг',goal:'Медиатор и пальцы вместе.',how:'Бас — медиатором, двойная нота сверху — средним и безымянным пальцами одновременно. Свинг.',tip:'Пальцы щиплют вверх от грифа коротко, медиатор не меняет хвата.',sub:3,lvl:['Бас на тонике','Тоника и квинта','Четыре такта','8 тактов','12-тактовый квадрат'],v:keyV(r11)},
+R12:{name:'Чикен-пикинг',goal:'Щелчок пальцем после глухой ноты.',how:'Шестнадцатые. Глухая нота (x) — медиатором по заглушённой струне, следующая — щипок средним пальцем, струна щёлкает о лады.',tip:'Левая рука держит ноту лёгким касанием на x и прижимает на щелчке.',sub:4,lvl:['Одна струна','Две струны','Три струны','Двухтактный лик','Двойные ноты'],v:keyV(r12)},
+R13:{name:'Сексты и терции',goal:'Ритм-партия двойными нотами.',how:'Секста — струны через одну, терция — соседние. Свинг. Двойная нота звучит как одна: обе струны вместе.',tip:'Струну между нотами сексты глушит палец, который играет нижнюю ноту.',sub:3,lvl:['Одна секста','Секста и соседняя','Четыре такта','Сексты и терции','12-тактовый квадрат'],v:keyV(r13)},
+R14:{name:'Тёрнэраунды',goal:'Ходы последних тактов квадрата.',how:'Хроматический спуск под верхней открытой нотой, затем доминанта. На четвёртом уровне бас поднимается, верх спускается.',tip:'Верхняя нота звучит ровно и тише хода: ход ведёт.',sub:3,lvl:['Четвертями','Свинг','Триоли','Встречное движение','Лик, ход и доминанта'],v:keyV(r14)},
+R15:{name:'Вызов и ответ',goal:'Рифф-вопрос и лик-ответ в одной партии.',how:'Две доли — рифф на нижних струнах, две — ответ по пентатонике выше. На четвёртом и пятом уровнях рифф идёт по аккордам квадрата.',tip:'Ответ — продолжение фразы, а не новая: держи один ритм.',sub:3,lvl:['Только вызов','Вызов и ответ','Три разных ответа','8 тактов','12-тактовый квадрат'],v:keyV(r15)},
+R37:{name:'Глухие удары шестнадцатыми',goal:'Плотный фанк-блюзовый ритм с глухими ударами.',how:'Шестнадцатые, рука движется вниз-вверх без остановки. x — левая рука ослабляет аккорд, медиатор бьёт по заглушённым струнам.',tip:'Рука не останавливается и в паузах: просто не задевает струны.',sub:4,lvl:['Аккорд на долю','Синкопы','Рифф на басу','Два аккорда','Четыре такта'],v:keyV(r37)}
+};
+const PLAIN=PEN;
+const EXEN={
+W0:{name:'Warm-up',goal:'Warm up the hands and wake up the ears.',how:'One minute without the guitar: rub your palms until warm, slow wrist and shoulder circles, open and close your fists 20 times. Then the {A} minor pentatonic in position 1 up and down, slowly, on a clean tone.',tip:'Gentle movement only. Cold hands are not ready for bends yet.',v:['{A} minor pentatonic, position 1']},
+W1:{name:'Mobility without the guitar',goal:'Get blood flowing in the hands and forearms.',how:'Rub your palms until warm. Wrist circles both ways, 10 each. Shoulders up, back, down. Open and close your fists 20 times. Shake out relaxed hands.',tip:'No stretching into pain: only warmth and mobility.'},
+W2:{name:'Pentatonic in two positions',goal:'Switch on hand sync and find your way round the neck.',how:'Clean tone, eighths, deliberately slow tempo. Position 1 of {A} minor up, position 2 down.',tip:'Every note rings its full length, no gaps at string changes.',v:['Positions 1 and 2']},
+W3:{name:'Gentle bends',goal:'Get the fingers and strings ready for bending.',how:'Clean tone, eighths, half your working tempo. First a half step, then a whole step: bend and release. Bend with three fingers together, not one.',tip:'Fingertips are still cold: do not go past a whole step or press harder than needed.',v:['Half step and whole step']},
+B1:{name:'Pentatonic sixteenths',goal:'Even alternate picking in fast pentatonic phrases.',how:'Strict down-up, sixteenths. Every third set as sextuplets, then thirty-seconds at half tempo. Each week has its own pentatonic position.',tip:'With two notes per string the pick never gets stuck: the move across a string is as short as the stroke.',lvl:['Two strings','Four strings','Whole position up and down','Sequence in threes','Sequence in fours up and down'],v:PLAIN},
+B2:{name:'Bends in tune',goal:'A bend that lands exactly on the target pitch.',how:'Eighths. First play the target note on its fret, then bend up to it. The release goes back exactly to the starting note. Level 4 is a unison bend: the higher string holds the target, the bend catches up until the beating stops.',tip:'Bend with three fingers, the wrist turns like a key in a lock. Free fingers mute the neighbouring strings.',lvl:['Target note and bend','Bend and release','Bend in a lick','Unison bend','Two phrases with vibrato on the bend'],v:['Whole step on the {s:G} string: {D}→{E}',{l:'Whole step on the {s:B} string: {G}→{A}',note:'In half the sets play the target note first; in the other half bend blind and check against the note afterwards.'},'Whole step on the {s:B} string, position 4: {D}→{E}',{l:'Whole step on the {s:e} string: {C}→{D}',note:'Instead of a unison, the bend sits under a note on the neighbouring string.'},'Whole step on the {s:G} string: {G}→{A}','Half step: the blue note {D#}']},
+B3:{name:'Vibrato',goal:'Even, singing vibrato in time.',how:'Eighths. Vibrato in time: two pulses per beat. The pitch goes up from the note and comes back exactly to it. On levels 4 and 5, vibrato on a held bend.',tip:'The wrist moves, not the finger: the thumb rests on the neck or hooks over it.',lvl:['Long note','Approach to the note','Two notes with vibrato','Vibrato on a bend','Four bars'],v:['Vibrato on the {s:G} string','Vibrato on the {s:B} string, little finger','With the index finger','Vibrato on the {s:D} string','Position 4','Wide vibrato on the {s:e} string']},
+B4:{name:'5–6 shuffle',goal:'An even swing and the chord changes of the twelve-bar.',how:'Two low strings: root and fifth, then root and sixth. Swing: each beat is a long and a short eighth. Level 5 adds the flat seventh to the figure.',tip:'The root rings all the time; only the finger on the higher string moves. The palm lightly touches the strings by the bridge.',lvl:['Root only','Root and the IV chord','8 bars with a quick change','Twelve-bar blues','Twelve-bar with the seventh'],v:keyEN},
+B5:{name:'Clean rests',goal:'Silence in the rests of lead phrases.',how:'Eighths. A dot in the tab is a rest: both hands mute the strings. After a bend the string comes back down and goes quiet without a squeak.',tip:'Test: stop on any rest. It should be silent, with no hum from the other strings.',lvl:['Long rests','Phrase with rests','String skips','Bend and rest','Four bars'],v:PLAIN},
+R6:{name:'Boogie line',goal:'A single-note boogie riff through the twelve-bar.',how:'Root, third, fifth, sixth, seventh and back. Straight quarters on level 1, swing from then on. On level 5, the last note before a chord change is a half-step approach to the new root.',tip:'The short eighth is a little quieter than the long one, but never swallowed.',lvl:['Quarter notes','Swing on the root','Four bars','Twelve-bar blues','Twelve-bar with approach notes'],v:keyEN},
+R7:{name:'Seventh-chord comping',goal:'Swinging accompaniment through the twelve-bar.',how:'Three-note chords: root, seventh, third. Both hands mute the rests. On level 5, a muted scratch on the off-beats.',tip:'Keep the chord short and dry: the fretting hand eases off right after the strum.',lvl:['Quarter notes','Hits every other beat','Swing on every beat','Twelve-bar blues','Twelve-bar with scratches'],v:keyEN},
+R8:{name:'Stop-time',goal:'A precise hit and silence in stop-time.',how:'One chord hit on beat one, then silence to the end of the bar. Bar four has a pentatonic fill. On level 5 the stop-time is followed by a shuffle to the end of the twelve-bar.',tip:'Count the rest out loud. The fill starts exactly on the beat, without rushing.',lvl:['Hit and silence','Two hits','Stop-time with a fill','8 bars','Twelve-bar blues'],v:keyEN},
+R9:{name:'Palm and accents',goal:'Shuffle dynamics: palm-muted versus open.',how:'5–6 shuffle. Notes marked m in the tab go under the palm, the rest ring open. On level 3 the palm lifts on beats 2 and 4.',tip:'The open beats get louder because the palm lifts, not because you strike harder.',lvl:['All under the palm','A bar muted, a bar open','Beats 2 and 4 open','Only beat 4 open','Twelve-bar with the seventh'],v:keyEN},
+R10:{name:'Slow blues in 12/8',goal:'The triplet pulse of a slow blues.',how:'12/8 is written as 4/4 with triplets: a click is a dotted quarter. First one chord per beat, then strummed and picked triplets. Level 5 ends the twelve-bar with a turnaround.',tip:'The three notes of each beat are even. At a slow tempo let the sound sustain, do not rush.',lvl:['A chord per beat','Strummed triplets','Picked triplets','Twelve-bar blues','Twelve-bar with a turnaround'],v:keyEN},
+R11:{name:'Hybrid picking',goal:'Pick and fingers together.',how:'The bass note with the pick, the double stop above with the middle and ring fingers at once. Swing.',tip:'The fingers pluck up and away from the neck briefly; the pick grip does not change.',lvl:['Bass on the root','Root and fifth','Four bars','8 bars','Twelve-bar blues'],v:keyEN},
+R12:{name:'Chicken picking',goal:'A finger snap after a muted note.',how:'Sixteenths. The dead note (x) is picked on a muted string; the next note is plucked with the middle finger so the string snaps against the frets.',tip:'The fretting hand only touches the note on the x and presses on the snap.',lvl:['One string','Two strings','Three strings','Two-bar lick','Double stops'],v:keyEN},
+R13:{name:'Sixths and thirds',goal:'A rhythm part in double stops.',how:'A sixth is two strings with one between, a third is two neighbouring strings. Swing. A double stop sounds as one: both strings together.',tip:'The finger that plays the lower note of the sixth also mutes the string in between.',lvl:['One sixth','A sixth and its neighbour','Four bars','Sixths and thirds','Twelve-bar blues'],v:keyEN},
+R14:{name:'Turnarounds',goal:'The moves of the last bars of the twelve-bar.',how:'A chromatic descent under an open top note, then the dominant. On level 4 the bass climbs while the top line falls.',tip:'The top note rings evenly and quieter than the moving line: the line leads.',lvl:['Quarter notes','Swing','Triplets','Contrary motion','Lick, turnaround and dominant'],v:keyEN},
+R15:{name:'Call and response',goal:'A riff that asks and a lick that answers in one part.',how:'Two beats of riff on the low strings, two beats of pentatonic answer higher up. On levels 4 and 5 the riff follows the chords of the twelve-bar.',tip:'The answer continues the phrase rather than starting a new one: keep one rhythm.',lvl:['The call only','Call and response','Three different answers','8 bars','Twelve-bar blues'],v:keyEN},
+R37:{name:'Sixteenth-note scratches',goal:'A tight funk-blues rhythm with muted strums.',how:'Sixteenths, the hand moves down and up without stopping. On x the fretting hand eases off the chord and the pick hits the muted strings.',tip:'The hand keeps moving through the rests too: it just misses the strings.',lvl:['A chord on the beat','Syncopation','A riff on the bass strings','Two chords','Four bars'],v:keyEN}
+};
+const TESTS=[
+  {id:'GBT1',ru:['Шаффл 5–6','{E}, свинг, держать 30 секунд без сбоя ритма.'],en:['5–6 shuffle','{E}, swing, hold 30 seconds without losing the groove.'],sub:3,t:[shufBar(CH.I,[2,2,4,4])]},
+  {id:'GBT2',ru:['Пентатоника шестнадцатыми','{A}m, 1-я позиция, вверх и вниз два круга.'],en:['Pentatonic sixteenths','{A} minor, position 1, up and down twice.'],sub:4,t:[J(...PENT1,...PENT1.slice().reverse())]},
+  {id:'GBT3',ru:['Бугги-линия','{E}, свинг, четыре такта подряд без сбоя.'],en:['Boogie line','{E}, swing, four bars in a row without a slip.'],sub:3,t:[pairs(boogie(CH.I))]},
+  {id:'GBT4',ru:['Пентатоника четвёрками','{A}m, 1-я позиция, секвенция по четыре ноты вверх, шестнадцатые.'],en:['Pentatonic in fours','{A} minor, position 1, a four-note sequence going up, sixteenths.'],sub:4,t:b1(PENT1)[4].slice(0,1)},
+  {id:'GBT5',ru:['Легато триолями','{A}m, 1-я позиция: вверх хаммерами, вниз пулл-оффами.'],en:['Legato triplets','{A} minor, position 1: up with hammer-ons, down with pull-offs.'],sub:3,t:['E5 Eh8 A5 Ah7 D5 Dh7 G5 Gh7 B5 Bh8 e5 eh8','e8 ep5 B8 Bp5 G7 Gp5 D7 Dp5 A7 Ap5 E8 Ep5']}
+];
+const RIFF={
+  ru:['хотя бы одна пауза длиной в целую долю','закончить на блюзовой ноте — пониженной квинте','только три нижние струны','хотя бы один бенд на тон','второй раз рифф повторяется с изменённой последней долей','через весь рифф проходит открытая нижняя струна','не больше пяти разных нот','рифф начинается не с сильной доли','стоп-тайм: удар на первую долю и тишина до конца такта','в риффе есть двойная нота: терция или секста','первый такт — вопрос, второй — ответ','темп на 20% ниже рабочего, но с полным свингом'],
+  en:['at least one rest a full beat long','end on the blue note, the flat fifth','only the three lowest strings','at least one whole-step bend','the second time through, the last beat changes','an open low string runs through the whole riff','no more than five different notes','the riff does not start on a strong beat','stop-time: a hit on beat one and silence to the end of the bar','includes a double stop: a third or a sixth','the first bar asks, the second answers','tempo 20% below your working tempo, but fully swung']
+};
+const COACH={
+  W0:{free:60},
+  B1:{cyc:[{},{},{sub:6,play:6,tag:['Секстоли','Sextuplets']},{sub:4,play:8,bpmMul:0.5,tag:['32-е на половине темпа','32nds at half tempo']}]},
+  B2:{v:{1:{cyc:[{tag:['Сначала целевая нота, потом бенд','Target note first, then the bend']},{tag:['Бенд вслепую, проверка нотой после','Blind bend, check with the note after']}]}}}
+};
+return {EX,EXEN,COACH,TESTS,RIFF};
+})();
 /*@BLUES_GUITAR_2@*/
 const BLG2={EX:{},EXEN:{},COACH:{}};
 /*@BLUES_ACOUSTIC_1@*/
