@@ -42,7 +42,7 @@ async function walkLib(page) {
   });
 }
 
-for (const inst of ['guitar', 'bass']) {
+for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) {
   test(`раздел: каждый id из EX на месте, по группам и номерам (${inst})`, async ({ page }) => {
     const errors = await openApp(page, inst + '-library-ru');
     const res = await page.evaluate(() => {
@@ -63,7 +63,7 @@ for (const inst of ['guitar', 'bass']) {
 
   test(`раздел в EN: нет кириллицы на всех вариантах и уровнях (${inst})`, async ({ page }) => {
     const errors = await openApp(page, inst + '-library-en');
-    if (inst === 'bass') await page.evaluate(() => { window.__grif.setStrings(6); window.__grif.setHand('pick'); });
+    if (inst.endsWith('bass')) await page.evaluate(() => { window.__grif.setStrings(6); window.__grif.setHand('pick'); });
     const res = await walkLib(page);
     expect(res.bad).toEqual([]);
     expect(res.tabErr).toEqual([]);
@@ -124,7 +124,7 @@ test('раздел: поиск и фильтр групп скрывают ка�
 });
 
 // Нумерация: сквозной номер по порядку раздела, 1..N без пропусков, тот же в плане; id не меняются.
-for (const inst of ['guitar', 'bass']) test('нумерация упражнений: ' + inst, async ({ page }) => {
+for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) test('нумерация упражнений: ' + inst, async ({ page }) => {
   const errors = await openApp(page, inst + '-library');
   const r = await page.evaluate(() => {
     const nums = [...document.querySelectorAll('#lib details[data-lib] .lib-id')].map(e => +e.textContent);

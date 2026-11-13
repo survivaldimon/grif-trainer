@@ -6,10 +6,10 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
-const INSTS = ['guitar', 'bass'];
-const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
+const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'];
+const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
 // Среда, 28 октября 2026: dayIndex = −5, вводная неделя. Дата зафиксирована, чтобы тесты не зависели от сегодняшнего дня.
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 

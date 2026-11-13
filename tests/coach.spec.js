@@ -5,8 +5,8 @@ const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const FIXED_NOW = new Date('2026-10-28T12:00:00'); // dayIndex = −5
-const INSTS = ['guitar', 'bass'];
-const H = (inst, lang) => (inst === 'bass' ? 'bass-' : '') + lang;
+const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'];
+const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
 
 async function openApp(page, lang) {
   const errors = [];
@@ -362,7 +362,7 @@ test(`${inst}: EN: ведение прокликано по всем интер�
   };
   // −5 разгрузка (вводная), 0 объём, 8 наращивание, 16 скорость, 27 разгрузка с тестами; W0 — на 15 минутах
   // у баса тот же код ведения: хватает объёма и дня тестов
-  const days = inst === 'bass' ? [[-5, 15], [0, 60], [27, 60]] : [[-5, 15], [0, 60], [8, 60], [16, 120], [27, 60]];
+  const days = inst !== 'guitar' ? [[-5, 15], [0, 60], [27, 60]] : [[-5, 15], [0, 60], [8, 60], [16, 120], [27, 60]];
   let cur = -5;
   for (const [day, T] of days) {
     if (cur !== day) { await page.evaluate(d => window.__grif.setDay(d), day); cur = day; }
