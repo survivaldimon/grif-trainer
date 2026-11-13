@@ -3731,7 +3731,6 @@ return {EX,EXEN:EN,COACH:{C36:{stages:COACH_GUITAR.C36.stages}}};
 // x — мёртвая нота, h/p — легато, m — приглушение, ~ — вибрато, :k — длина, A — хроматический подход к следующему аккорду.
 // Тоника I всегда на струне E (лад r), IV и V — на струне A; вся фраза в одной позиции (лады r-1…r+4).
 // Тесты BBT*: тренер ищет длительности по id без первой B (BBT1 → BT1), поэтому BT1/BT3 — как T1/T3.
-TEST_CO.set.BT1=TEST_CO.set.T1;TEST_CO.set.BT3=TEST_CO.set.T3;
 const BLB1=(function(){
 const SN='EADG';
 function nt(r,n){const s=Math.max(0,Math.ceil((n-4)/5)),f=r+n-5*s;if(s>3||f<0)throw Error('BLB1: '+r+'/'+n);return SN[s]+f;}
