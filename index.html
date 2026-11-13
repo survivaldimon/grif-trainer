@@ -2969,7 +2969,7 @@ function coachPlan(s,d,lv){
       if(!mins[j])return;
       // между тестами — отдых в начале следующего теста (подготовки нет)
       const base={blk:j,test:tt.id,tag:[[tt.ru[0],tt.en[0]]],sub:tt.sub,meter:'4/4',burst:0};
-      const sr=rng3(TEST_CO.set[tt.id.replace(/^B/,'')]||TEST_CO.def); // у баса BT1…BT5 — те же длительности, что у T1…T5
+      const sr=rng3(TEST_CO.set[tt.id.replace(/^[A-Z]*(?=T)/,'')]||TEST_CO.def); // у баса BT1…BT5, у блюза GBT/ABT/BBT — те же длительности, что у T1…T5
       out.push(...coLayout(mins[j]*60,out.length&&out[out.length-1].type==='set'?[fixed('rest',20,{blk:j})]:[],k=>Object.assign({},base,sr,{tempo:[k?'ladder':'ladder0']}),()=>Object.assign({blk:j},rng3(TEST_CO.rest)),null));
     });
     return out;
