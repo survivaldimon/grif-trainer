@@ -3129,8 +3129,6 @@ const BLA1=(function(){
     W2:{name:'Slow fingerpicking',goal:'Wake up the thumb and the picking fingers.',how:'The thumb takes the bass strings, i-m-a the top three. Eighth notes, deliberately slow. Hold the chord and let it ring.',tip:'Every note rings its full length; the thumb does not catch the neighbouring strings.',v:['Picking over two chords']},
     W3:{name:'Trills from open strings',goal:'Warm up the fretting fingers without strain.',how:'Eighth notes, half your working tempo. Pluck the open string, then hammer on and pull off: fingers 1, 2, 3 in turn on the third string, then on the second.',tip:'A pull-off goes slightly down, not just off the string.',v:['Three fingers on two strings']}
   });
-  // тесты цикла: длительности ABT1 и ABT3 как у T1 и T3 (тренер ищет их по id в TEST_CO.set)
-  Object.assign(TEST_CO.set,{ABT1:TEST_CO.set.T1,ABT3:TEST_CO.set.T3});
   const TESTS=[
     {id:'ABT1',ru:['Монотонный бас','Тоника {E} четвертями большим пальцем, щипок на первую долю, держать 30 секунд без сбоя.'],en:['Dead thumb','Root {E} in quarter notes with the thumb, a pinch on beat one, hold 30 seconds without a slip.'],sub:2,t:['E0+e0:2 E0:2 E0:2 E0:2']},
     {id:'ABT2',ru:['Перебор Трэвиса','{E}7, переменный бас и пальцы между долями, четыре такта подряд без сбоя.'],en:['Travis picking','{E}7, alternating bass and fingers between the beats, four bars in a row without a slip.'],sub:2,t:['E0+e0:2 D2 B3 E0 e0 D2 G1']},
