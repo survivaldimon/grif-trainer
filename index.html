@@ -125,9 +125,13 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tip{color:var(--muted)}
 .tabbox{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .tabhd{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
-.tabsc{overflow-x:auto;padding:4px 4px 0;display:flex;flex-direction:column;gap:2px;-webkit-overflow-scrolling:touch}
-.tsys{display:flex;flex-wrap:wrap;row-gap:2px}
-.tabsc svg{display:block;flex:none}
+.tabsc{overflow-x:auto;padding:4px 4px 0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:2px 0;-webkit-overflow-scrolling:touch}
+.tsys{display:contents}
+.tabsc svg{display:block;flex:none;overflow:visible}
+.tabsc svg.se{margin-right:10px}
+.tabsc svg.ls{margin-left:18px}
+.tb .slg{display:none}
+.tb.ls .slg{display:inline}
 .tabft{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:6px 10px;border-top:1px solid var(--line)}
 .tplay{padding:4px 12px;font-size:13px}
 .tplay[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
@@ -143,7 +147,7 @@ h2.title{font-family:var(--f-display);font-weight:800;font-size:clamp(30px,4vw,4
 .tb text{font-family:var(--f-mono)}
 .tb .ln{stroke:var(--muted);stroke-opacity:.45}
 .tb .br{stroke:var(--muted);stroke-width:1.2}
-.tb .sl{fill:var(--muted);font-size:11px}
+.tb .sl,.tb .sl2{fill:var(--muted);font-size:11px}
 .tb .nb{fill:var(--surface-2)}
 .tb .nt{fill:var(--fg);font-size:12px;font-weight:600}
 .tb .lt{fill:var(--muted);font-size:9px}
@@ -600,7 +604,7 @@ function renderSystem(sys,meter,si,tu){
   const STR=TUN(tu).strs,LG=13,TOP=32,X0=24,SB=TOP+(STR.length-1)*LG,S2=SB+26,H=S2+14,den=tabDen(meter);
   const yS=s=>TOP+STR.indexOf(s)*LG,f1=v=>Math.round(v*10)/10,T=TUN(tu),ftx=nt=>nt.x?'x':nt.f+dsh(T,nt.s);
   // система режется на куски по тактам (без тактов — по 4 долям), куски переносятся по ширине (flex-wrap)
-  const CH=4/den*4,chunks=[[]];let x=X0+6,cs=0;const cols=[];
+  const CH=4/den*4,chunks=[[]];let x=6,cs=0;const cols=[];
   sys.items.forEach((it,ii)=>{
     const cur=chunks[chunks.length-1];
     if(it.bar){cols.push({bar:true,x:x+3});cur.push(cols.length-1);x+=8;
@@ -615,10 +619,12 @@ function renderSystem(sys,meter,si,tu){
   const lab=s=>{const n=NOTES[mod(T.open[s],12)];return s==='e'?n.toLowerCase():n;};
   return '<div class="tsys">'+chunks.filter(ch=>ch.length).map((ch,k)=>{
   const first=!k,last=ch[ch.length-1],endBar=cols[last].bar&&k<chunks.length-1;
-  const W=Math.ceil(endBar?cols[last].x+1:(cols[last].bar?cols[last].x:cols[last].x+cols[last].w)+(k===chunks.length-1||!chunks[k+1]||!chunks[k+1].length?10:0)),R=k===chunks.length-1?W-4:W-1,L0=first?X0:0;
+  const W=Math.ceil(endBar?cols[last].x+1:(cols[last].bar?cols[last].x:cols[last].x+cols[last].w)+(k===chunks.length-1||!chunks[k+1]||!chunks[k+1].length?10:0)),R=k===chunks.length-1?W-4:W-1,L0=0;
   let back='',lines='',body='',ann='',rh='';
-  STR.forEach((s,i)=>{const y=TOP+i*LG;lines+='<line class="ln" x1="'+L0+'" x2="'+R+'" y1="'+y+'" y2="'+y+'"/>'+(first?'<text class="sl" x="'+(X0-11)+'" y="'+y+'" dy=".35em" text-anchor="middle">'+lab(s)+'</text>':'');});
-  (first?[X0,R]:[R]).forEach(bx=>{lines+='<line class="br" x1="'+bx+'" x2="'+bx+'" y1="'+TOP+'" y2="'+SB+'"/>';});
+  STR.forEach((s,i)=>{const y=TOP+i*LG;lines+='<line class="ln" x1="'+L0+'" x2="'+R+'" y1="'+y+'" y2="'+y+'"/>';});
+  // подписи струн рисуются у каждого куска, видны только у того, что начинает строку (.ls, layTabs)
+  lines+='<g class="slg">'+STR.map((s,i)=>'<text class="'+(first?'sl':'sl2')+'" x="-10" y="'+(TOP+i*LG)+'" dy=".35em" text-anchor="middle">'+lab(s)+'</text>').join('')+'</g>';
+  (first?[0,R]:[R]).forEach(bx=>{lines+='<line class="br" x1="'+bx+'" x2="'+bx+'" y1="'+TOP+'" y2="'+SB+'"/>';});
   const groups=new Map();let prev=null,pm=null;
   const pmEnd=()=>{if(!pm)return;ann+='<text class="an" x="'+f1(pm.x0)+'" y="10">P.M.</text>';if(pm.x1-pm.x0>34)ann+='<path class="dsh" d="M'+f1(pm.x0+26)+' 7H'+f1(pm.x1)+'V11"/>';pm=null;};
   ch.forEach(ci=>{const c=cols[ci];
@@ -675,11 +681,16 @@ function renderSystem(sys,meter,si,tu){
     const tn=gr.find(c=>!isP2(c.it.n));
     if(tn&&gr.length>1)rh+='<text class="tu" x="'+f1((gr[0].cx+gr[gr.length-1].cx)/2)+'" y="'+(S2+11)+'" text-anchor="middle">'+tn.it.n+'</text>';
   });
-  return '<svg class="tb" width="'+f1(W*TAB_K)+'" height="'+f1(H*TAB_K)+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
+  return '<svg class="tb'+(k===chunks.filter(c=>c.length).length-1?' se':'')+'" width="'+f1(W*TAB_K)+'" height="'+f1(H*TAB_K)+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Табулатура','Tablature'))+'">'+back+lines+body+ann+rh+'</svg>';
   }).join('')+'</div>';
 }
 // масштаб рисунка таба
 const TAB_K=.8;
+// перенос: куски всех систем текут одной строкой; кусок, начинающий строку, получает .ls (отступ и подписи струн)
+function layTabs(sc){const ch=[...sc.querySelectorAll('svg.tb')];if(!ch.length)return;
+  for(let n=0;n<4;n++){let top=null,chg=false;ch.forEach(c=>{const t=c.getBoundingClientRect().top,ls=top===null||t>top+4;if(ls)top=t;if(c.classList.contains('ls')!==ls){c.classList.toggle('ls',ls);chg=true;}});if(!chg)break;}}
+const tabRO=typeof ResizeObserver!=='undefined'?new ResizeObserver(es=>es.forEach(e=>layTabs(e.target))):null;
+if(tabRO)new MutationObserver(()=>document.querySelectorAll('.tabsc:not([data-ro])').forEach(sc=>{sc.setAttribute('data-ro','1');tabRO.observe(sc);layTabs(sc);})).observe(document.documentElement,{childList:true,subtree:true});
 const renderTab=(systems,sub,meter,tu)=>parseTab(systems,sub,tu).map((s,si)=>renderSystem(s,meter||'4/4',si,tu)).join('');
 
 /* ================= лады ================= */
