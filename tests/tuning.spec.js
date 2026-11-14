@@ -149,8 +149,8 @@ test('разметка: струны {s:X}/{o:X} в подписях есть в
   const errs = await page.evaluate(() => {
     const G = window.__grif, errs = [];
     const strsOf = t => new Set(t.join(' ').split(/\s+/).flatMap(tok => tok.split('+')).map(p => (p.match(/^[A-Za-z]/) || [])[0]).filter(Boolean));
-    for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) {
-      const lib = inst.startsWith('blues-') || inst === 'acoustic' ? G.LIBS.blues[inst.replace('blues-', '')] : G.LIBS.metal[inst], EX = lib.EX, EN = lib.EXEN;
+    for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle']) {
+      G.setProf(inst); const lib = G.LIBS[G.GENRE][G.INST], EX = lib.EX, EN = lib.EXEN;
       for (const [id, ex] of Object.entries(EX)) (ex.v || []).forEach((v, k) => (v.lv || [v]).forEach((e, li) => {
         for (const ver of ['', '5', '6', '7', '8']) {
           const t = e['t' + ver]; if (!t) continue;
@@ -196,7 +196,7 @@ test('drop: все упражнения играбельны, подписи б�
     const G = window.__grif, errs = [], d0 = G.dayInfo(0);
     const strsOf = t => new Set(t.join(' ').split(/\s+/).flatMap(tok => tok.split('+')).map(p => (p.match(/^[A-Za-z]/) || [])[0]).filter(Boolean));
     let key = 0;
-    for (const [inst, ns] of [['guitar', [6, 7, 8]], ['bass', [4, 5, 6]], ['blues-guitar', [6, 7, 8]], ['acoustic', [6]], ['blues-bass', [4, 5, 6]]]) {
+    for (const [inst, ns] of [['guitar', [6, 7, 8]], ['bass', [4, 5, 6]], ['blues-guitar', [6, 7, 8]], ['acoustic', [6]], ['blues-bass', [4, 5, 6]], ['jazz-guitar', [6, 7, 8]], ['jazz-acoustic', [6]], ['jazz-bass', [4, 5, 6]], ['funk-guitar', [6, 7, 8]], ['funk-bass', [4, 5, 6]], ['fingerstyle', [6]]]) {
       G.setProf(inst);
       for (const n of ns) for (const o of [0, -5]) {
         G.setStrings(n); G.setTuning(o, true);

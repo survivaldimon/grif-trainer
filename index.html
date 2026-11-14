@@ -332,7 +332,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
     </div>
     <div class="setrow"><span class="lbl" data-i="genreLabel"></span>
-      <div class="lang" id="genreSw" role="group"><button data-genre="metal"></button><button data-genre="blues"></button></div>
+      <select id="genreSel" class="tsel"></select>
     </div>
     <div class="setrow"><span class="lbl" data-i="instLabel"></span>
       <div class="lang" id="instSw" role="group"><button data-inst="guitar"></button><button data-inst="acoustic"></button><button data-inst="bass"></button></div>
@@ -452,14 +452,21 @@ function splitInt(total,weights){
 }
 
 /* ================= язык ================= */
-// Адрес: слова через дефис в любом порядке — язык (ru, en), жанр (metal, blues) и инструмент (guitar, acoustic, bass): #en, #bass, #blues-acoustic-en. Чего нет в адресе — из сохранённых настроек (lsGet).
+// Адрес: слова через дефис в любом порядке — язык (ru, en), жанр (metal, blues, jazz, funk, fingerstyle) и инструмент (guitar, acoustic, bass): #en, #bass, #blues-acoustic-en. Чего нет в адресе — из сохранённых настроек (lsGet).
 const hashWords=()=>(location.hash||'').slice(1).toLowerCase().split(/[-,+]/);
 let LANG=(function(){const h=hashWords();if(h.includes('en'))return 'en';if(h.includes('ru'))return 'ru';const s=lsGet('lang',null);if(s==='en'||s==='ru')return s;return 'en';})();
 const L=(ru,en)=>LANG==='en'?en:ru;
 // Инструмент: гитара или бас. У баса своё число струн (4/5/6, стандартный строй) и техника правой руки; план дня от них не зависит.
 let INST=(function(){const h=hashWords();for(const k of ['bass','acoustic','guitar'])if(h.includes(k))return k;const s=lsGet('inst','guitar');return ['bass','acoustic'].includes(s)?s:'guitar';})();
+// Жанры (решения автора от 2026-11-13 и 2026-11-14): инструменты по жанрам, первый — по умолчанию.
+// Акустика: блюз, джаз, фингерстайл. Фингерстайл — только акустика, фанк — гитара и бас.
+const GENRES={metal:['guitar','bass'],blues:['guitar','acoustic','bass'],jazz:['guitar','acoustic','bass'],funk:['guitar','bass'],fingerstyle:['acoustic']};
+const GENRE_IDS=Object.keys(GENRES);
+// жанр, где есть инструмент i: текущий g, если подходит, иначе первый подходящий
+const genreFor=(g,i)=>GENRES[g]&&GENRES[g].includes(i)?g:GENRE_IDS.find(k=>GENRES[k].includes(i));
 // Жанр (решение автора от 2026-11-13): дэт-метал или блюз. У каждой пары «жанр + инструмент» своя библиотека; расписание общее. Акустика — только блюз.
-let GENRE=(function(){const h=hashWords();if(INST==='acoustic'||h.includes('blues'))return 'blues';if(h.includes('metal'))return 'metal';return lsGet('genre','metal')==='blues'?'blues':'metal';})();
+let GENRE=(function(){const h=hashWords();let g=GENRE_IDS.find(k=>h.includes(k));if(!g){const s=lsGet('genre','metal');g=GENRES[s]?s:'metal';}
+  if(!GENRES[g].includes(INST)){if(h.includes(INST))return genreFor(g,INST);INST=GENRES[g][0];}return g;})();
 let STRINGS=(function(){const n=+lsGet('strings',4);return [4,5,6].includes(n)?n:4;})();
 let HAND=lsGet('hand','fingers')==='pick'?'pick':'fingers';
 // число струн гитары: 6/7/8 (7 — низкая B, 8 — ещё F#)
@@ -472,14 +479,15 @@ const NSTR=()=>INST==='bass'?STRINGS:INST==='acoustic'?6:GSTR;
 const TU=()=>{const n=NSTR(),b=INST==='bass'?'bass'+n:n===6?'guitar':'guitar'+n,t=TUNE[INST];return t.o||t.d?b+'@'+t.o+(t.d?'d':''):b;};
 // ключ упражнения в grif.bpmEx и grif.lvl: у баса с префиксом, чтобы не смешивать с гитарой
 // у блюза ещё префикс blues., у акустики ac.: blues.ac.B1
-const exKey=id=>(GENRE==='blues'?'blues.':'')+(INST==='bass'?'bass.':INST==='acoustic'?'ac.':'')+id;
+const exKey=id=>(GENRE!=='metal'?GENRE+'.':'')+(INST==='bass'?'bass.':INST==='acoustic'?'ac.':'')+id;
 const UI={
   ru:{tag:'тренировка дня · гитара и бас',today:'Сегодня',timeLabel:'Сколько времени есть',weekLabel:'Неделя',cycleLabel:'Цикл 4 недели',back:'Назад',next:'Дальше',start:'Старт',pause:'Пауза',resume:'Продолжить',totalLeft:'всего осталось',metro:'Метроном',meter:'Размер',subdiv:'Деление доли',bursts:'Рывки',ladder:'Лестница: +4 bpm каждые 8 тактов',mOn:'Включить',mOff:'Выключить',tap:'Тап',play:'ИГРАЙ',rest:'ПАУЗА',plan:'План',copy:'Скопировать тренировку',aboutT:'Как это устроено',safeT:'Правила безопасности',prevDay:'Предыдущий день',nextDay:'Следующий день',langLabel:'Язык',instLabel:'Инструмент',genreLabel:'Жанр',tuneLabel:'Строй',handLabel:'Правая рука',themeLabel:'Тема',tabzLabel:'Масштаб табов',settings:'Настройки'},
   en:{tag:'daily workout · guitar and bass',today:'Today',timeLabel:'Time available',weekLabel:'Week',cycleLabel:'4-week cycle',back:'Back',next:'Next',start:'Start',pause:'Pause',resume:'Resume',totalLeft:'total left',metro:'Metronome',meter:'Meter',subdiv:'Subdivision',bursts:'Bursts',ladder:'Ladder: +4 bpm every 8 bars',mOn:'Start',mOff:'Stop',tap:'Tap',play:'PLAY',rest:'REST',plan:'Plan',copy:'Copy workout',aboutT:'How it works',safeT:'Safety rules',prevDay:'Previous day',nextDay:'Next day',langLabel:'Language',instLabel:'Instrument',genreLabel:'Genre',tuneLabel:'Tuning',handLabel:'Right hand',themeLabel:'Theme',tabzLabel:'Tab size',settings:'Settings'}
 };
 const t=k=>UI[LANG][k];
 const INAME=k=>k==='bass'?L('Бас','Bass'):k==='acoustic'?L('Акустика','Acoustic'):L('Гитара','Guitar');
-const GNAME=k=>k==='blues'?L('Блюз','Blues'):L('Дэт-метал','Death metal');
+const GENRE_NAMES={metal:['Дэт-метал','Death metal'],blues:['Блюз','Blues'],jazz:['Джаз','Jazz'],funk:['Фанк','Funk'],fingerstyle:['Фингерстайл','Fingerstyle']};
+const GNAME=k=>L(...GENRE_NAMES[k]);
 const ABOUT={
   ru:['Программа одна для всех. Тренировка определяется датой: у всех, кто открыл RiffGym в этот день, она одинаковая.','Жанр (дэт-метал или блюз) и инструмент (гитара, бас, в блюзе ещё акустика) выбирают библиотеку упражнений, расписание у всех одно.','Главная настройка — время. Чем его меньше, тем раньше выпадают блоки с конца списка: сначала музыка, затем поддержка. Фокус дня остаётся всегда.','Темп у каждого свой. <b>Чистый темп</b> — самый быстрый, на котором ты играешь без ошибок и без зажима. <b>Рабочий</b> — на 10% ниже. Протокол недели говорит, что с ними делать.','Неделя: ритм, арпеджио, левая рука — каждый фокус дважды, в воскресенье связки техник. База (альтернейт и синхронизация) — каждый день.','Цикл 4 недели: объём → наращивание → скорость → разгрузка с тестами в последнее воскресенье. Каждый цикл меняется лад и набор вариантов упражнений.','Анонимная статистика посещений — Cloudflare Web Analytics: без cookies и без личных данных. Настройки и результаты тестов хранятся только в твоём браузере.'],
   en:['One program for everyone. The workout is set by the date: everyone who opens RiffGym on a given day gets the same one.','Genre (death metal or blues) and instrument (guitar, bass, plus acoustic in blues) pick the exercise library; the schedule is the same for everyone.','The main setting is time. The less you have, the earlier blocks drop from the end of the list: music first, then maintenance. The day’s focus always stays.','Tempo is personal. <b>Clean tempo</b> is the fastest you can play with no mistakes and no tension. <b>Working tempo</b> is 10% below it. The week protocol tells you what to do with them.','Week: rhythm, arpeggios and left hand, each focus twice, with technique combinations on Sunday. Base (alternate picking and hand sync) runs every day.','4-week cycle: volume → build → speed → deload, with tests on the last Sunday. Each cycle brings a new scale and a new set of exercise variants.','Anonymous visit stats via Cloudflare Web Analytics: no cookies and no personal data. Your settings and test results stay in your browser only.']
@@ -502,8 +510,21 @@ const TUNINGS={
   guitar8:{strs:['e','B','G','D','A','E','Y','Z'],open:{Z:30,Y:35,E:40,A:45,D:50,G:55,B:59,e:64}},
   bass4:{strs:['G','D','A','E'],open:{E:28,A:33,D:38,G:43},bass:true},
   bass5:{strs:['G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43},bass:true},
-  bass6:{strs:['C','G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43,C:48},bass:true}
+  bass6:{strs:['C','G','D','A','E','B'],open:{B:23,E:28,A:33,D:38,G:43,C:48},bass:true},
+  // открытые строи 6-струнной гитары и акустики (решение автора от 2026-11-14): свойство варианта или уровня (tun), а не настройка.
+  // Буквы струн те же, что в стандарте (e B G D A E — по положению), меняются только ноты открытых струн. Сдвиг строя пользователя применяется сверху, drop — нет.
+  dadgad:{strs:['e','B','G','D','A','E'],open:{E:38,A:45,D:50,G:55,B:57,e:62},lab:'DADGAD'},
+  opend:{strs:['e','B','G','D','A','E'],open:{E:38,A:45,D:50,G:54,B:57,e:62},lab:'Open D'},
+  opendm:{strs:['e','B','G','D','A','E'],open:{E:38,A:45,D:50,G:53,B:57,e:62},lab:'Open Dm'},
+  openg:{strs:['e','B','G','D','A','E'],open:{E:38,A:43,D:50,G:55,B:59,e:62},lab:'Open G'},
+  openc:{strs:['e','B','G','D','A','E'],open:{E:36,A:43,D:48,G:55,B:60,e:64},lab:'Open C'},
+  opene:{strs:['e','B','G','D','A','E'],open:{E:40,A:47,D:52,G:56,B:59,e:64},lab:'Open E'},
+  opena:{strs:['e','B','G','D','A','E'],open:{E:40,A:45,D:52,G:57,B:61,e:64},lab:'Open A'},
+  dropd:{strs:['e','B','G','D','A','E'],open:{E:38,A:45,D:50,G:55,B:59,e:64},lab:'Drop D'},
+  dgdgcd:{strs:['e','B','G','D','A','E'],open:{E:38,A:43,D:50,G:55,B:60,e:62},lab:'DGDGCD'},
+  cgcgcd:{strs:['e','B','G','D','A','E'],open:{E:36,A:43,D:48,G:55,B:60,e:62},lab:'CGCGCD'}
 };
+const OPEN_TUNINGS=Object.keys(TUNINGS).filter(k=>TUNINGS[k].lab);
 // У 7/8-струнной гитары низкие струны в табе — Y (B) и Z (F#): буквы B и E уже заняты.
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FLATS=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const TUN_C={};
@@ -514,7 +535,7 @@ function TUN(tu){
   const low=base.strs[base.strs.length-1],open={};
   base.strs.forEach(s=>{open[s]=base.open[s]+off-(drop&&s===low?2:0);});
   const nm=base.strs.slice().reverse().map(s=>NOTES[mod(open[s],12)]);
-  return TUN_C[tu]={strs:base.strs,open,bass:!!base.bass,off,drop,dk:drop&&!!m[4],low,std:!off&&!drop,name:nm.join(nm.some(x=>x.length>1)?' ':''),key:NOTES[mod(4+off,12)]};
+  return TUN_C[tu]={strs:base.strs,open,bass:!!base.bass,lab:base.lab||'',off,drop,dk:drop&&!!m[4],low,std:!off&&!drop,name:nm.join(nm.some(x=>x.length>1)?' ':''),key:NOTES[mod(4+off,12)]};
 }
 // drop, два способа переноса таба:
 // — «+2 лада» (dsh): ноты нижней струны на 2 лада выше, звучание как в стандарте того же тона;
@@ -531,7 +552,7 @@ function dropKey(t,T){
     const used=new Set(),res=[];
     for(const q of notes){
       let si=T.strs.indexOf(q[1]);
-      if(q[8]){si+=all&&si!==low?1:0;if(si>low||used.has(si))return null;used.add(si);res.push({p:T.strs[si]+'x'});continue;}
+      if(q[8]){si+=all&&si!==low?1:0;if(si>low||used.has(si))return null;used.add(si);res.push({p:T.strs[si]+q[8]});continue;}
       let f=+q[3];
       if(si===low&&!all){if(f===0)open=true;used.add(si);res.push({f,p:q[0]});continue;}
       if(si===low)return null;
@@ -569,7 +590,8 @@ function noteTxt(x,tu){
     return (a==='b'?FLATS:NOTES)[mod(pc+T.off-(T.dk?2:0),12)];
   });
 }
-const TAB_PART=/^([A-Za-z])(?:([hpt]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)|(x))$/;
+// техника: h, p, t (тэп); у баса ещё S — слэп большим пальцем, P — поп (решение автора от 2026-11-14): ES5, GP7, ESx — глухой слэп
+const TAB_PART=/^([A-Za-z])(?:([hptSP]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?(\*?)(~?)|(([SP]?)x))$/;
 const TAB_TOK=/^(.+?)(m?)(?::(\d+))?$/;
 const EPS=1e-6;
 const isInt=x=>Math.abs(x-Math.round(x))<EPS;
@@ -586,7 +608,8 @@ function parseSystem(src,sub,tu){
     const notes=rest?[]:m[1].split('+').map(p=>{
       const q=p.match(TAB_PART);if(!q){errs.push('токен '+tok);return null;}
       if(!strs.includes(q[1])){errs.push('струна '+q[1]+' в '+tok);return null;}
-      if(q[8])return {s:q[1],x:true,tech:'',f:null,b:null,r:null,ph:false,vib:false};
+      const tc=q[8]?q[9]:q[2];if((tc==='S'||tc==='P')&&!TUN(tu).bass){errs.push('слэп/поп не на басу: '+tok);return null;}
+      if(q[8])return {s:q[1],x:true,tech:tc,f:null,b:null,r:null,ph:false,vib:false};
       return {s:q[1],tech:q[2],f:+q[3],b:q[4]!=null?+q[4]:null,r:q[5]!=null?+q[5]:null,ph:!!q[6],vib:!!q[7]};
     }).filter(Boolean);
     items.push({pos,dur:k/n,k,n,rest,pm:!!m[2],notes});pos+=k/n;
@@ -658,6 +681,7 @@ function renderSystem(sys,meter,si,tu){
         body+='<text class="lt" x="'+f1(mx)+'" y="'+(y-12)+'" text-anchor="middle">'+nt.tech+'</text>';
       }
       if(nt.tech==='t')ann+='<text class="an" x="'+f1(c.cx)+'" y="10" text-anchor="middle">T</text>';
+      if(nt.tech==='S'||nt.tech==='P')ann+='<text class="an sp" x="'+f1(c.cx)+'" y="10" text-anchor="middle">'+nt.tech+'</text>';
       if(nt.ph)ann+='<text class="an" x="'+f1(c.cx)+'" y="10" text-anchor="middle">P.H.</text>';
       if(nt.b!=null){
         const top=TOP-12,bx=xr+8;
@@ -2030,7 +2054,9 @@ function riffOfDay(d){
   const list=GROUPS[d.focus];const ti=pickIdx(r,list.length);const mi=pickIdx(r,RIFF_METERS.ru.length);const ri=pickIdx(r,RIFF_RULES.ru.length);
   return {techId:list[ti],mi,ri,material:d.material};
 }
-function riffText(r){return {meter:RIFF_METERS[LANG][r.mi],material:matName(r.material),tech:X(r.techId,'name'),rule:riffRules()[LANG][r.ri]};}
+function riffText(r){return {meter:riffMeters()[LANG][r.mi],material:matName(r.material),tech:X(r.techId,'name'),rule:riffRules()[LANG][r.ri]};}
+// размеры риффа дня по жанру (решение автора от 2026-11-14): у библиотеки METERS из 8 строк, индексы общие
+function riffMeters(){return LIB_NOW().METERS||RIFF_METERS;}
 
 function seg(kind,min,extra){return Object.assign({kind,min},extra||{});}
 function warmSegs(W){
@@ -2151,13 +2177,15 @@ function resolveEx(s,d,lv){
   else if(ex.v){
     const idx=varIdx(s,d);const raw=ex.v[idx];
     const e=(lv&&raw.lv)?raw.lv[lv-1]:raw;
-    v={l:VX(s.id,idx,'l',RAW),note:VX(s.id,idx,'note',RAW),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter};
+    v={l:VX(s.id,idx,'l',RAW),note:VX(s.id,idx,'note',RAW),t:e.t,sub:e.sub||raw.sub,meter:e.meter||raw.meter,tun:e.tun||raw.tun};
     // версия под число струн, если есть: бас t6 → t5 → t, гитара t8 → t7 → t; у такой версии своя подпись lN и noteN, если струна в подписи другая
     const n=NSTR(),k=(INST==='bass'?[6,5]:[8,7]).find(k=>n>=k&&e['t'+k])||0;
     if(k){v.t=e['t'+k];v.l=VX(s.id,idx,'l'+k,RAW)||v.l;v.note=VX(s.id,idx,'note'+k,RAW)||v.note;}
   }
   // drop: таб в тональности drop, если можно (см. dropKey); иначе ноты нижней струны +2 лада (dsh)
   let tu=TU();
+  // открытый строй варианта (tun): только на 6 струнах не баса; сдвиг пользователя сохраняется, drop не применяется
+  if(v&&v.tun&&INST!=='bass'&&NSTR()===6){const o=TUNE[INST].o;tu=v.tun+(o?'@'+o:'');}
   if(v&&Array.isArray(v.t)&&TUN(tu).drop){const kt=dropKey(v.t,TUN(tu));if(kt){v.t=kt;tu+='k';}}
   if(v){v.l=noteTxt(v.l,tu);v.note=noteTxt(v.note,tu);}
   return {ex,id:s.id,v,lv,nl,tu,sub:(v&&v.sub)||ex.sub||1,meter:(v&&v.meter)||'4/4'};
@@ -2207,7 +2235,7 @@ applyTheme();
 const tuneShort=()=>{const t=TUNE[INST];return NOTES[mod(4+t.o,12)]+(t.d?' drop':'');};
 function renderStatic(){
   document.documentElement.lang=LANG;
-  document.title='RiffGym'+(GENRE==='blues'?' · '+L('блюз','blues'):'')+(INST!=='guitar'?' · '+INAME(INST).toLowerCase():'');
+  document.title='RiffGym'+(GENRE!=='metal'?' · '+GNAME(GENRE).toLowerCase():'')+(INST!=='guitar'?' · '+INAME(INST).toLowerCase():'');
   $('logo').innerHTML='Riff<b>Gym</b>';
   document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.dataset.i);});
   $('prevDay').setAttribute('aria-label',t('prevDay'));$('nextDay').setAttribute('aria-label',t('nextDay'));
@@ -2215,9 +2243,9 @@ function renderStatic(){
   $('themeSw').setAttribute('aria-label',t('themeLabel'));
   document.querySelectorAll('#themeSw button').forEach(b=>{const k=b.dataset.themeSet;b.textContent=k==='auto'?L('Авто','Auto'):k==='light'?L('Светлая','Light'):L('Тёмная','Dark');b.setAttribute('aria-pressed',String(k===THEME));});
   $('instSw').setAttribute('aria-label',L('Инструмент','Instrument'));
-  document.querySelectorAll('#instSw button').forEach(b=>{const k=b.dataset.inst;b.textContent=INAME(k);b.hidden=k==='acoustic'&&GENRE!=='blues';b.setAttribute('aria-pressed',String(k===INST));});
-  $('genreSw').setAttribute('aria-label',t('genreLabel'));
-  document.querySelectorAll('#genreSw button').forEach(b=>{const k=b.dataset.genre;b.textContent=GNAME(k);b.setAttribute('aria-pressed',String(k===GENRE));});
+  document.querySelectorAll('#instSw button').forEach(b=>{const k=b.dataset.inst;b.textContent=INAME(k);b.hidden=!GENRES[GENRE].includes(k);b.setAttribute('aria-pressed',String(k===INST));});
+  $('genreSel').setAttribute('aria-label',t('genreLabel'));
+  $('genreSel').innerHTML=GENRE_IDS.map(k=>'<option value="'+k+'"'+(k===GENRE?' selected':'')+'>'+GNAME(k)+'</option>').join('');
   $('instBar').hidden=INST==='acoustic';
   $('bassBar').hidden=INST!=='bass';
   $('instLbl').textContent=L('Струны','Strings');
@@ -2234,9 +2262,9 @@ function renderStatic(){
   $('aboutL').innerHTML=ABOUT[LANG].map(x=>'<li>'+x+'</li>').join('');
   $('safeL').innerHTML=SAFETY[LANG].map(x=>'<li>'+esc(x)+'</li>').join('');
   const sv=$('mSub').value||'1',bv=$('mBurst').value||'0';
-  $('mSub').innerHTML=[[1,L('нет','none')],[2,L('8-е','8ths')],[3,L('триоли','triplets')],[4,L('16-е','16ths')],[6,L('секстоли','sextuplets')]].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
+  $('mSub').innerHTML=[[1,L('нет','none')],[2,L('8-е','8ths')],[3,L('триоли','triplets')],[4,L('16-е','16ths')],[6,L('секстоли','sextuplets')],['sw',L('свинг','swing')]].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
   $('mBurst').innerHTML=[[0,L('выкл','off')],[1,L('1 доля / 1 пауза','1 beat on / 1 off')],[2,'2 / 2'],[4,'4 / 4']].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
-  $('mSub').value=String(Mt.sub);$('mBurst').value=String(Mt.burst);
+  $('mSub').value=Mt.sw?'sw':String(Mt.sub);$('mBurst').value=String(Mt.burst);
   $('mToggle').textContent=Mt.on?t('mOff'):t('mOn');
 }
 // Доступны только сегодня и 7 дней назад: будущие тренировки и старые не показываем.
@@ -2274,7 +2302,7 @@ function renderPlan(){
 }
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
 // заголовок строя таба: «стандартный строй», «B drop · ADGCFBE»; у баса и 7/8 струн — ещё ноты струн
-function tuneName(tu){const T=TUN(tu);return (T.std?L('стандартный строй','standard tuning'):T.key+' '+(T.drop?'drop':L('стандарт','standard')))+(T.bass||T.strs.length!==6||!T.std?' '+T.name:'')+(T.dk?L(' · на тон ниже',' · a tone lower'):'');}
+function tuneName(tu){const T=TUN(tu);if(T.lab)return T.lab+(T.off?' · '+T.name:'');return (T.std?L('стандартный строй','standard tuning'):T.key+' '+(T.drop?'drop':L('стандарт','standard')))+(T.bass||T.strs.length!==6||!T.std?' '+T.name:'')+(T.dk?L(' · на тон ниже',' · a tone lower'):'');}
 function tabHtml(label,systems,sub,meter,tu){
   const key=JSON.stringify([systems,sub||1,meter||'4/4',tu||'guitar']),on=Pl.on&&Pl.key===key;
   return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+tuneName(tu)+'</span></div>'+
@@ -2284,7 +2312,7 @@ function tabHtml(label,systems,sub,meter,tu){
 function legendHtml(){return '<p class="legend" style="margin:0">'+esc(L('h — хаммер, p — пулл-офф, T — тэп, стрелка — бенд (½ — полтона, full — тон) и возврат, волна — вибрато, P.H. — флажолет медиатором, P.M. — палм-мьют, прямоугольник и косая черта — паузы. Под табом ритм: вязки по долям, цифра под вязкой — триоль, квинтоль, секстоль. '+GB('7–8 струн: играй на шести верхних.','x — мёртвая нота. Строй стандартный; в пониженном играй те же лады.'),'h hammer-on, p pull-off, T tap, arrow: bend (½ half step, full whole step) and release, wave: vibrato, P.H. pinch harmonic, P.M. palm mute, block and slash: rests. Rhythm under the tab: beams per beat, a number under the beam marks triplets, quintuplets, sextuplets. '+GB('7–8 strings: play on the top six.','x: dead note. Standard tuning; if you tune down, play the same frets.')))+'</p>';}
 // бас: указание для выбранной техники правой руки
 function handHtml(id){if(INST!=='bass')return '';const f=HAND==='pick'?'hp':'hf',x=X(id,f);return x?'<p class="note"><b>'+esc(HAND==='pick'?L('Медиатор','Pick'):L('Пальцы','Fingers'))+':</b> '+esc(x)+'</p>':'';}
-function subName(n){return {1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
+function subName(n){return {sw:L('свинг','swing'),1:L('без деления','no subdivision'),2:L('8-е','8ths'),3:L('триоли','triplets'),4:L('16-е','16ths'),6:L('секстоли','sextuplets')}[n];}
 
 function varHtml(s,d){
   const n=EX[s.id].v.length,cur=varIdx(s,d),day=dayVar(s,d);
@@ -2366,7 +2394,7 @@ setInterval(()=>{
 
 /* ================= метроном ================= */
 const METERS={'4/4':[4],'3/4':[3],'6/8':[3,3],'5/8':[3,2],'7/8':[2,2,3],'9/8':[2,2,2,3],'11/8':[3,3,3,2],'13/16':[4,4,5]};
-const Mt={ctx:null,on:false,bpm:clamp(lsGet('bpm',100),30,320),meter:'4/4',sub:1,burst:0,ladder:false,next:0,pulse:0,subi:0,bar:0,bc:0,timer:null,q:[]};
+const Mt={ctx:null,on:false,bpm:clamp(lsGet('bpm',100),30,320),meter:'4/4',sub:1,sw:false,burst:0,ladder:false,next:0,pulse:0,subi:0,bar:0,bc:0,timer:null,q:[]};
 function audio(){try{if(!Mt.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;Mt.ctx=new C();}if(Mt.ctx.state==='suspended')Mt.ctx.resume();return Mt.ctx;}catch(e){return null;}}
 function meterPulses(){return METERS[Mt.meter].reduce((a,b)=>a+b,0);}
 function groupStarts(){const s=new Set();let c=0;METERS[Mt.meter].forEach(g=>{s.add(c);c+=g;});return s;}
@@ -2386,7 +2414,7 @@ function schedule(){
     const rest=Mt.burst>0&&Math.floor(Mt.bc/Mt.burst)%2===1;
     click(Mt.next,level,rest);
     if(Mt.subi===0)Mt.q.push({t:Mt.next,p:Mt.pulse,rest});
-    Mt.next+=60/Mt.bpm/Mt.sub;Mt.subi++;
+    Mt.next+=60/Mt.bpm*subFrac(Mt.subi);Mt.subi++;
     if(Mt.subi>=Mt.sub){Mt.subi=0;Mt.pulse++;Mt.bc++;if(Mt.pulse>=n){Mt.pulse=0;Mt.bar++;if(Mt.ladder&&Mt.bar%8===0)setBpm(Mt.bpm+4);}}
   }
 }
@@ -2422,7 +2450,10 @@ function tempoMemHtml(id){
 function tempoMemText(w,c){return esc(L('рабочий: ','working: ')+(w?w+' bpm':'—')+' · '+L('последний чистый: ','last clean: ')+(c?c.bpm+' bpm ('+c.date+')':'—'));}
 function renderTempoMem(){const el=$('tempoMem'),k=curExKey();if(el&&k)el.innerHTML=tempoMemText(lsGet('bpmEx',{})[k],lsGet('bpmClean',{})[k]);}
 function setMeter(m){Mt.meter=METERS[m]?m:'4/4';$('mMeter').value=Mt.meter;Mt.pulse=0;Mt.bc=0;renderDots();}
-function setSub(n){Mt.sub=[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=String(Mt.sub);}
+// деление доли: 1, 2, 3, 4, 6 или 'sw' — свинговые восьмые (решение автора от 2026-11-14): два клика на долю, долгая-короткая 2:1
+function setSub(n){Mt.sw=n==='sw';Mt.sub=Mt.sw?2:[1,2,3,4,6].includes(+n)?+n:1;$('mSub').value=Mt.sw?'sw':String(Mt.sub);}
+// длина i-го клика доли в долях
+function subFrac(i){return Mt.sw?(i===0?2/3:1/3):1/Mt.sub;}
 function applyMetroDefaults(){
   if(co.base!=null)coBpm(null);const s=st.plan.segs[st.cur];const d=st.plan.d;
   if(s.id&&EX[s.id]){const r=resolveEx(s,d);setSub(r.sub);setMeter(r.meter);const m=lsGet('bpmEx',{});if(m[exKey(s.id)])setBpm(m[exKey(s.id)]);}
@@ -2487,7 +2518,9 @@ function plBuf(c,midi,pm,soft){
 function plNote(c,nt,t0,len,pm,vel){
   const T=TUN(Pl.tu);
   if(nt.x){pm=true;len=Math.min(len,0.06);vel*=0.6;} // мёртвая нота: короткий глухой щелчок без высоты
-  const bf=plBuf(c,T.open[nt.s]+dsh(T,nt.s)+(nt.x?3:nt.f)+(nt.ph?19:0),pm,!!T.bass&&Pl.hand==='fingers');
+  const sp=nt.tech==='S'||nt.tech==='P';
+  if(sp){vel*=1.15;plSnap(c,t0,nt.tech==='P',vel);} // слэп и поп: яркая струна и щелчок о лады
+  const bf=plBuf(c,T.open[nt.s]+dsh(T,nt.s)+(nt.x?3:nt.f)+(nt.ph?19:0),pm,!!T.bass&&Pl.hand==='fingers'&&!sp);
   const src=c.createBufferSource(),g=c.createGain(),pr=src.playbackRate,rt=bf.rate;
   src.buffer=bf.b;pr.setValueAtTime(rt,t0);
   if(nt.b!=null){const up=rt*Math.pow(2,(nt.b-nt.f)/12);pr.linearRampToValueAtTime(up,t0+len*0.35);
@@ -2500,6 +2533,14 @@ function plNote(c,nt,t0,len,pm,vel){
   node.connect(g).connect(T.bass?plBassBus(c):Pl.ac?plAcBus(c):plBus(c));
   src.start(t0);src.stop(t0+len+0.12);
   Pl.voices.push({src,g,lfo,end:t0+len+0.12});
+}
+// щелчок слэпа (удар о лады, ниже) и попа (струна хлопает о гриф, выше и звонче)
+function plSnap(c,t0,pop,vel){
+  const n=Math.floor(c.sampleRate*0.03),b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n*(pop?0.12:0.2)));
+  const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=b;
+  f.type='bandpass';f.frequency.value=pop?3200:1800;f.Q.value=1.2;g.gain.value=vel*(pop?0.9:0.7);
+  s.connect(f).connect(g).connect(plBassBus(c));s.start(t0);s.stop(t0+0.04);
 }
 function plClick(c,tm,acc){
   const o=c.createOscillator(),g=c.createGain();o.frequency.value=acc?1600:1150;
@@ -2517,7 +2558,7 @@ function plTick(){
   while(Pl.next<c.currentTime+0.15){
     if(Pl.i>=Pl.ev.length){if(!Pl.loop||Pl.once){if(c.currentTime>=Pl.next)plStop();return;}Pl.i=0;}
     const e=Pl.ev[Pl.i],spb=60/Mt.bpm,len=e.dur*spb;
-    if(!e.rest){const vel=0.9/Math.sqrt(e.notes.length);e.notes.forEach(nt=>plNote(c,nt,Pl.next,len,e.pm,nt.tech?vel*0.6:vel));}
+    if(!e.rest){const vel=0.9/Math.sqrt(e.notes.length);e.notes.forEach(nt=>plNote(c,nt,Pl.next,len,e.pm,nt.tech&&nt.tech!=='S'&&nt.tech!=='P'?vel*0.6:vel));}
     if(!Mt.on)for(let p=Math.ceil(Pl.pos-EPS);p<Pl.pos+e.dur-EPS;p++)plClick(c,Pl.next+(p-Pl.pos)*spb,mod(p,Pl.bar)===0);
     Pl.q.push({t:Pl.next,id:e.id});
     Pl.next+=len;Pl.pos+=e.dur;Pl.i++;
@@ -2560,7 +2601,7 @@ function plStart(box,once,re){
   if(Mt.on&&Mt.next){
     // вступаем с ближайшей сильной доли включённого метронома
     const sp=60/Mt.bpm,n=meterPulses();let tp=Mt.next,p=Mt.pulse;
-    if(Mt.subi>0){tp+=(Mt.sub-Mt.subi)*sp/Mt.sub;p++;}
+    if(Mt.subi>0){for(let i=Mt.subi;i<Mt.sub;i++)tp+=subFrac(i)*sp;p++;}
     Pl.next=tp+mod(n-p,n)*sp;
     if(Pl.next<c.currentTime+0.05)Pl.next+=n*sp;
   }
@@ -2632,7 +2673,7 @@ let COACH=COACH_GUITAR;
 /*@BLUES_GUITAR_1@*/
 const BLG1=(function(){
 // Блюз, электрогитара, часть 1. Табы риффов пишутся в {E} и переносятся в тональность варианта сдвигом ладов (sh).
-const sh=(s,d)=>d?s.replace(/([A-Za-z])([hpt]?)(\d+)(?:b(\d+))?(?:r(\d+))?/g,(m,a,te,f,b,r)=>a+te+(+f+d)+(b?'b'+(+b+d):'')+(r?'r'+(+r+d):'')):s;
+const sh=(s,d)=>d?s.replace(/([A-Za-z])([hptSP]?)(\d+)(?:b(\d+))?(?:r(\d+))?/g,(m,a,te,f,b,r)=>a+te+(+f+d)+(b?'b'+(+b+d):'')+(r?'r'+(+r+d):'')):s;
 const KEYS=[0,5,3,7,8,10],KN=['{E}','{A}','{G}','{B}','{C}','{D}'];
 const lvs=a=>a.map(x=>Array.isArray(x)?{t:x}:x);
 // 6 вариантов-тональностей: lev() — 5 уровней в {E}, каждый — массив систем или {t,sub}
@@ -4080,6 +4121,74 @@ function bluesLib(base,p1,p2){
 LIBS.blues.guitar=bluesLib(LIBS.metal.guitar,BLG1,BLG2);
 LIBS.blues.acoustic=bluesLib(LIBS.metal.guitar,BLA1,BLA2);
 LIBS.blues.bass=bluesLib(LIBS.metal.bass,BLB1,BLB2);
+/* ================= джаз, фанк, фингерстайл ================= */
+// Части библиотек по схеме блюза: часть 1 — W, B, R, тесты цикла и RIFF; часть 2 — A, L, C. Пока часть пуста, id берётся из базы.
+/*@NEW_GENRES_PARTS@*/
+// ----- JZG1: джаз, гитара, часть 1 -----
+const JZG1={EX:{},EXEN:{},COACH:{}};
+/*@JZG1_END@*/
+
+// ----- JZG2: джаз, гитара, часть 2 -----
+const JZG2={EX:{},EXEN:{},COACH:{}};
+/*@JZG2_END@*/
+
+// ----- JZA1: джаз, акустика, часть 1 -----
+const JZA1={EX:{},EXEN:{},COACH:{}};
+/*@JZA1_END@*/
+
+// ----- JZA2: джаз, акустика, часть 2 -----
+const JZA2={EX:{},EXEN:{},COACH:{}};
+/*@JZA2_END@*/
+
+// ----- JZB1: джаз, бас, часть 1 -----
+const JZB1={EX:{},EXEN:{},COACH:{}};
+/*@JZB1_END@*/
+
+// ----- JZB2: джаз, бас, часть 2 -----
+const JZB2={EX:{},EXEN:{},COACH:{}};
+/*@JZB2_END@*/
+
+// ----- FKG1: фанк, гитара, часть 1 -----
+const FKG1={EX:{},EXEN:{},COACH:{}};
+/*@FKG1_END@*/
+
+// ----- FKG2: фанк, гитара, часть 2 -----
+const FKG2={EX:{},EXEN:{},COACH:{}};
+/*@FKG2_END@*/
+
+// ----- FKB1: фанк, бас, часть 1 -----
+const FKB1={EX:{},EXEN:{},COACH:{}};
+/*@FKB1_END@*/
+
+// ----- FKB2: фанк, бас, часть 2 -----
+const FKB2={EX:{},EXEN:{},COACH:{}};
+/*@FKB2_END@*/
+
+// ----- FSA1: фингерстайл, акустика, часть 1 -----
+const FSA1={EX:{},EXEN:{},COACH:{}};
+/*@FSA1_END@*/
+
+// ----- FSA2: фингерстайл, акустика, часть 2 -----
+const FSA2={EX:{},EXEN:{},COACH:{}};
+/*@FSA2_END@*/
+
+// общий сборщик: база того же инструмента (у акустики — блюзовая акустика), поверх — обе части
+const genreLib=bluesLib;
+LIBS.jazz={guitar:genreLib(LIBS.metal.guitar,JZG1,JZG2),acoustic:genreLib(LIBS.blues.acoustic,JZA1,JZA2),bass:genreLib(LIBS.metal.bass,JZB1,JZB2)};
+LIBS.funk={guitar:genreLib(LIBS.metal.guitar,FKG1,FKG2),bass:genreLib(LIBS.metal.bass,FKB1,FKB2)};
+LIBS.fingerstyle={acoustic:genreLib(LIBS.blues.acoustic,FSA1,FSA2)};
+// размеры риффа дня по жанрам: ровно 8, как RIFF_METERS
+const GENRE_METERS={
+  blues:{ru:['4/4, шаффл','4/4, прямые восьмые','12/8, медленный блюз','4/4, стоп-тайм','4/4, бугги','12/8, вызов и ответ','3/4, блюз-вальс','4/4, полутемп'],
+         en:['4/4 shuffle','4/4 straight eighths','12/8 slow blues','4/4 stop-time','4/4 boogie','12/8 call and response','3/4 blues waltz','4/4 half-time']},
+  jazz:{ru:['4/4, свинг','4/4, медленный свинг','3/4, джаз-вальс','5/4','4/4, босса-нова','4/4, баллада','6/8','4/4, быстрый свинг'],
+        en:['4/4 swing','4/4 medium swing','3/4 jazz waltz','5/4','4/4 bossa nova','4/4 ballad','6/8','4/4 up-tempo swing']},
+  funk:{ru:['4/4, шестнадцатые','4/4, шестнадцатые со свингом','4/4, синкопы на «и»','4/4, полутемп','4/4, вступление со второй шестнадцатой','7/8','4/4, один такт по кругу','12/8, шаффл-фанк'],
+        en:['4/4 sixteenths','4/4 swung sixteenths','4/4 offbeat syncopation','4/4 half-time','4/4 start on the second sixteenth','7/8','4/4 one-bar vamp','12/8 shuffle funk']},
+  fingerstyle:{ru:['4/4','3/4','6/8','4/4, переменный бас','2/4, рэгтайм','12/8','5/4','4/4, рубато в последнем такте'],
+               en:['4/4','3/4','6/8','4/4 alternating bass','2/4 ragtime','12/8','5/4','4/4, rubato in the last bar']}
+};
+Object.keys(GENRE_METERS).forEach(g=>Object.values(LIBS[g]).forEach(l=>{l.METERS=GENRE_METERS[g];}));
 const LIB_NOW=()=>LIBS[GENRE][INST];
 function riffRules(){return LIB_NOW().RIFF;}
 // Активный инструмент подменяет наборы данных; план дня, тренер и рендер работают с EX/EXEN/GROUPS/TESTS/COACH.
@@ -4431,23 +4540,25 @@ function setLang(l){
   writeHash();
   renderStatic();renderHeader();renderPlan();renderNow();markPlan();renderLib();
 }
-function writeHash(){const h=(GENRE==='blues'&&INST!=='acoustic'?'blues-':'')+(INST!=='guitar'?INST+'-':'')+(LIB.on?'library-':'')+LANG;try{history.replaceState(null,'','#'+h);}catch(e){try{location.hash=h;}catch(e2){}}}
+function writeHash(){const h=(GENRE!=='metal'&&GENRE!==genreFor('',INST)?GENRE+'-':'')+(INST!=='guitar'?INST+'-':'')+(LIB.on?'library-':'')+LANG;try{history.replaceState(null,'','#'+h);}catch(e){try{location.hash=h;}catch(e2){}}}
 // смена инструмента: другой набор упражнений, план дня строится заново
 function setInst(i){
   if(!['bass','acoustic'].includes(i))i='guitar';if(i===INST)return;
-  INST=i;lsSet('inst',i);if(i==='acoustic'&&GENRE!=='blues'){GENRE='blues';lsSet('genre',GENRE);}
+  INST=i;lsSet('inst',i);const g=genreFor(GENRE,i);if(g!==GENRE){GENRE=g;lsSet('genre',g);}
   applyInst();writeHash();plStop();
   renderStatic();rebuild();
 }
 // смена жанра: другая библиотека, план дня строится заново; акустика есть только в блюзе
 function setGenre(g){
-  if(g!=='blues')g='metal';if(g===GENRE)return;
-  GENRE=g;lsSet('genre',g);if(g==='metal'&&INST==='acoustic'){INST='guitar';lsSet('inst',INST);}
+  if(!GENRES[g])g='metal';if(g===GENRE)return;
+  GENRE=g;lsSet('genre',g);if(!GENRES[g].includes(INST)){INST=GENRES[g][0];lsSet('inst',INST);}
   applyInst();writeHash();plStop();
   renderStatic();rebuild();
 }
 // профиль для тестов: 'guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'
-function setProf(p){const b=p.startsWith('blues-')||p==='acoustic',i=p.replace('blues-','');if(b){setGenre('blues');setInst(i);}else{setInst(i);setGenre('metal');}}
+// и новые: 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle' (акустика)
+function setProf(p){const w=p.split('-'),g=GENRES[w[0]]?w[0]:p==='acoustic'?'blues':'metal',i=w.find(x=>['guitar','bass','acoustic'].includes(x))||GENRES[g][0];
+  if(GENRES[GENRE].includes(i))setGenre(g);setInst(i);setGenre(g);}
 // число струн и техника меняют только таб и указания текущего упражнения, не план и не таймер
 function setStrings(n){
   if(!GB([6,7,8],[4,5,6]).includes(n)||n===NSTR())return;
@@ -4458,10 +4569,12 @@ function setTuning(o,d){
   o=Math.max(-11,Math.min(0,Math.round(+o)||0));d=!!d;const t=TUNE[INST];if(t.o===o&&t.d===d)return;
   TUNE[INST]={o,d};lsSet('tuning',TUNE);plStop();renderStatic();renderHeader();renderPlan();renderNow();markPlan();renderLib();renderLib();
 }
+// строй текущего упражнения: открытый строй варианта или строй пользователя
+function curTu(){const s=st.plan&&st.plan.segs[st.cur];const r=s&&s.id&&EX[s.id]?resolveEx(s,st.plan.d):null;return r&&r.tu||TU();}
 // «Настроиться»: открытые струны текущего строя снизу вверх
 function tuneUp(){
   plStop();const c=audio();if(!c)return;
-  Pl.tu=TU();const T=TUN(Pl.tu),t0=c.currentTime+0.1;
+  Pl.tu=curTu();const T=TUN(Pl.tu),t0=c.currentTime+0.1;
   T.strs.slice().reverse().forEach((s,k)=>plNote(c,{s,f:-dsh(T,s),tech:'',b:null,r:null,ph:false,vib:false},t0+k*1.1,1.5,false,0.8));
 }
 function setHand(h){h=h==='pick'?'pick':'fingers';if(h===HAND)return;HAND=h;Pl.hand=h;lsSet('hand',h);plStop();renderStatic();renderNow();renderLib();}
@@ -4474,7 +4587,7 @@ document.querySelectorAll('#themeSw button').forEach(b=>b.onclick=()=>setTheme(b
 document.querySelectorAll('#tabzSw button').forEach(b=>b.onclick=()=>setTabz(b.dataset.tabz));
 applyTabz();
 document.querySelectorAll('#instSw button').forEach(b=>b.onclick=()=>setInst(b.dataset.inst));
-document.querySelectorAll('#genreSw button').forEach(b=>b.onclick=()=>setGenre(b.dataset.genre));
+$('genreSel').onchange=e=>setGenre(e.target.value);
 $('strChips').addEventListener('click',e=>{const b=e.target.closest('button[data-str]');if(b)setStrings(+b.dataset.str);});
 $('tuneKey').onchange=e=>setTuning(+e.target.value,TUNE[INST].d);
 $('dropChips').addEventListener('click',e=>{const b=e.target.closest('button[data-drop]');if(b)setTuning(TUNE[INST].o,b.dataset.drop==='true');});
@@ -4497,7 +4610,7 @@ $('nowBody').addEventListener('click',e=>{
   const sv=e.target.closest('button[data-save]');
   if(sv){const id=sv.dataset.save;const inp=$('ti-'+id);const v=Math.round(+inp.value);if(!v||v<20||v>400){toast(L('Введи темп в bpm, например 140','Enter a tempo in bpm, e.g. 140'));return;}
     const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
-  const sb=e.target.closest('button[data-sub]');if(sb){setSub(+sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
+  const sb=e.target.closest('button[data-sub]');if(sb){setSub(sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
   if(e.target.closest('button[data-clean]')){const k=curExKey();if(k){const m=lsGet('bpmClean',{});m[k]={bpm:Mt.bpm,date:dateOfIndex(st.i).toISOString().slice(0,10)};lsSet('bpmClean',m);renderTempoMem();toast(L('Чистый темп: ','Clean tempo: ')+Mt.bpm+' bpm');}return;}
   const lb=e.target.closest('button[data-lvl]');if(lb)changeLvl(+lb.dataset.lvl);
   const vb=e.target.closest('button[data-var]');if(vb)changeVar(+vb.dataset.var);
@@ -4555,7 +4668,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE','GENRE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE,GENRE})[k]}));
 })();

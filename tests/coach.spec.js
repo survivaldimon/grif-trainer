@@ -5,7 +5,7 @@ const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const FIXED_NOW = new Date('2026-10-28T12:00:00'); // dayIndex = −5
-const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'];
+const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
 
 async function openApp(page, lang) {

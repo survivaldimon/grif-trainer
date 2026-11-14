@@ -265,3 +265,27 @@ test('подпись l5/l6 и note5/note6 есть в EN', async ({ page }) => {
   });
   expect(errs).toEqual([]);
 });
+
+test('слэп S и поп P: разбор, рисунок, звук, только на басу', async ({ page }) => {
+  const errors = await openApp(page, 'funk-bass-ru');
+  const res = await page.evaluate(() => {
+    const G = window.__grif;
+    const p = (sys, tu) => G.parseTab([sys], 4, tu)[0];
+    const ok = p('ES5 GP7 ESx DP9', 'bass4');
+    const svg = G.renderTab(['ES5 GP7 ESx DP9'], 4, '4/4', 'bass4');
+    return {
+      errs: ok.errs.length, tech: ok.items.map(i => i.notes[0].tech), dead: ok.items[2].notes[0].x,
+      guitar: p('ES5 . . .', 'guitar').errs.length, guitarPop: p('GPx . . .', 'guitar').errs.length,
+      legato: p('Ah5 Ap3 . .', 'bass4').errs.length,
+      ann: (String(svg).match(/class="an sp"[^>]*>([SP])</g) || []).length
+    };
+  });
+  expect(res.errs).toBe(0);
+  expect(res.tech).toEqual(['S', 'P', 'S', 'P']);
+  expect(res.dead).toBe(true);
+  expect(res.guitar).toBe(1);
+  expect(res.guitarPop).toBe(1);
+  expect(res.legato).toBe(0);
+  expect(res.ann).toBe(4);
+  expect(errors).toEqual([]);
+});

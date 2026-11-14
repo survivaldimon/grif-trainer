@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 const URL = require('url').pathToFileURL(path.resolve(__dirname, '..', 'index.html')).href;
 
-for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) {
+for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle']) {
   test(`${inst}: вариант дня = номер недели mod числа вариантов, все варианты попадают в план`, async ({ page }) => {
     await page.goto(URL + '#' + inst + '-ru');
     const res = await page.evaluate(() => {

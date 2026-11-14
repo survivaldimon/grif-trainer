@@ -8,7 +8,7 @@ const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
 const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
-const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'];
+const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
 // Среда, 28 октября 2026: dayIndex = −5, вводная неделя. Дата зафиксирована, чтобы тесты не зависели от сегодняшнего дня.
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
@@ -122,7 +122,7 @@ test(`${inst}: табы: стандартный строй, корректные
     const G = window.__grif, errs = [], bass = G.INST === 'bass';
     // формат токена — см. CLAUDE.md; дублируем регэкспы здесь, чтобы тест ловил и изменения парсера
     const TOK = /^(\.|[^:]+?)(m?)(?::([1-9]\d*))?$/;
-    const PART = /^([A-Za-z])(?:[hpt]?(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?\*?~?|x)$/;
+    const PART = /^([A-Za-z])(?:([hptSP]?)(\d{1,2})(?:b(\d{1,2})(?:r(\d{1,2}))?)?\*?~?|([SP]?)x)$/;
     const whole = x => Math.abs(x - Math.round(x)) < 1e-6;
     const checkSystems = (where, systems, sub, meter, tu = bass ? 'bass4' : 'guitar') => {
       const ROWS = G.TUNINGS[tu].strs;
@@ -138,9 +138,10 @@ test(`${inst}: табы: стандартный строй, корректные
           if (strs.has(m[1])) errs.push(`${where}: струна дважды в ${tok}`);
           if (!ROWS.includes(m[1])) errs.push(`${where}: струна ${m[1]} не из строя ${tu}`);
           strs.add(m[1]);
-          [m[2], m[3], m[4]].forEach(f => { if (f != null && +f > 24) errs.push(`${where}: лад ${f}`); });
-          if (m[3] != null && !(+m[3] > +m[2])) errs.push(`${where}: бенд вниз в ${tok}`);
-          if (m[4] != null && !(+m[4] < +m[3])) errs.push(`${where}: возврат вверх в ${tok}`);
+          [m[3], m[4], m[5]].forEach(f => { if (f != null && +f > 24) errs.push(`${where}: лад ${f}`); });
+          if (m[4] != null && !(+m[4] > +m[3])) errs.push(`${where}: бенд вниз в ${tok}`);
+          if (m[5] != null && !(+m[5] < +m[4])) errs.push(`${where}: возврат вверх в ${tok}`);
+          if (/[SP]/.test((m[2] || '') + (m[6] || '')) && !G.TUNINGS[tu].bass) errs.push(`${where}: слэп/поп не на басу в ${tok}`);
         });
       }));
       // ритм: система — целое число долей; в нечётном размере каждый такт = числителю

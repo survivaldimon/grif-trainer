@@ -42,7 +42,7 @@ async function walkLib(page) {
   });
 }
 
-for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) {
+for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle']) {
   test(`раздел: каждый id из EX на месте, по группам и номерам (${inst})`, async ({ page }) => {
     const errors = await openApp(page, inst + '-library-ru');
     const res = await page.evaluate(() => {
@@ -124,7 +124,7 @@ test('раздел: поиск и фильтр групп скрывают ка�
 });
 
 // Нумерация: сквозной номер по порядку раздела, 1..N без пропусков, тот же в плане; id не меняются.
-for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass']) test('нумерация упражнений: ' + inst, async ({ page }) => {
+for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle']) test('нумерация упражнений: ' + inst, async ({ page }) => {
   const errors = await openApp(page, inst + '-library');
   const r = await page.evaluate(() => {
     const nums = [...document.querySelectorAll('#lib details[data-lib] .lib-id')].map(e => +e.textContent);
