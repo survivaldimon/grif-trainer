@@ -3421,7 +3421,8 @@ const BLA1=(function(){
   const strOf=t=>t.split('+').map(p=>p[0]);
   const merge=(a,b)=>{if(a==='.')return b;if(b==='.')return a;const s=strOf(a);const add=b.split('+').filter(p=>!s.includes(p[0]));return add.length?a+'+'+add.join('+'):a;};
   const bar=(N,ev)=>{const g=Array(N).fill(null);ev.forEach(([i,t])=>{if(t)g[i]=g[i]==null?t:merge(g[i],t);});
-    const out=[];let cur=null,len=0;const fl=()=>{if(cur!=null)out.push(len>1?cur+':'+len:cur);};
+    // палм-мьют («m» у любой части столбца) переносится в конец токена
+    const out=[];let cur=null,len=0;const fl=()=>{if(cur!=null){const c=cur!=='.'&&cur.includes('m')?cur.replace(/m/g,'')+'m':cur;out.push(len>1?c+':'+len:c);}};
     g.forEach(x=>{if(x==null){if(cur==null){cur='.';len=1;}else len++;}else{fl();cur=x;len=1;}});fl();return out.join(' ');};
   const sys=bs=>bs.join(' | ');
   const fr=t=>+t.replace(/^[A-Za-z][hp]?/,'').replace(/[^\d].*$/,'');
@@ -3502,12 +3503,15 @@ const BLA1=(function(){
       return [sys([B12(qf(I)),B12(qf(IV))]),sys([B12(sw(I)),B12(sw(IV))]),sys([B12(shf(I)),B12(shf(IV)),B12(shf(V)),B12(shf(I))]),
         sys([B12(ch(I)),B12(ch(IV))]),sys([B12(ch(I)),B12(ch(IV)),B12(ch(I)),B12(ch(V))])];},
     R7:K=>{const{I,IV,V}=K;const q=c=>[[0,bg(c,2)],[3,bg(c,2)],[6,bg(c,4)],[9,bg(c,4)]];
-      const s=c=>bgg(c,[2,2,4,4]),s7=c=>bgg(c,[2,4,5,4]);
+      const s=c=>bgg(c,[2,2,4,4]),s7=c=>bgg(c,K.bk||[2,4,5,4]);
       return [sys([B12(q(I)),B12(q(I))]),sys([B12(s(I)),B12(s(IV))]),sys([B12(s7(I)),B12(s7(IV))]),
         sys([I,IV,I,V].map(c=>B12(s7(c)))),[sys([I,I,IV,I].map(c=>B12(s7(c)))),sys([V,IV,I,V].map(c=>B12(s7(c))))]];},
-    R8:K=>{const{I,IV}=K;const s7=c=>bgg(c,[2,4,5,4]);
-      return [sys([I,IV,I,I].map(c=>B12(qf(c)))),by4(P12(K).map(c=>B12(qf(c)))),by4(P12(K).map(c=>B12(shf(c)))),
-        by4(Q12(K).map(c=>B12(shf(c)))),by4(Q12(K).map(c=>B12(s7(c))))];},
+    R8:K=>{const{I,IV,V}=K;const s7=c=>bgg(c,K.bk||[2,4,5,4]);
+      // тёрнэраунд: в 11-м такте после аккорда I бас хроматически подходит к тонике V
+      const w=walk(V.r,2),ta=B12([[0,I.r],[0,I.up],[3,I.up],[6,w[0]],[9,w[1]]]);
+      const f=bs=>{if(K.ta)bs[10]=ta;return by4(bs);};
+      return [sys([I,IV,I,I].map(c=>B12(qf(c)))),f(P12(K).map(c=>B12(qf(c)))),f(P12(K).map(c=>B12(shf(c)))),
+        f(Q12(K).map(c=>B12(shf(c)))),f(Q12(K).map(c=>B12(s7(c))))];},
     R9:K=>{const{I,IV,V,hi:h}=K;
       const s1=c=>[[0,c.full],[3,'.']], s2=c=>[[0,c.full],[3,'.'],[11,c.full]];
       const s3=c=>[[0,c.full],[3,'.'],[6,h[5]],[8,h[4]],[9,h[3]],[11,h[2]]];
@@ -3621,10 +3625,46 @@ const BLA1=(function(){
       ru:{name:'Бой и щипок',goal:'Совместить бас, бой и одиночные ноты.',how:'Большой палец — бас, указательный — короткий бой вниз по трём верхним струнам на 2 и 4, между ними пальцы щипают мелодию.',tip:'Бой короче и тише баса, мелодия слышна поверх.',lvl:['Бас и бой','Нота между ударами','Ход в басу','Мелодия с легато','Мелодия с бендом']},
       en:{name:'Strum and pluck',goal:'Combine bass, strums and single notes.',how:'The thumb plays the bass, the index finger a short downstroke across the top three strings on 2 and 4, and the fingers pluck a melody in between.',tip:'The strum is shorter and quieter than the bass; the melody carries on top.',lvl:['Bass and strum','A note between strokes','Bass walk','Melody with legato','Melody with a bend']}}
   };
+  // материал варианта: тональность + приёмы (флаги). h — верхние голоса и мелодия октавой выше (12-й лад),
+  // m — глушёный ладонью бас, t — бой только по верхним струнам, v — бас начинается со второй басовой ноты,
+  // a — тёрнэраунд с хроматическим ходом, 1/2 — другая фигура бугги
+  const sh=t=>t[0]+(fr(t)+12);
+  const FL=(K,f)=>{const k=Object.assign({},K),each=fn=>['I','IV','V'].forEach(n=>{k[n]=Object.assign({},k[n]);fn(k[n]);});
+    if(f.includes('h')){k.hi=K.hi.map(sh);k.bn=sh(K.bn);each(c=>{c.g=sh(c.g);c.b=sh(c.b);c.e=sh(c.e);c.up=[c.g,c.b,c.e].join('+');});}
+    if(f.includes('v'))each(c=>{const r=c.r;c.r=c.a;c.a=r;});
+    if(f.includes('t'))each(c=>{c.full=c.up;});
+    if(f.includes('m'))each(c=>{c.r+='m';c.a+='m';c.full+='m';});
+    if(f.includes('a'))k.ta=1;
+    if(f.includes('1'))k.bk=[2,5,4,2];
+    if(f.includes('2'))k.bk=[4,5,4,2];
+    return k;};
+  const FW={h:['верх на 12-м ладу','top voices at the 12th fret'],m:['глушёный бас','muted bass'],t:['бой по верхним струнам','strum the top strings'],
+    v:['бас со второй ноты','bass starts on the second note'],a:['тёрнэраунд с ходом','turnaround with a walk'],
+    '1':['септима на второй доле','seventh on beat two'],'2':['бугги с сексты','boogie from the sixth'],'':['базовая фигура','basic figure']};
+  const phr=(f,j)=>f?f.split('').map(c=>FW[c][j]).join(', '):FW[''][j];
+  // [тональность (индекс KEYS), флаги]
+  const VAR={
+    B1:[[0,''],[1,'m'],[4,'h'],[2,'m'],[0,'mh'],[5,'h']],
+    B2:[[0,''],[1,'m'],[2,'h'],[3,'m'],[4,'h'],[5,'mh']],
+    B3:[[0,''],[1,'h'],[2,'v'],[3,'h'],[4,'v'],[5,'m']],
+    B4:[[0,''],[1,'h'],[2,'m'],[3,'mh'],[4,'h'],[5,'m']],
+    B5:[[0,''],[1,'t'],[2,'m'],[3,'t'],[4,'h'],[5,'m']],
+    R6:[[0,''],[1,'m'],[2,'t'],[3,'th'],[4,'m'],[5,'t']],
+    R7:[[0,''],[1,'1'],[2,'m'],[3,'2'],[4,'m1'],[5,'m2']],
+    R8:[[0,''],[1,'a'],[2,'m'],[3,'ta'],[4,'t'],[5,'ma']],
+    R9:[[0,''],[1,'t'],[2,'h'],[3,'m'],[4,'th'],[5,'h']],
+    R10:[[0,''],[1,'h'],[2,'v'],[3,'m'],[4,'h'],[5,'v']],
+    R11:[[0,''],[1,'m'],[2,'h'],[3,'mh'],[4,'m'],[5,'h']],
+    R12:[[0,''],[1,'h'],[2,'m'],[3,'h'],[4,'m'],[5,'mh']],
+    R13:[[0,''],[1,'h'],[2,'t'],[3,'m'],[4,'h'],[5,'th']],
+    R14:[[0,''],[1,'h'],[2,'m'],[3,'h'],[4,'m'],[5,'mh']],
+    R15:[[0,''],[1,'t'],[2,'m'],[3,'th'],[4,'t'],[5,'m']],
+    R37:[[0,''],[1,'h'],[2,'m'],[3,'h'],[4,'mh'],[5,'m']]
+  };
   const EX={},EXEN={};
-  Object.keys(T).forEach(id=>{const o=T[id];
-    EX[id]=Object.assign({},o.ru,{sub:o.sub,v:KEYS.map(K=>BV(o.lab[0]+' '+K.ru,LV[id](K),o.meter?{meter:o.meter}:null))});
-    EXEN[id]=Object.assign({},o.en,{v:KEYS.map(K=>o.lab[1]+' '+K.ru)});
+  Object.keys(T).forEach(id=>{const o=T[id],vs=VAR[id];
+    EX[id]=Object.assign({},o.ru,{sub:o.sub,v:vs.map(([k,f])=>BV(o.lab[0]+' '+KEYS[k].ru+', '+phr(f,0),LV[id](FL(KEYS[k],f)),o.meter?{meter:o.meter}:null))});
+    EXEN[id]=Object.assign({},o.en,{v:vs.map(([k,f])=>o.lab[1]+' '+KEYS[k].ru+', '+phr(f,1))});
   });
   // разминка без уровней
   Object.assign(EX,{
