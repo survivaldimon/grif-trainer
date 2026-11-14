@@ -178,6 +178,20 @@ test('версии на низкую B и высокую C есть во все�
   expect(r.by.R).toBeGreaterThanOrEqual(5);
 });
 
+test('блюз-бас: версии на низкую B и высокую C', async ({ page }) => {
+  await openApp(page);
+  const n = await page.evaluate(() => {
+    const G = window.__grif, n = { t5: 0, t6: 0 };
+    for (const ex of Object.values(G.LIBS.blues.bass.EX)) {
+      const lv = (ex.v || []).flatMap(v => v.lv || []);
+      if (lv.some(x => x.t5)) n.t5++; if (lv.some(x => x.t6)) n.t6++;
+    }
+    return n;
+  });
+  expect(n.t5).toBeGreaterThanOrEqual(10);
+  expect(n.t6).toBeGreaterThanOrEqual(5);
+});
+
 test('бас, EN: план 5 часов на 6 струнах с медиатором прокликан без кириллицы', async ({ page }) => {
   test.setTimeout(300000);
   const errors = await openApp(page, 'bass-en');

@@ -36,7 +36,7 @@ test(`${inst}: тренер: подходы и отдых ровно уклад�
   const res = await page.evaluate(() => {
     const G = window.__grif, errs = [], seen = new Set();
     const LED = ['base', 'focus', 'maint', 'combo', 'test'];
-    const METERS = ['4/4', '3/4', '6/8', '5/8', '7/8', '9/8', '11/8', '13/16'];
+    const METERS = ['4/4', '3/4', '6/8', '5/8', '7/8', '9/8', '11/8', '12/8', '13/16'];
     let plans = 0;
     for (let i = -7; i <= 168; i++) {
       for (const T of G.TIMES) {
