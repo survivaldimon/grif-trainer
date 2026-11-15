@@ -4616,7 +4616,7 @@ function bassOct(t,dir){const SS='BEADGC';let ok=true;
     return SS[i]+tc+(f==='x'?f:fr(f))+(bb?'b'+fr(bb):'')+(rr?'r'+fr(rr):'');});
   const sys=t=>String(t).split(/\s+/).map(tok=>tok==='|'||tok[0]==='/'||tok[0]==='.'?tok:tok.split('+').map(one).join('+')).join(' ');
   const r=Array.isArray(t)?t.map(sys):sys(t);return ok&&(dir<0?/(^|[\s+])B[hpt]?(\d|x)/:/(^|[\s+])C[hpt]?(\d|x)/).test([].concat(r).join(' '))?r:null;}
-function bassExt(EX,ids,lvs,key,dir){ids.forEach(id=>EX[id].v.forEach(v=>lvs.forEach(j=>{const l=v.lv&&v.lv[j];if(!l||l.t5||l.t6)return;const t=bassOct(l.t,dir);if(t)l[key]=t;})));}
+function bassExt(EX,ids,lvs,key,dir){ids.forEach(id=>EX[id].v.forEach(v=>lvs.forEach(j=>{const l=v.lv&&v.lv[j];if(!l||l[key])return;const t=bassOct(l.t,dir);if(t)l[key]=t;})));}
 [BLB1.EX,BLB2.EX].forEach(E=>{const ids=Object.keys(E).filter(id=>id[0]!=='W'&&E[id].v&&E[id].v[0].lv);
   bassExt(E,ids,[3,4],'t5',-1);bassExt(E,ids.filter(id=>id[0]==='A'||id[0]==='L'),[4],'t6',1);});
 LIBS.blues.guitar=bluesLib(LIBS.metal.guitar,BLG1,BLG2);
