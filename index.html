@@ -4149,7 +4149,218 @@ const JZB2={EX:{},EXEN:{},COACH:{}};
 /*@JZB2_END@*/
 
 // ----- FKG1: фанк, гитара, часть 1 -----
-const FKG1={EX:{},EXEN:{},COACH:{}};
+const FKG1=(function(){
+// Фанк, электрогитара, часть 1. Вариант = другой аккорд (или линия) и другая ритмическая ячейка, а не только тональность.
+// Ячейка — 16 знаков на такт (шестнадцатые): C — аккорд, H — второй аккорд или второе обращение, x — глухой удар (скретч),
+// . — рука проходит мимо струн, - — продление предыдущего. В линиях цифра 1–6 — нота из списка варианта.
+const sh=(s,d)=>d?s.replace(/([A-Za-z])([hpt]?)(\d+)/g,(m,a,te,f)=>a+te+(+f+d)):s;
+const mx=c=>c.split('+').map(p=>p[0]+'x').join('+');
+const cell=(p,map)=>{const o=[];for(const ch of p){if(ch==='-')o[o.length-1].k++;else o.push({t:ch==='.'?'.':map(ch,o),k:1});}
+  return o.map(z=>z.k>1?z.t+':'+z.k:z.t).join(' ');};
+const sys2=a=>{const o=[];for(let i=0;i<a.length;i+=2)o.push(a.slice(i,i+2).join(' | '));return o;};
+const dry=p=>p.replace(/x/g,'.');                       // уровень 1: только удары
+const stac=p=>p.replace(/-/g,'.');                      // короткие удары
+const alt=p=>{let i=0;return p.replace(/C/g,()=>(i++%2)?'H':'C');}; // каждый второй удар — второй аккорд
+const swing=p=>{let o='';for(let i=0;i<p.length;i+=2)o+=p[i]+'-'+p[i+1];return o;}; // пара шестнадцатых → долгая-короткая (24 шага)
+const fill=q=>q.slice(0,12)+'xCxC';
+// ---- аккорды (лады в стандартном строе) ----
+const K={
+  E9:['A7+D6+G7+B7','{E}9'],E13:['A7+D6+G7+B9','{E}13'],E7s9:['A7+D6+G7+B8','{E}7#9'],
+  A13:['E5+D5+G6+B7','{A}13'],A9:['A12+D11+G12+B12','{A}9'],A913:['A12+D11+G12+B14','{A}13'],A7s9:['A12+D11+G12+B13','{A}7#9'],
+  Am7:['D5+G5+B5+e5','{A}m7'],Em7:['A7+D9+G7+B8','{E}m7'],Em9:['A7+D5+G7+B7','{E}m9'],
+  D9:['A5+D4+G5+B5','{D}9'],D13:['A5+D4+G5+B7','{D}13'],D7s9:['A5+D4+G5+B6','{D}7#9'],
+  G13:['E3+D3+G4+B5','{G}13'],G9:['A10+D9+G10+B10','{G}9'],G913:['A10+D9+G10+B12','{G}13'],
+  C9:['A3+D2+G3+B3','{C}9'],C13:['A3+D2+G3+B5','{C}13'],F9:['A8+D7+G8+B8','{F}9'],F13:['A8+D7+G8+B10','{F}13'],
+  Bm7:['A2+D4+G2+B3','{B}m7'],Fsm7:['E2+D2+G2+B2','{F#}m7'],Cm7:['A3+D5+G3+B4','{C}m7'],Gm7:['E3+D3+G3+B3','{G}m7'],
+  // три верхние струны
+  tE:['G9+B9+e7','{E}'],tAE:['G9+B10+e9','{A}/{E}'],tDE:['G7+B7+e5','{D}/{E}'],tAm:['G5+B5+e5','{A}m'],tDm:['G7+B6+e5','{D}m'],
+  tG:['G4+B3+e3','{G}'],tCG:['G5+B5+e3','{C}/{G}'],tEm:['G9+B8+e7','{E}m'],tAmE:['G9+B10+e8','{A}m/{E}'],
+  tE9:['D6+G7+B7','{E}9'],tE13:['D6+G7+B9','{E}13'],uE9:['G7+B7+e7','{E}9'],uAm7:['G9+B8+e8','{A}m7'],uD9:['G5+B5+e5','{D}9'],
+  uG2:['G7+B8+e7','{G}'],uFs1:['G6+B5+e5','{F#}m7'],uFs2:['G2+B2+e2','{F#}m7'],uC1:['G5+B5+e7','{C}maj7'],uC2:['G9+B8+e7','{C}maj7'],
+  uD9b:['A5+D4+G5','{D}9']
+};
+// ---- ритмические ячейки: P — основной такт, Q — ответ ----
+const CL={
+  A:{P:'xxC-xxC-xxC-xxCx',Q:'xxC-xxC-xxCxC-xx',ru:'акцент на «и»',en:'accent on the "and"'},
+  B:{P:'C-xCxxC-xCxxC-xC',Q:'xCxxC-xCxxC-C-xx',ru:'акцент на последнюю шестнадцатую',en:'accent on the last sixteenth'},
+  C:{P:'xC-xxC-xxC-xxCxx',Q:'xC-xxCxCxC-xxCxx',ru:'удар на вторую шестнадцатую',en:'hits on the second sixteenth'},
+  D:{P:'C---xxCxx.Cx.xCx',Q:'C---x.Cx.xC-x.xx',ru:'долгий удар на раз',en:'a long hit on the one'},
+  E:{P:'C-.xC.xCx.C-xCx.',Q:'xC.xC.x.C-.xCxCx',ru:'короткие удары',en:'short stabs'},
+  F:{P:'CxCxCxCxCxCxCxCx',Q:'CxxCCxxCCxCxCxxC',ru:'ровные шестнадцатые',en:'straight sixteenths'},
+  G:{P:'C--C--C--C--C-x-',Q:'x--C--x--C--Cx-x',ru:'пунктир 3+3+3+3+2+2',en:'dotted 3+3+3+3+2+2'},
+  H:{P:'.xC-.xCx.xC-.xCx',Q:'.xCx.xC-.CxC.xCx',ru:'пауза на сильной доле',en:'a rest on the downbeat'}
+};
+// грув: c1, c2 — аккорды, cl — ячейка, f — преобразование ячейки, xs — чем бьётся x
+const groove=(c1,c2,cl,f,xs)=>{f=f||(p=>p);xs=xs||mx;
+  const m=(a,b)=>ch=>ch==='C'?a:ch==='H'?b:xs(a);
+  const P=f(CL[cl].P),Q=f(CL[cl].Q),bar=(p,a,b)=>cell(p,m(a,b));
+  return [
+    [bar(dry(P),c1,c2),bar(dry(P),c1,c2)].join(' | '),
+    [bar(P,c1,c2),bar(P,c1,c2)].join(' | '),
+    [bar(P,c1,c2),bar(Q,c1,c2)].join(' | '),
+    sys2([bar(P,c1,c2),bar(Q,c1,c2),bar(P,c2,c1),bar(Q,c2,c1)]),
+    sys2([bar(P,c1,c2),bar(Q,c1,c2),bar(P,c2,c1),bar(f(fill(CL[cl].Q)),c1,c2)])
+  ].map(t=>({t:Array.isArray(t)?t:[t]}));};
+// варианты грув-упражнения: [аккорд1, аккорд2, ячейка]
+const gV=(list,f,xs,sep)=>list.map(([a,b,cl])=>({l:K[a][1]+(sep||' и ')+K[b][1]+', '+CL[cl].ru,lv:groove(K[a][0],K[b][0],cl,f,xs)}));
+const gEN=(list,sep)=>list.map(([a,b,cl])=>K[a][1]+(sep||' and ')+K[b][1]+', '+CL[cl].en);
+const gV1=(list,f)=>list.map(([a,b,cl])=>({l:K[a][1]+': два обращения, '+CL[cl].ru,lv:groove(K[a][0],K[b][0],cl,f)}));
+const gEN1=list=>list.map(([a,b,cl])=>K[a][1]+': two voicings, '+CL[cl].en);
+// линия: n — ноты (1…6), A, B — такты; x — глухая нота на струне предыдущей ноты
+const lineMap=n=>(ch,o)=>{if(ch!=='x')return n[+ch-1];for(let i=o.length-1;i>=0;i--)if(o[i].t!=='.')return mx(o[i].t);return mx(n[0]);};
+const lmin=n=>Math.min(...n.join('+').match(/\d+/g).map(Number));
+const line=(n,A,B)=>{const b=p=>cell(p,lineMap(n)),lo=lmin(n)>=7,s4=lo?-7:5,s5=lo?-5:7;
+  return [
+    [b(dry(A)),b(dry(A))].join(' | '),
+    [b(A),b(A)].join(' | '),
+    [b(A),b(B)].join(' | '),
+    sys2([b(A),b(B),sh(b(A),s4),sh(b(B),s4)]),
+    sys2([b(A),b(B),sh(b(A),s4),sh(b(B),s5)])
+  ].map(t=>({t:Array.isArray(t)?t:[t]}));};
+const lV=list=>list.map(x=>({l:x.l,lv:line(x.n,x.A,x.B)}));
+const oc=(s,f)=>s==='E'?'E'+f+'+D'+(f+2):s==='A'?'A'+f+'+G'+(f+2):'D'+f+'+B'+(f+3);
+
+// ---- данные упражнений ----
+const B1L=[['E9','A13','A'],['Em7','Am7','C'],['G13','C9','F'],['Bm7','Em9','B'],['D9','G13','G'],['Fsm7','Bm7','H']];
+const B3L=[['Am7','D9','E'],['Cm7','F9','D'],['E7s9','D7s9','B'],['Gm7','C9','H'],['Em9','A13','A'],['tDm','tG','C']];
+const B4L=[['tE','tAE','F'],['tDE','tE','A'],['tAm','tDm','E'],['tG','tCG','B'],['tEm','tAmE','H'],['tE9','tE13','C']];
+const R6L=[['E9','A13','A'],['Am7','D9','C'],['Em7','A13','G'],['G13','C9','H'],['D7s9','G13','B'],['Bm7','E9','E']];
+const R7L=[['E7s9','A13','D'],['D7s9','G13','E'],['A7s9','D9','G'],['E7s9','E9','B'],['D7s9','D9','H'],['A7s9','A9','A']];
+const R8L=[['E9','E13','F'],['D9','D13','A'],['A9','A913','C'],['C9','C13','E'],['G9','G913','H'],['F9','F13','B']];
+const R13L=[['Em7','Am7','D'],['E9','A13','H'],['Am7','D9','E'],['G13','C9','G'],['Bm7','Em7','B'],['Cm7','F9','A']];
+const R14L=[['E9','A13','G'],['Am7','D9','A'],['Em9','A13','C'],['G13','C9','D'],['Bm7','E9','E'],['F9','C9','H']];
+const R37L=[['uE9','tE9','F'],['tAm','uAm7','A'],['uD9','uD9b','B'],['tG','uG2','C'],['uFs1','uFs2','E'],['uC1','uC2','H']];
+// кварты: три ноты через кварту на струнах D G B (или A D G)
+const Q3=f=>'D'+f+'+G'+f+'+B'+(f+1),QA=f=>'A'+f+'+D'+f+'+G'+f;
+const R10D=[[Q3(7),Q3(9),'G','лады 7 и 9, D–G–B','frets 7 and 9, D–G–B'],[Q3(5),Q3(7),'H','лады 5 и 7, D–G–B','frets 5 and 7, D–G–B'],
+  [QA(5),QA(7),'D','лады 5 и 7, A–D–G','frets 5 and 7, A–D–G'],[Q3(10),Q3(12),'A','лады 10 и 12, D–G–B','frets 10 and 12, D–G–B'],
+  [QA(7),QA(5),'C','сверху вниз: лады 7 и 5, A–D–G','downward: frets 7 and 5, A–D–G'],[Q3(2),Q3(4),'E','лады 2 и 4, D–G–B','frets 2 and 4, D–G–B']];
+const B2D=[
+  {l:'{E}m, верхние струны, 12-я позиция',n:['G14','G12','B12','B15','e12'],A:'1x1x2x1x3x2x1xx2',B:'x1x2x3x4x3x2x1-x'},
+  {l:'{A} дорийский, 5-я позиция',n:['G7','G5','B5','B7','D7'],A:'5x1x2x1x5x1-3x2x',B:'1x2x3x4-3x1x2x5x'},
+  {l:'{D}m, 10-я позиция, через струну',n:['B10','B13','G10','G12','e10'],A:'x1x2x1x3x4x3x1x5',B:'x5x1x2x1x3-4x3x.'},
+  {l:'{E} миксолидийский, открытая позиция',n:['D2','D0','G1','G2','A2'],A:'5x1x2x3x4x3x1x2x',B:'5-1x2x5x1x3-4x3x'},
+  {l:'{G}, мажорная пентатоника, 2-я позиция',n:['D5','D2','G2','G4','B3'],A:'2x1x3x4x5x4x3x1x',B:'1x5-4x3x1x2-3x4x'},
+  {l:'{B}m, 7-я позиция, двойные ноты',n:['G7+B7','G9+B10','G7+B10','e7','B7'],A:'1x1x2x1x3x1x4x5x',B:'x1x2-1x3x4-5x1x.'}
+];
+const B5D=[
+  {l:'Октавы {s:A}–{s:G}, {E}m',n:[oc('A',7),oc('A',10),oc('A',12),oc('A',5),oc('A',9)],A:'1x1x2x1x3x2x1x4x',B:'1x2x3x5x3x2x1-x.'},
+  {l:'Октавы {s:D}–{s:B}, {A}m',n:[oc('D',7),oc('D',10),oc('D',12),oc('D',5),oc('D',9)],A:'1-x1x2x3x2x1x4x1',B:'x1x4x1x2x3-2x1x.'},
+  {l:'Октавы {s:E}–{s:D}, {G}',n:[oc('E',3),oc('E',5),oc('E',8),oc('E',10),oc('E',7)],A:'1x2x1x3x4x3x1x2x',B:'1xx1x2x3x5-3x2x1'},
+  {l:'Октавы {s:A}–{s:G}, {D}m',n:[oc('A',5),oc('A',8),oc('A',10),oc('A',3),oc('E',5)],A:'x1x1x2x3x2x1x4x5',B:'x1x2-3x2x1x4-5x.'},
+  {l:'Октавы {s:D}–{s:B}, {B}m',n:[oc('D',9),oc('D',12),oc('D',14),oc('D',7),oc('D',4)],A:'1x2x1x3x2x1x4x5x',B:'1-2x3-2x1x4x5-x.'},
+  {l:'Октавы по двум парам струн, {C}',n:[oc('E',8),oc('E',10),oc('A',8),oc('A',10),oc('E',11)],A:'1x2x3x4x3x2x1x5x',B:'1x1x3x4x5x4-3x2x'}
+];
+// сексты и терции с подходом на полтона снизу: 1 — подход, 2 — цель, 3 — сосед сверху, 4 — бас
+const sixG=r=>['G'+r+'+e'+(r-1),'G'+(r+1)+'+e'+r,'G'+(r+2)+'+e'+(r+2)],sixD=r=>['D'+r+'+B'+(r-1),'D'+(r+1)+'+B'+r,'D'+(r+2)+'+B'+(r+2)];
+const R9D=[
+  {l:'Сексты {s:G}–{s:e}, {A}',n:sixG(5).concat(['A0']),A:'4x12x3x2x12-x3x2',B:'4-x12x3-2x12x3x2'},
+  {l:'Сексты {s:G}–{s:e}, {E}, 12-я позиция',n:sixG(12).concat(['G9']),A:'12x3x2-x12x3x4x.',B:'x12-3x2x4x12x3-2'},
+  {l:'Сексты {s:D}–{s:B}, {D}',n:sixD(3).concat(['A5']),A:'4x12x3x2x4x12x3x',B:'12x3-2x12x4-x3x2'},
+  {l:'Сексты {s:D}–{s:B}, {G}',n:sixD(8).concat(['E3']),A:'12-3x2x4x12x3x2x',B:'4x12x3x2-12x3x4x'},
+  {l:'Сексты {s:G}–{s:e}, {C}',n:sixG(8).concat(['A3']),A:'x12x3x2x12x4x3x2',B:'12x3x2-4-12x3x2x'},
+  {l:'Терции {s:G}–{s:B}, {E}',n:['G8+B8','G9+B9','G11+B10','E0'],A:'4x12x3x2x4x12x3x',B:'12x3-2x4x12-3x2x'}
+];
+const R11D=[
+  {l:'{A}: малая терция → большая',n:['G5+B5+e5','Gh6','B5','e5','A0'],A:'1x2x3x4x1x2x5x2x',B:'1-2x4x3x1x2-5x2x'},
+  {l:'{D}: кварта и назад',n:['G7+B7+e5','Bh8','Bp7','e5','D7'],A:'1x2x3x4x5x1x2x3x',B:'1x2-3x5x1x2x3-4x'},
+  {l:'{E}, открытая позиция: квинта → секста',n:['G1+B0+e0','D2','Dh4','D2','E0'],A:'5x1x2x3x4x1x2x5x',B:'5-1x2x3-4x1x5x.x'},
+  {l:'{G}: терция → кварта',n:['G4+B3+e3','Gh5','Gp4','e3','E3'],A:'1x2x3x4x5x1x2x3x',B:'5x1x2-3x1x4x5-x.'},
+  {l:'{C}, 8-я позиция: секста → септима',n:['G9+B8+e8','Bh10','Bp8','e8','A3'],A:'1x2x3x1x5x2x3x4x',B:'5x1x2-3x1x2x4-x.'},
+  {l:'{F#}m: двойная нота и хаммер',n:['G4+B7','Gh6','e5','B7+e5','E2'],A:'1x2x3x4x5x1x2x4x',B:'5-1x2x4x3x1x2-4x'}
+];
+const R12D=[
+  {l:'{E} дорийский, низкие струны',n:['E0','E3','A2','A4','D2','E5'],A:'1x1x2x3x1x4x5x6x',B:'1-x1x2x3x4x2-1x.'},
+  {l:'{A}m, от открытой {o:A}',n:['A0','A3','A5','D2','D5','E3'],A:'1x2x1x3x4x5x3x6x',B:'1x1-2x3x1x4-x5x.'},
+  {l:'{D} дорийский, от открытой {o:D}',n:['D0','D3','D5','G2','A5','A3'],A:'1x2x3x4x3x2x5x6x',B:'1-x1x2x3-4x3x6x.'},
+  {l:'{G}, мажорная пентатоника',n:['E3','E5','A2','A3','A5','D5'],A:'1x2x3x4x5x6x5x4x',B:'1x1x2-3x5x4x6-x.'},
+  {l:'{E} миксолидийский, по трём струнам',n:['E0','A2','A4','A5','D2','E2'],A:'1x2x3x4x5x4x3x6x',B:'1x6x1x2-3x4x5-x.'},
+  {l:'{C}m, 3-я позиция',n:['A3','A6','D3','D5','E8','E6'],A:'1x2x3x4x3x2x5x6x',B:'1-x2x3x4-5x6x1x.'}
+];
+const R15D=[
+  {c:'E9',cl:'A',n:['G9','G7','B7','B9'],A:'1x2x3x4x3x2x1-x.'},
+  {c:'Am7',cl:'C',n:['D7','D5','G5','G7'],A:'1x2x3x4-3x2x1x.x'},
+  {c:'G13',cl:'B',n:['A5','A2','D2','D5'],A:'x1x2x3x4x3x2x1-.'},
+  {c:'D9',cl:'D',n:['G7','G5','B5','B7'],A:'1-2x3x4x3x2-1x.x'},
+  {c:'Em7',cl:'H',n:['A7','A5','D5','D7'],A:'1x2x3-4x3x2x1x.x'},
+  {c:'C9',cl:'E',n:['G5','G3','B3','B5'],A:'1x2x3x4x3-2x1x.x'}
+];
+const r15=x=>{const c=K[x.c][0],gb=p=>cell(p,ch=>ch==='C'?c:mx(c)),lb=p=>cell(p,lineMap(x.n)),P=CL[x.cl].P,Q=CL[x.cl].Q,B=x.A.split('').reverse().join('').replace(/^([.x]*)/,'$1');
+  const B2=x.A.slice(8)+x.A.slice(0,8);
+  return [[gb(dry(P)),lb(dry(x.A))].join(' | '),[gb(P),lb(x.A)].join(' | '),sys2([gb(P),lb(x.A),gb(Q),lb(B2)]),
+    sys2([gb(P),lb(x.A),gb(Q),lb(B2),gb(P),lb(x.A),gb(fill(Q)),lb(B2)]),
+    sys2([gb(P),lb(x.A),gb(Q),lb(B2),gb(P),sh(lb(x.A),5),gb(fill(Q)),sh(lb(B2),5)])].map(t=>({t:Array.isArray(t)?t:[t]}));};
+
+const EX={
+W0:{name:'Разминка',goal:'Разогреть руки и включить шестнадцатую.',how:'Минуту без гитары: потри ладони до тепла, медленные круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем на чистом звуке: рука медиатором движется вниз-вверх без остановки, по заглушённым струнам, аккорд {E}9 — на каждую долю.',tip:'Кисть свободная, движение от запястья. Громкость не нужна.',sub:2,v:[{l:'{E}9 и глухие удары',t:[cell('CxCxCxCx',ch=>ch==='C'?K.E9[0]:mx(K.E9[0]))]}]},
+W1:{name:'Мобилизация без гитары',goal:'Разогнать кровь в кистях и предплечьях.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Потряси расслабленными кистями.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
+W2:{name:'Маятник шестнадцатыми',goal:'Запустить непрерывное движение правой руки.',how:'Левая рука глушит три верхние струны, правая играет ровные шестнадцатые вниз-вверх. Во втором такте на первую и третью доли звучит аккорд {E}9 на верхних струнах, рука не останавливается.',tip:'Удар вниз — на долю и на «и», вверх — между ними. Рука ходит так же и там, где звука нет.',sub:4,v:[{l:'Глухие удары и {E}9',t:[cell('xxxxxxxxxxxxxxxx',()=>'Gx+Bx+ex')+' | '+cell('CxxxxxxxCxxxxxxx',ch=>ch==='C'?K.uE9[0]:'Gx+Bx+ex')]}]},
+W3:{name:'Девятые и тринадцатые',goal:'Вспомнить главные фанковые аккорды.',how:'Чистый звук, восьмые, медленно. {E}9 → {E}13 → {E}7#9: меняется только нота на {s:B}. Каждый аккорд — короткий, левая рука отпускает сразу после удара.',tip:'Аккорд с тоникой на {s:A}: большой палец или край указательного глушат {s:E}.',sub:2,v:[{l:'{E}9, {E}13, {E}7#9',t:[cell('C.C.H.H.',ch=>ch==='C'?K.E9[0]:K.E13[0])+' | '+cell('C.C.H.C-',ch=>ch==='C'?K.E7s9[0]:K.E9[0])]}]},
+
+B1:{n:1,name:'Непрерывная рука',goal:'Правая рука ходит шестнадцатыми без остановки, аккорд звучит только там, где нужно.',how:'Шестнадцатые: вниз на доли и на «и», вверх между ними. На x левая рука ослабляет аккорд и медиатор бьёт по заглушённым струнам. На первом уровне вместо x рука проходит мимо струн.',tip:'Удар не ускоряет руку и не останавливает её: меняется только то, касается ли медиатор струн.',sub:4,lvl:['Только удары, рука ходит в воздухе','Удары и глухие','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(B1L)},
+B2:{n:2,name:'Чикен-скретч',goal:'Одиночные ноты на верхних струнах между глухими ударами.',how:'Шестнадцатые, рука не останавливается. Нота звучит коротко, следующий x — та же струна под ослабленным пальцем. На четвёртом и пятом уровнях фраза переносится на другие ступени.',tip:'Звук — сухой щелчок. Пальцы левой руки не отрываются от струн, только ослабляют нажим.',sub:4,lvl:['Только ноты','Ноты и глухие','Двухтактная фраза','Смена ступени','Четыре ступени: I, IV и V'],v:lV(B2D)},
+B3:{n:3,name:'Стаккато левой рукой',goal:'Короткий аккорд и тишина сразу после него.',how:'Каждый удар — шестнадцатая, затем левая рука ослабляет нажим и аккорд замолкает. Точка в табе — тишина, правая рука при этом продолжает движение.',tip:'Глушит левая рука, а не ладонь правой: правая свободна для шестнадцатых.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(B3L,stac)},
+B4:{n:4,name:'Малые аккорды на верхних струнах',goal:'Быстрая смена трезвучий на трёх верхних струнах.',how:'Удары по очереди: первое обращение, второе. Звучат только три верхние струны, остальные под левой рукой. На четвёртом уровне аккорды меняются ролями.',tip:'Пальцы переходят коротким движением, общая нота остаётся на месте.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Аккорды меняются ролями','Четыре такта с концовкой'],v:gV(B4L,alt,null,' → ')},
+B5:{n:5,name:'Октавы',goal:'Однонотная линия октавами без лишних струн.',how:'Октава через струну: нижний палец — указательный, верхний — мизинец или безымянный. Струна между ними заглушена мякотью указательного. Шестнадцатые, на x — глухой удар по той же октаве.',tip:'Можно бить по всем струнам: звучат только две ноты октавы, остальное заглушено.',sub:4,lvl:['Только ноты','Ноты и глухие','Двухтактная фраза','Смена ступени','Четыре ступени: I, IV и V'],v:lV(B5D)},
+
+R6:{name:'Синкопы',goal:'Удар между долями, а не на них.',how:'Акценты сдвинуты с доли на «и» или на шестнадцатую. Считай вслух «раз-и-два-и», рука продолжает шестнадцатые.',tip:'Синкопа точнее, когда метроном слышен: удар не прилипает к щелчку.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(R6L)},
+R7:{name:'Аккорд 7#9',goal:'Жёсткий удар доминанты с повышенной ноной.',how:'Аккорд 7#9 — короткими ударами, между ними глухие. Во второй половине — разрешение в соседний аккорд.',tip:'7#9 звучит резко: удар короткий, без звона.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(R7L,stac,null,' → ')},
+R8:{name:'Девятая и тринадцатая',goal:'Ход 9 → 13 внутри одного аккорда.',how:'Удары по очереди: девятый аккорд, тринадцатый. Меняется одна нота на {s:B}, остальные пальцы стоят.',tip:'Мизинец ставится на ноту заранее и не давит, пока не нужен.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Аккорды меняются ролями','Четыре такта с концовкой'],v:gV(R8L,alt,null,' → ')},
+R9:{name:'Ду-дакс',goal:'Двойные ноты с подходом на полтона.',how:'Двойная нота съезжает в цель с полутона ниже: подход и цель — соседние шестнадцатые. Между ними глухие удары и бас на низкой струне.',tip:'Подход тише цели. Слайда нет: пальцы переставляются, рука движется одним целым.',sub:4,lvl:['Только ноты','Ноты и глухие','Двухтактная фраза','Смена ступени','Четыре ступени: I, IV и V'],v:lV(R9D)},
+R10:{name:'Кварты',goal:'Квартовые аккорды и движение по ним.',how:'Три ноты через кварту одним барре или двумя пальцами. Удары по очереди: нижнее и верхнее положение.',tip:'Кварты звучат открыто: не дави, чтобы не уходил строй.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Положения меняются ролями','Четыре такта с концовкой'],v:R10D.map(x=>({l:'Кварты: '+x[3]+', '+CL[x[2]].ru,lv:groove(x[0],x[1],x[2],alt)}))},
+R11:{name:'Хаммеры в аккордах',goal:'Мелодия внутри аккорда: хаммер и пулл-офф с аккордового положения.',how:'Аккорд держится, один палец добавляет хаммер или снимает пулл-оффом. Бас на низкой струне — большим пальцем или медиатором.',tip:'Аккорд не перехватывается: двигается только один палец.',sub:4,lvl:['Только ноты','Ноты и глухие','Двухтактная фраза','Смена ступени','Четыре ступени: I, IV и V'],v:lV(R11D)},
+R12:{name:'Однонотный рифф',goal:'Рифф на низких струнах с глухими нотами.',how:'Шестнадцатые: нота, глухая, нота. Глухая — на той же струне, палец лежит без нажима.',tip:'Глухая нота — часть ритма, не шум: она такая же ровная, как звучащая.',sub:4,lvl:['Только ноты','Ноты и глухие','Двухтактная фраза','Смена ступени','Четыре ступени: I, IV и V'],v:lV(R12D)},
+R13:{name:'Ладонь в кармане',goal:'Удары под ладонью вместо глухих.',how:'Где в табе m — аккорд под ладонью правой руки у подставки, коротко и тихо. Открытые удары — громкие. Разница громкости и есть грув.',tip:'Ладонь не давит: она касается струн и сразу отходит.',sub:4,lvl:['Только открытые удары','Открытые и под ладонью','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(R13L,null,c=>c+'m')},
+R14:{name:'Шестнадцатые со свингом',goal:'Свинговая шестнадцатая: долгая-короткая.',how:'Каждая пара шестнадцатых — долгая и короткая (2:1), метроном — секстоли. Рука движется так же, вниз-вверх.',tip:'Свинг — в правой руке: удар вверх чуть позже. Не превращай его в триоли.',sub:6,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Смена аккорда','Четыре такта с концовкой'],v:gV(R14L,swing)},
+R15:{name:'Аккорд и линия',goal:'Одна партия: такт аккордов, такт однонотной линии.',how:'Первый такт — грув аккордом, второй — короткая линия на средних струнах. Рука не останавливается на стыке.',tip:'Линия продолжает грув: тот же ритм, та же громкость.',sub:4,lvl:['Только удары и ноты','Удары, ноты и глухие','Четыре такта','Восемь тактов','Линия на другой ступени'],v:R15D.map(x=>({l:K[x.c][1]+' и линия, '+CL[x.cl].ru,lv:r15(x)}))},
+R37:{name:'Вамп одного аккорда',goal:'Один аккорд по кругу, два обращения на верхних струнах.',how:'Аккорд не меняется, меняется голос: удары по очереди в двух положениях на трёх верхних струнах. Глухие между ними.',tip:'Такт повторяется много раз: держи его одинаковым, без украшений.',sub:4,lvl:['Только удары','Удары и глухие','Двухтактная фраза','Положения меняются ролями','Четыре такта с концовкой'],v:gV1(R37L,alt)}
+};
+const GL=['Hits only, the hand moves in the air','Hits and scratches','A two-bar phrase','Chord change','Four bars with an ending'];
+const LL=['Notes only','Notes and dead notes','A two-bar phrase','Move to another degree','Four degrees: I, IV and V'];
+const ROLE=['Hits only','Hits and scratches','A two-bar phrase','The voicings swap roles','Four bars with an ending'];
+const EN_B2=['{E} minor, top strings, position 12','{A} Dorian, position 5','{D} minor, position 10, string skips','{E} Mixolydian, open position','{G} major pentatonic, position 2','{B} minor, position 7, double stops'];
+const EN_B5=['Octaves on {s:A}–{s:G}, {E} minor','Octaves on {s:D}–{s:B}, {A} minor','Octaves on {s:E}–{s:D}, {G}','Octaves on {s:A}–{s:G}, {D} minor','Octaves on {s:D}–{s:B}, {B} minor','Octaves on two string pairs, {C}'];
+const EN_R9=['Sixths on {s:G}–{s:e}, {A}','Sixths on {s:G}–{s:e}, {E}, position 12','Sixths on {s:D}–{s:B}, {D}','Sixths on {s:D}–{s:B}, {G}','Sixths on {s:G}–{s:e}, {C}','Thirds on {s:G}–{s:B}, {E}'];
+const EN_R11=['{A}: minor third to major','{D}: the fourth and back','{E}, open position: fifth to sixth','{G}: third to fourth','{C}, position 8: sixth to seventh','{F#} minor: double stop and hammer-on'];
+const EN_R12=['{E} Dorian, low strings','{A} minor from the open {o:A}','{D} Dorian from the open {o:D}','{G} major pentatonic','{E} Mixolydian across three strings','{C} minor, position 3'];
+const EXEN={
+W0:{name:'Warm-up',goal:'Warm up the hands and lock into the sixteenth.',how:'One minute without the guitar: rub your palms until warm, slow wrist and shoulder circles, open and close your fists 20 times. Then on a clean tone: the picking hand moves down and up without stopping over muted strings, with an {E}9 chord on every beat.',tip:'Loose wrist, the motion comes from it. No need for volume.',v:['{E}9 and scratches']},
+W1:{name:'Mobility without the guitar',goal:'Get blood flowing in the hands and forearms.',how:'Rub your palms until warm. Wrist circles both ways, 10 each. Shoulders up, back, down. Open and close your fists 20 times. Shake out relaxed hands.',tip:'No stretching into pain: only warmth and mobility.'},
+W2:{name:'Sixteenth-note pendulum',goal:'Start the non-stop motion of the picking hand.',how:'The fretting hand mutes the top three strings; the picking hand plays even sixteenths down and up. In the second bar an {E}9 on the top strings sounds on beats one and three; the hand does not stop.',tip:'Down on the beat and the "and", up in between. The hand moves the same where there is no sound.',v:['Scratches and {E}9']},
+W3:{name:'Ninths and thirteenths',goal:'Recall the core funk chords.',how:'Clean tone, eighths, slowly. {E}9 → {E}13 → {E}7#9: only the note on the {s:B} string changes. Every chord is short; the fretting hand lets go right after the strum.',tip:'With the root on the {s:A} string, the thumb or the edge of the index finger mutes the {s:E} string.',v:['{E}9, {E}13, {E}7#9']},
+B1:{name:'The non-stop hand',goal:'The picking hand keeps moving in sixteenths; the chord sounds only where it should.',how:'Sixteenths: down on the beats and the "and", up in between. On x the fretting hand eases off and the pick hits the muted strings. On level 1 the hand passes over the strings instead of the x.',tip:'A hit neither speeds the hand up nor stops it: the only change is whether the pick touches the strings.',lvl:GL,v:gEN(B1L)},
+B2:{name:'Chicken scratch',goal:'Single notes on the top strings between muted scratches.',how:'Sixteenths, the hand never stops. The note is short; the next x is the same string under a relaxed finger. On levels 4 and 5 the phrase moves to other degrees.',tip:'The sound is a dry click. The fretting fingers stay on the strings and only ease the pressure.',lvl:LL,v:EN_B2},
+B3:{name:'Fretting-hand staccato',goal:'A short chord and silence right after it.',how:'Every hit is a sixteenth; then the fretting hand eases off and the chord stops. A dot in the tab is silence while the picking hand keeps moving.',tip:'The fretting hand mutes, not the picking-hand palm: the picking hand stays free for sixteenths.',lvl:GL,v:gEN(B3L)},
+B4:{name:'Small chords on the top strings',goal:'Quick triad changes on the top three strings.',how:'Hits alternate: the first voicing, then the second. Only the top three strings ring, the rest are under the fretting hand. On level 4 the chords swap roles.',tip:'The fingers move a short way and the common note stays put.',lvl:ROLE,v:gEN(B4L,' → ')},
+B5:{name:'Octaves',goal:'A single-note line in octaves with no extra strings.',how:'An octave with one string between: the index finger takes the low note, the little or ring finger the high one. The flesh of the index finger mutes the string between them. Sixteenths; on x a muted hit on the same octave.',tip:'You can strike all the strings: only the two octave notes sound, everything else is muted.',lvl:LL,v:EN_B5},
+R6:{name:'Syncopation',goal:'Hits between the beats, not on them.',how:'The accents move off the beat onto the "and" or onto a sixteenth. Count "one-and-two-and" out loud; the hand keeps up the sixteenths.',tip:'Syncopation gets tighter when you hear the metronome: the hit does not stick to the click.',lvl:GL,v:gEN(R6L)},
+R7:{name:'The 7#9 chord',goal:'A hard dominant hit with a sharp nine.',how:'The 7#9 chord in short stabs with scratches between. In the second half it resolves to a neighbouring chord.',tip:'7#9 sounds harsh: keep the stab short with no ring.',lvl:GL,v:gEN(R7L,' → ')},
+R8:{name:'Nine and thirteen',goal:'The 9 → 13 move inside one chord.',how:'Hits alternate: the ninth chord, then the thirteenth. One note on the {s:B} string changes; the other fingers stay.',tip:'Hover the little finger over its note and do not press until it is needed.',lvl:ROLE,v:gEN(R8L,' → ')},
+R9:{name:'Doo-dacks',goal:'Double stops with a half-step approach.',how:'The double stop slips into its target from a half step below: approach and target are neighbouring sixteenths. Scratches and a bass note on a low string in between.',tip:'The approach is quieter than the target. There is no slide: the fingers shift, the hand moves as one.',lvl:LL,v:EN_R9},
+R10:{name:'Fourths',goal:'Quartal chords and moving between them.',how:'Three notes a fourth apart, with one barre or two fingers. Hits alternate between the lower and the upper position.',tip:'Fourths sound open: do not press hard or they go out of tune.',lvl:['Hits only','Hits and scratches','A two-bar phrase','The positions swap roles','Four bars with an ending'],v:R10D.map(x=>'Fourths: '+x[4]+', '+CL[x[2]].en)},
+R11:{name:'Hammer-ons in chords',goal:'A melody inside a chord: hammer-ons and pull-offs from a chord shape.',how:'Hold the chord; one finger adds a hammer-on or takes a note away with a pull-off. The bass note on a low string with the thumb or the pick.',tip:'Do not re-grip the chord: only one finger moves.',lvl:LL,v:EN_R11},
+R12:{name:'Single-note riff',goal:'A riff on the low strings with dead notes.',how:'Sixteenths: note, dead note, note. The dead note is on the same string with the finger resting on it without pressure.',tip:'A dead note is part of the rhythm, not noise: it is as even as a sounding one.',lvl:LL,v:EN_R12},
+R13:{name:'Palm in the pocket',goal:'Palm-muted strums instead of scratches.',how:'Where the tab says m, the chord sits under the picking-hand palm by the bridge, short and quiet. The open hits are loud. The difference in volume is the groove.',tip:'The palm does not press: it touches the strings and lifts right away.',lvl:['Open hits only','Open and palm-muted','A two-bar phrase','Chord change','Four bars with an ending'],v:gEN(R13L)},
+R14:{name:'Swung sixteenths',goal:'The swung sixteenth: long-short.',how:'Every pair of sixteenths is long and short (2:1); the metronome plays sextuplets. The hand moves the same way, down and up.',tip:'The swing lives in the picking hand: the upstroke comes a little later. Do not turn it into triplets.',lvl:GL,v:gEN(R14L)},
+R15:{name:'Chord and line',goal:'One part: a bar of chords, a bar of single-note line.',how:'The first bar is a chord groove, the second a short line on the middle strings. The hand does not stop at the joint.',tip:'The line continues the groove: same rhythm, same volume.',lvl:['Hits and notes only','Hits, notes and scratches','Four bars','Eight bars','The line on another degree'],v:R15D.map(x=>K[x.c][1]+' and a line, '+CL[x.cl].en)},
+R37:{name:'One-chord vamp',goal:'One chord in a loop, two voicings on the top strings.',how:'The chord stays, the voice changes: hits alternate between two positions on the top three strings, with scratches between them.',tip:'The bar repeats many times: keep it the same, no embellishments.',lvl:ROLE,v:gEN1(R37L)}
+};
+const TESTS=[
+  {id:'FGT1',ru:['Глухие шестнадцатые','Три верхние струны под левой рукой, держать 30 секунд без сбоя.'],en:['Muted sixteenths','The top three strings under the fretting hand, hold 30 seconds without a slip.'],sub:4,t:[R('Gx+Bx+ex',16)]},
+  {id:'FGT2',ru:['Грув {E}9','Акцент на «и», два такта подряд без сбоя.'],en:['{E}9 groove','Accent on the "and", two bars in a row without a slip.'],sub:4,t:[groove(K.E9[0],K.A13[0],'A')[1].t[0]]},
+  {id:'FGT3',ru:['Непрерывная рука','{E}9 на каждую долю, между ними глухие, держать 60 секунд.'],en:['The non-stop hand','{E}9 on every beat with scratches between, hold 60 seconds.'],sub:4,t:[cell('CxxxCxxxCxxxCxxx',ch=>ch==='C'?K.E9[0]:mx(K.E9[0]))]},
+  {id:'FGT4',ru:['Октавы','{E}m, октавы {s:A}–{s:G}, шестнадцатые с глухими, два такта.'],en:['Octaves','{E} minor, octaves on {s:A}–{s:G}, sixteenths with dead notes, two bars.'],sub:4,t:[line(B5D[0].n,B5D[0].A,B5D[0].B)[2].t[0]]},
+  {id:'FGT5',ru:['Однонотный рифф','{E} дорийский на низких струнах, два такта подряд без сбоя.'],en:['Single-note riff','{E} Dorian on the low strings, two bars in a row without a slip.'],sub:4,t:[line(R12D[0].n,R12D[0].A,R12D[0].B)[2].t[0]]}
+];
+const RIFF={
+  ru:['рифф держится на одном аккорде','первая доля такта — долгий удар, дальше только синкопы','только три верхние струны','в риффе есть аккорд 7#9 или 13','второй раз рифф повторяется с изменённой последней долей','через весь рифф проходят глухие шестнадцатые','не больше четырёх разных нот','рифф начинается со второй шестнадцатой','одна доля — полная тишина, рука при этом движется','в риффе есть октавы или ду-дакс','первый такт — аккорды, второй — однонотная линия','темп на 20% ниже рабочего, но грув не проседает'],
+  en:['the riff stays on one chord','beat one is a long hit, then syncopation only','only the top three strings','includes a 7#9 or a 13 chord','the second time through, the last beat changes','muted sixteenths run through the whole riff','no more than four different notes','the riff starts on the second sixteenth','one beat of full silence while the hand keeps moving','includes octaves or a doo-dack','the first bar is chords, the second a single-note line','tempo 20% below your working tempo, but the groove does not sag']
+};
+const COACH={
+  W0:{free:60}
+};
+return {EX,EXEN,COACH,TESTS,RIFF};
+})();
 /*@FKG1_END@*/
 
 // ----- FKG2: фанк, гитара, часть 2 -----
