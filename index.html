@@ -4158,7 +4158,7 @@ const JZB2=(()=>{
   const md=(a,b)=>((a%b)+b)%b;
   const pc=nm=>NN.indexOf(nm);
   // нота → [струна, лад] в окне p…p+4 (p−1 — растяжка), иначе ближайший лад
-  const pl=(n,p)=>{let b=null,bs=1e9;for(let s=0;s<4;s++){const f=n-5*s;if(f<0||f>21)continue;
+  const pl=(n,p)=>{while(n<0)n+=12;while(n>34)n-=12;let b=null,bs=1e9;for(let s=0;s<4;s++){const f=n-5*s;if(f<0||f>21)continue;
     const sc=f>=p&&f<=p+4?0:f===p-1?1:5+Math.min(Math.abs(f-p),Math.abs(f-p-4))+s*0.01;if(sc<bs){bs=sc;b=[s,f];}}
     if(!b)throw new Error('JZB2: нота вне грифа '+n);return b;};
   // такт: доли — число/нота {n,t,x,v}, пара [a,b] (свинг 2+1 или две восьмые), триоль [a,b,c], {h} — половинная, {w} — весь такт, {seq:[[нота,шаги]]}, null — пауза
