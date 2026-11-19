@@ -63,7 +63,7 @@ test(`${inst}: тренер: подходы и отдых ровно уклад�
             if (x.type === 'set') {
               if (iv[k + 1] && iv[k + 1].type === 'set') errs.push(`${where}: подходы без отдыха`);
               if (x.sec < 10) errs.push(`${where}: подход ${x.sec} с`);
-              if (![1, 2, 3, 4, 6].includes(x.sub)) errs.push(`${where}: деление ${x.sub}`);
+              if (![1, 2, 3, 4, 6, 'sw'].includes(x.sub)) errs.push(`${where}: деление ${x.sub}`);
               if (![0, 1, 2, 4].includes(x.burst)) errs.push(`${where}: рывки ${x.burst}`);
               if (!METERS.includes(x.meter)) errs.push(`${where}: размер ${x.meter}`);
               if (!x.tempo || !x.tempo.length) errs.push(`${where}: нет подсказки темпа`);
