@@ -1,15 +1,18 @@
-// Отчёт: плотность нот при 100 bpm (node tests/density-scan.mjs [--all]).
+// Отчёт: плотность нот при 100 bpm (node tests/density-scan.mjs [--all] [--prof=blues-guitar,...]).
+// Профили — как в тестах: guitar, bass, blues-guitar, acoustic, blues-bass (по умолчанию все).
 // nps = ударов (не пауз) в секунду при пульсе 100 bpm; доля = пульс метронома (в x/8 — восьмая).
 // Медиана по упражнениям — ориентир; выбросы — уровни с nps вне [0.6; 1.6] × медианы инструмента.
 import { chromium } from '@playwright/test';
 import path from 'path';
 const ALL = process.argv.includes('--all');
+const pa = process.argv.find(a => a.startsWith('--prof='));
+const PROFS = pa ? pa.slice(7).split(',') : ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass'];
 const b = await chromium.launch(); const p = await b.newPage();
 await p.goto('file://' + path.resolve('index.html'));
-const rows = await p.evaluate(() => {
+const rows = await p.evaluate((PROFS) => {
   const g = window.__grif, out = [];
-  for (const inst of ['guitar', 'bass']) {
-    g.setInst(inst); g.setStrings(inst === 'bass' ? 4 : 6); g.setLang('ru');
+  for (const inst of PROFS) {
+    g.setProf(inst); g.setStrings(inst.endsWith('bass') ? 4 : 6); g.setLang('ru');
     for (const [id, ex] of Object.entries(g.EX)) {
       const nv = ex.gen ? 1 : (ex.v || []).length, nl = (ex.lvl || []).length || 1;
       for (let k = 0; k < nv; k++) for (let lv = 1; lv <= nl; lv++) {
@@ -23,9 +26,9 @@ const rows = await p.evaluate(() => {
     }
   }
   return out;
-});
+}, PROFS);
 await b.close();
-for (const inst of ['guitar', 'bass']) {
+for (const inst of PROFS) {
   const rs = rows.filter(r => r.inst === inst), s = rs.map(r => r.nps).sort((a, b) => a - b), med = s[s.length >> 1];
   console.log(`\n== ${inst}: медиана ${med} нот/с при 100 bpm (${rs.length} уровней)`);
   const by = {};

@@ -58,8 +58,8 @@ test('размеры риффа дня: свои у жанра, по 8, в EN б
     }
     return out;
   });
-  expect(r.metal).toBe(null);
-  for (const g of ['blues', 'jazz', 'funk', 'fingerstyle']) expect(r[g]).toEqual([8, 8, false]);
+  expect(r.metal).toBe(null); expect(r.blues).toBe(null);
+  for (const g of ['jazz', 'funk', 'fingerstyle']) expect(r[g]).toEqual([8, 8, false]);
   expect(r['metal.now']).toBe('4/4');
   expect(r['jazz.now']).toBe('4/4 swing');
 });
