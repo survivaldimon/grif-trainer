@@ -4137,7 +4137,426 @@ const JZA1={EX:{},EXEN:{},COACH:{}};
 /*@JZA1_END@*/
 
 // ----- JZA2: джаз, акустика, часть 2 -----
-const JZA2={EX:{},EXEN:{},COACH:{}};
+// Табы строятся от высоты (midi): нота ставится в позицию p (лады p…p+3, при нужде p-1…p+4), аккорды — шеллы и drop-2 по формулам.
+const JZA2=(()=>{
+const J=(...a)=>a.flat(Infinity).filter(x=>x!=null&&x!=='').join(' ');
+const SS=['E','A','D','G','B','e'],OP={E:40,A:45,D:50,G:55,B:59,e:64};
+const PC={C:0,'C#':1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,G:7,'G#':8,Ab:8,A:9,Bb:10,B:11};
+const CT={maj7:[0,4,7,11],7:[0,4,7,10],m7:[0,3,7,10],m7b5:[0,3,6,10],dim7:[0,3,6,9],6:[0,4,7,9],m6:[0,3,7,9],mM7:[0,3,7,11]};
+const SUF={mM7:'m(maj7)'};
+const md=(n,k)=>((n%k)+k)%k;
+// аккорд из строки 'Dm7', 'Bbmaj7', 'C#dim7'
+const C=s=>{const m=/^([A-G](?:#|b)?)(maj7|m7b5|mM7|m6|m7|dim7|7|6)$/.exec(s);if(!m)throw Error('JZA2 chord '+s);
+  return {r:PC[m[1]],t:m[2],name:'{'+m[1]+'}'+(SUF[m[2]]||m[2]),pcs:CT[m[2]].map(i=>md(PC[m[1]]+i,12))};};
+const P=s=>s.split(' ').map(C);
+const pn=a=>a.map(c=>c.name).join(' – ');
+const W=[[0,3],[-1,4],[-2,5]];
+const tryAt=(m,p,nw=3,strs=SS)=>{for(const [a,b] of W.slice(0,nw))for(const s of strs){const f=m-OP[s];if(f>=Math.max(0,p+a)&&f<=p+b)return s+f;}return null;};
+const at=(m,p,strs)=>{const t=tryAt(m,p,3,strs);if(!t)throw Error('JZA2 at '+m+'@'+p);return t;};
+const mid=t=>{const m=/^([EADGBe])[hp]?(\d+)/.exec(t);return OP[m[1]]+ +m[2];};
+// ноты звукоряда pcs в позиции p, снизу вверх
+const pos=(pcs,p)=>{const o=[];for(let m=40;m<=90;m++)if(pcs.includes(m%12)){const t=tryAt(m,p,2);if(t)o.push(t);}return o;};
+const sc=(r,iv)=>iv.map(i=>md(r+i,12));
+// ритм: q — четверти, e8 — восьмые (при sub 2), sw — свинговые восьмые триолями, tr — ровные триоли
+const q=a=>a.map(x=>x+':2');
+const e8=a=>{const o=a.slice();if(o.length%2)o[o.length-1]+=':2';return J('/2',o);};
+const sw=a=>{const o=['/3'];for(let i=0;i<a.length;i+=2)o.push(a[i+1]!=null?a[i]+':2 '+a[i+1]:a[i]+':3');return o.join(' ');};
+const tr3=a=>{const o=a.slice();while(o.length%3)o.push('.');return J('/3',o);};
+// легато: соседние ноты на одной струне — хаммер вверх, пулл-офф вниз
+const leg=a=>a.map((t,i)=>{if(!i||t.includes('+')||a[i-1].includes('+'))return t;const p=/^([EADGBe])[hp]?(\d+)/.exec(a[i-1]),c=/^([EADGBe])(\d+)(.*)$/.exec(t);
+  if(!p||!c||p[1]!==c[1]||p[2]===c[2])return t;return c[1]+(+c[2]>+p[2]?'h':'p')+c[2]+c[3];});
+const vib=a=>a.slice(0,-1).concat(a[a.length-1]+'~');
+const ud=a=>a.concat(a.slice(0,-1).reverse());
+const X=t=>t.replace(/\d+/g,'x');
+// шелл: тоника на E или A, терция и септима на D и G; у m7b5 и dim7 — ещё квинта/терция на B
+const SH={maj7:[4,11],7:[4,10],m7:[3,10],m7b5:[3,10],dim7:[3,9],6:[4,9],m6:[3,9],mM7:[3,11]};
+function shellAt(c,f,r){const [t3,t7]=SH[c.t];let o;
+  if(f==='E'){o=['E'+r,'D'+(r+t7-10),'G'+(r+t3-3)];if(c.t==='m7b5')o.push('B'+(r-1));if(c.t==='dim7')o=['E'+r,'D'+(r-1),'G'+r,'B'+(r-1)];}
+  else{o=['A'+r,'D'+(r+t3-5),'G'+(r+t7-10)];if(c.t==='m7b5'||c.t==='dim7')o=['A'+r,'D'+(r+1),'G'+(r+t7-10),'B'+(r+1)];}
+  const fr=o.map(x=>+x.slice(1));if(Math.min(...fr)<0||Math.max(...fr)>15)return null;
+  return {b:o[0],top:o.slice(1),all:o.join('+'),f,r,s:o[0][0],fifth:f==='E'?'A'+(r+2):'E'+r};}
+function shell(c,p){let best=null;for(const f of ['E','A'])for(const k of [0,12]){const r=md(c.r-(f==='E'?4:9),12)+k,x=shellAt(c,f,r);if(x&&(!best||Math.abs(r-p)<Math.abs(best.r-p)))best=x;}return best;}
+// ход аккордов: каждый следующий шелл — ближайший к предыдущему
+const comp=(cs,p)=>{let q0=p;return cs.map(c=>{const s=shell(c,q0);q0=Math.round((s.r+p)/2);return s;});};
+// drop-2 на четырёх соседних струнах, верхний голос topM
+function drop2(c,topM,strs){const cl=[topM];let m=topM;while(cl.length<4){m--;if(c.pcs.includes(md(m,12)))cl.push(m);}
+  const v=[cl[1]-12,cl[3],cl[2],cl[0]],fr=v.map((x,i)=>x-OP[strs[i]]);
+  if(Math.min(...fr)<1||Math.max(...fr)-Math.min(...fr)>4)return null;return v.map((x,i)=>strs[i]+fr[i]).join('+');}
+function inversions(c,strs,lo){const top=OP[strs[3]],o=[];for(let m=top+lo;m<top+17&&o.length<4;m++)if(c.pcs.includes(md(m,12))){const v=drop2(c,m,strs);if(v)o.push(v);else if(o.length)break;}
+  if(o.length<4)throw Error('JZA2 drop2 '+c.name);return o;}
+// такт из клеток: строка — нота/аккорд, '.' — пауза, '' — продолжение
+const cells=a=>{const o=[];a.forEach(x=>{if(x===''&&o.length)o[o.length-1][1]++;else o.push([x===''?'.':x,1]);});return o.map(([t,k])=>k>1?t+':'+k:t).join(' ');};
+const plus=(...a)=>a.filter(Boolean).join('+');
+const bars=a=>a.join(' | ');
+// прямые восьмые → свинг: восьмая e переходит в триольную сетку (чётная — 3e/2, нечётная — на третью триоль доли)
+const swc=s=>{let e=0;const T=x=>x%2?1.5*(x-1)+2:1.5*x;return J('/3',s.split(' ').map(t=>{if(t==='|')return t;if(t[0]==='/')return '';const m=/^(.*?)(?::(\d+))?$/.exec(t),k=+(m[2]||1),a=T(e),b=T(e+k);e+=k;return b-a>1?m[1]+':'+(b-a):m[1];}));};
+const appr=s=>{const t=/^([EADGBe])(\d+)/.exec(s.b);return t[1]+Math.max(0,+t[2]-1);};
+
+const EX={},EN={};
+function add(id,n,sub,ru,en,vs){
+  EX[id]=Object.assign({n},ru,{sub,v:vs.map(([l,,lv,x])=>Object.assign({l,lv:lv.map(t=>t&&t.t?Object.assign({},t,{t:[].concat(t.t)}):{t:[].concat(t)})},x||{}))});
+  EN[id]=Object.assign({},en,{v:vs.map(x=>x[1])});
+}
+// уровни линии: 1 — начало четвертями, 2 — вверх-вниз восьмыми, 3 — свинг, 4 — секвенция, 5 — свинг легато
+const g4=a=>{const o=[];for(let i=0;i+3<a.length;i++)o.push(a.slice(i,i+4));return o.flat();};
+const g3=a=>{const o=[];for(let i=0;i+2<a.length;i++)o.push(a.slice(i,i+3));return o.flat();};
+const lineLv=(T,o={})=>{const u=ud(T);return [
+  J(q(T.slice(0,8))),e8(u),sw(u),
+  o.l4?o.l4(T):(o.g===3?[tr3(g3(T)),tr3(g3(T.slice().reverse()))]:[sw(g4(T)),sw(g4(T.slice().reverse()))]),
+  o.l5?o.l5(T):sw(vib(leg(u)))];};
+
+/* A16 арпеджио септаккордов */
+const A16V=[['C','maj7',7],['D','m7',4],['G','7',2],['B','m7b5',6],['C#','dim7',3],['A','mM7',4]];
+add('A16',16,2,
+ {name:'Арпеджио септаккордов',goal:'Знать каждый септаккорд в позиции: все его ноты от нижней струны до верхней.',how:'Только ноты аккорда, по одному пальцу на лад, рука в позиции. Щипок пальцами или медиатором с упором (rest stroke). На третьем уровне — свинговые восьмые: долгая-короткая.',tip:'Пропой аккорд, пока играешь: тоника, терция, квинта, септима. Ориентир — Джо Пасс: арпеджио у него звучит как мелодия.',lvl:['Тоника — октава вверх четвертями','Вся позиция вверх и вниз','Свинговые восьмые','Секвенция по четыре ноты','Свинг легато, вибрато на последней']},
+ {name:'Seventh chord arpeggios',goal:'Know every seventh chord in position: all its notes from the low string to the top.',how:'Chord tones only, one finger per fret, the hand stays in position. Fingers or a pick with rest strokes. From level 3: swung eighths, long-short.',tip:'Sing the chord as you play: root, third, fifth, seventh. Think Joe Pass: his arpeggios sound like melodies.',lvl:['Root up an octave in quarters','The whole position up and down','Swung eighths','Four-note sequence','Swing legato, vibrato on the last note']},
+ A16V.map(([r,t,p])=>{const c=C(r+t),T=pos(c.pcs,p),i=T.findIndex(x=>mid(x)%12===c.r);return [`${c.name}, позиция ${p}`,`${c.name}, position ${p}`,lineLv(T,{l4:t==='dim7'||t==='m7b5'?null:null}).map((x,k)=>k===0?J(q(T.slice(i,i+5).concat(T.slice(i+1,i+4).reverse()))):x)];}));
+
+/* A17 ii–V–I арпеджио */
+function bounce(L,i,dir,n){const o=[];let k=i,d=dir;for(let j=0;j<n;j++){o.push(L[k]);if(k+d<0||k+d>=L.length)d=-d;k+=d;}return o;}
+const A17V=[
+  {cs:'Dm7 G7 Cmaj7',p:7,m:'up',ru:'ii–V–I в {C}: от тоники вверх',en:'ii–V–I in {C}: up from the root'},
+  {cs:'Gm7 C7 Fmaj7',p:5,m:'t3',ru:'ii–V–I в {F}: от терции (3-5-7-9)',en:'ii–V–I in {F}: from the third (3-5-7-9)'},
+  {cs:'Em7b5 A7 Dm6',p:4,m:'up',ru:'Минорный ii–V–i в {D}',en:'Minor ii–V–i in {D}'},
+  {cs:'Cm7 F7 Bbmaj7',p:5,m:'down',ru:'ii–V–I в {Bb}: от септимы вниз',en:'ii–V–I in {Bb}: down from the seventh'},
+  {cs:'Am7 D7 Gmaj7',p:2,m:'near',ru:'ii–V–I в {G}: ближайшая нота, без скачков',en:'ii–V–I in {G}: nearest note, no leaps'},
+  {cs:'Dm7 C#7 Cmaj7',p:7,m:'up',ru:'Тритоновая замена: {D}m7 – {C#}7 – {C}maj7',en:'Tritone sub: {D}m7 – {C#}7 – {C}maj7'}];
+function a17line(cs,p,m,n){let last=null,dir=1;return cs.map((c,ci)=>{
+  const pcs=m==='t3'?c.pcs.slice(1).concat(md(c.r+2,12)):c.pcs,L=pos(pcs,p);let i;
+  if(m==='down'){const s7=md(c.r+CT[c.t][3],12);i=L.map(mid).lastIndexOf(L.map(mid).filter(x=>x%12===s7).pop());dir=-1;}
+  else if(m==='near'&&last!=null){i=L.reduce((b,x,k)=>Math.abs(mid(x)-last)<Math.abs(mid(L[b])-last)?k:b,0);dir=ci%2?-1:1;if(i===0)dir=1;if(i===L.length-1)dir=-1;}
+  else{const st=m==='t3'?md(c.r+CT[c.t][1],12):c.r;i=L.findIndex(x=>mid(x)%12===st);dir=1;}
+  const o=bounce(L,i,dir,n);last=mid(o[o.length-1]);return o;});}
+const encl=(t,p)=>[at(mid(t)+1,p),at(mid(t)-1,p)];
+add('A17',17,2,
+ {name:'Арпеджио ii–V–I',goal:'Провести арпеджио через смену аккордов: главный оборот джаза.',how:'По такту на аккорд: ii, V, I. Каждый такт — ноты своего аккорда, рука не уходит из позиции. Слушай, как септима одного аккорда переходит в терцию следующего.',tip:'Если смена рвётся, играй только последнюю ноту такта и первую ноту следующего. Чарли Паркер строил целые соло на этом обороте.',lvl:['Четыре ноты на аккорд четвертями','Восемь нот на аккорд','Свинг','Два аккорда в такте','Свинг, энклоужер в следующий аккорд']},
+ {name:'ii–V–I arpeggios',goal:'Carry arpeggios through the changes of jazz’s main progression.',how:'One bar per chord: ii, V, I. Each bar uses its own chord tones and the hand stays in position. Listen to the seventh of one chord moving into the third of the next.',tip:'If the change breaks, play just the last note of the bar and the first note of the next. Charlie Parker built whole solos on this progression.',lvl:['Four notes per chord in quarters','Eight notes per chord','Swing','Two chords per bar','Swing, enclosure into the next chord']},
+ A17V.map(v=>{const cs=P(v.cs),f4=a17line(cs,v.p,v.m,4),f8=a17line(cs,v.p,v.m,8),
+   l5=f8.map((b,i)=>{const nx=f8[i+1];return nx?b.slice(0,6).concat(encl(nx[0],v.p)):b.slice(0,7).concat(b[7]+'~');});
+   return [v.ru,v.en,[J(q(f4.flat())),e8(f8.flat()),sw(f8.flat()),[sw(f4[0].concat(f4[1],f8[2])),sw(f8[2].slice().reverse().concat(f4[0]).concat(f4[1].slice().reverse()))],sw(l5.flat())]];}));
+
+/* A18 шеллы: четыре четверти (Фредди Грин) */
+const A18V=[
+  ['Dm7 G7 Cmaj7 Cmaj7',5,'ii–V–I в {C}','ii–V–I in {C}'],
+  ['Fmaj7 D7 Gm7 C7',3,'I–VI–ii–V в {F}','I–VI–ii–V in {F}'],
+  ['Dm7 G7 Cm7 F7',8,'iii–VI–ii–V в {Bb}','iii–VI–ii–V in {Bb}'],
+  ['Bm7b5 E7 Am6 Am6',5,'Минорный ii–V–i в {A}','Minor ii–V–i in {A}'],
+  ['D7 G7 C7 F7',5,'Доминанты по квартам (бридж «ритм-ченджес»)','Dominants in fourths (rhythm changes bridge)'],
+  ['F7 Bb7 Bdim7 F7',3,'Начало джаз-блюза в {F}','Opening of a jazz blues in {F}']];
+const fg=s=>[s.all+':2',s.all+':2',s.all+':2',s.all+':2'].join(' ');
+add('A18',18,2,
+ {name:'Шеллы',goal:'Аккомпанемент в три ноты: тоника, терция, септима — скелет джазовой гармонии.',how:'Тоника на нижней струне, терция и септима на средних. Удар вниз на каждую долю, струна под пальцем глохнет сразу после доли. Квинты нет: она ничего не говорит об аккорде.',tip:'Аккорды короткие и ровные, как шаги контрабаса. Это ритм-гитара Фредди Грина в оркестре Каунта Бэйси.',lvl:['Половинные','Четыре четверти','Чарльстон: раз и «и» второй доли','Два аккорда в такте','Бас на 1 и 3, верх на 2 и 4, подход к следующему басу']},
+ {name:'Shell voicings',goal:'Three-note comping: root, third, seventh, the skeleton of jazz harmony.',how:'Root on a low string, third and seventh on the middle strings. A downstroke on every beat, the notes are cut right after the beat. No fifth: it says nothing about the chord.',tip:'Short, even chords, like the steps of an upright bass. This is Freddie Green’s rhythm guitar in the Count Basie band.',lvl:['Half notes','Four quarters','Charleston: one and the “and” of two','Two chords per bar','Bass on 1 and 3, top on 2 and 4, approach to the next bass']},
+ A18V.map(([ps,p,ru,en])=>{const cs=P(ps),S=comp(cs,p),nx=i=>S[(i+1)%S.length];
+   return [ru+': '+pn(cs.filter((c,i)=>!i||c.name!==cs[i-1].name)),en+': '+pn(cs.filter((c,i)=>!i||c.name!==cs[i-1].name)),[
+   bars(S.map(s=>`${s.all}:4 ${s.all}:4`)),bars(S.map(fg)),bars(S.map(s=>`${s.all}:3 ${s.all} .:4`)),
+   [J(S[0].all+':2',S[0].all+':2',S[1].all+':2',S[1].all+':2','|',S[2].all+':2',S[2].all+':2',S[3].all+':2',S[3].all+':2'),J(S[2].all+':2',S[2].all+':2',S[1].all+':2',S[1].all+':2','|',S[0].all+':2',S[0].all+':2',S[0].all+':4')],
+   bars(S.map((s,i)=>`${s.b}:2 ${s.top.join('+')}:2 ${appr(nx(i))}:2 ${s.top.join('+')}:2`))]];}));
+
+/* A19 drop-2 */
+const A19V=[['Cmaj7','DGBe',3,'{C}maj7: четыре обращения на верхних струнах','{C}maj7: four inversions on the top strings'],
+  ['Dm7','DGBe',1,'{D}m7: обращения на верхних струнах','{D}m7: inversions on the top strings'],
+  ['G7','ADGB',1,'{G}7: обращения на средних струнах','{G}7: inversions on the middle strings'],
+  ['Bm7b5','DGBe',1,'{B}m7b5: полууменьшённый','{B}m7b5: half-diminished'],
+  ['F6','ADGB',1,'{F}6: секстаккорд на средних струнах','{F}6: sixth chord on the middle strings'],
+  ['C#dim7','DGBe',1,'{C#}dim7: одна форма через три лада','{C#}dim7: one shape every three frets']];
+add('A19',19,2,
+ {name:'Drop-2 аккорды',goal:'Четыре голоса на соседних струнах и все обращения аккорда по грифу.',how:'Аккорд в тесном расположении, второй сверху голос опущен на октаву — получается удобная форма на четырёх соседних струнах. Обращения идут вверх по грифу: верхняя нота — следующая нота аккорда.',tip:'Ставь форму целиком, а не по пальцу. Верхний голос — мелодия: слушай его отдельно. Так играют Уэс Монтгомери и Джим Холл.',lvl:['Два обращения половинными','Четыре обращения вверх','Вверх и вниз четвертями','Каждое обращение арпеджио, потом аккорд','Подход к каждому обращению с лада ниже']},
+ {name:'Drop-2 voicings',goal:'Four voices on adjacent strings and every inversion up the neck.',how:'A close-position chord with the second voice from the top dropped an octave: a playable shape on four adjacent strings. Inversions move up the neck, each top note the next chord tone.',tip:'Place the whole shape at once, not finger by finger. The top voice is the melody: listen to it on its own. Wes Montgomery and Jim Hall play like this.',lvl:['Two inversions in half notes','Four inversions up','Up and down in quarters','Each inversion arpeggiated, then the chord','Approach every inversion from a fret below']},
+ A19V.map(([cn,strs,lo,ru,en])=>{const c=C(cn),I=inversions(c,strs.replace('e','e').split(''),lo),dn=x=>x.replace(/\d+/g,d=>d-1);
+   return [ru,en,[J(I[0]+':4',I[1]+':4','|',I[1]+':4',I[0]+':4'),J(I.map(x=>x+':4')),J(q(ud(I)),I[0]+':2'),
+   I.map(x=>J(x.split('+'),x+':4')),J(I.map(x=>`${dn(x)} ${x}:3`))]];}));
+
+/* A20 босса-нова пальцами */
+const BP=[[[2,5],[1,4,6]],[[1,3,6],[1,4,7]],[[0,3,6],[2,5]]];
+const A20V=[['Am7 D7',0,'{A}m7 – {D}7, рисунок 1','{A}m7 – {D}7, pattern 1'],['Dm7 G7 Cmaj7 Cmaj7',1,'ii–V–I в {C}, рисунок 2','ii–V–I in {C}, pattern 2'],
+  ['Fmaj7 Gm7 Am7 Gm7',2,'{F}maj7 – {G}m7 – {A}m7, рисунок 3','{F}maj7 – {G}m7 – {A}m7, pattern 3'],['Cmaj7 C#dim7 Dm7 G7',0,'Уменьшённый проходящий, рисунок 1','Passing diminished, pattern 1'],
+  ['Am6 E7',1,'Минорная босса: {A}m6 – {E}7, рисунок 2','Minor bossa: {A}m6 – {E}7, pattern 2'],['Ebmaj7 Ab7 Dm7 G7',2,'{Eb}maj7 – {Ab}7 – {D}m7 – {G}7, рисунок 3','{Eb}maj7 – {Ab}7 – {D}m7 – {G}7, pattern 3']];
+function bossa(S,pt,mode){return S.map((s,i)=>{const a=Array(8).fill(''),top=s.top.join('+'),nx=S[(i+1)%S.length];
+  const ch=mode==='24'?[2,6]:pt[i%2];
+  a[0]=s.b;if(mode!=='bass1')a[4]=s.fifth;
+  ch.forEach(k=>{a[k]=plus(k===0?s.b:k===4?s.fifth:'',top);});
+  if(mode==='walk'){a[7]=plus(appr(nx),ch.includes(7)?top:'');}
+  return cells(a);});}
+add('A20',20,2,
+ {name:'Босса-нова пальцами',goal:'Бас большим пальцем на 1 и 3, аккорд пальцами в синкопах.',how:'Большой палец играет тонику на раз и квинту на три, ровно, как сурдо. Указательный, средний и безымянный щиплют верх аккорда одновременно, в рисунке из двух тактов. Рисунок варианта — свой порядок синкоп.',tip:'Бас не подстраивается под аккорды: он — метроном. Сначала проговори рисунок слогами. Ориентир — Жуан Жилберту.',lvl:['Только бас: тоника и квинта','Бас и аккорд на 2 и 4','Рисунок на одном аккорде','Рисунок по всей гармонии','Хроматический подход басом в следующий аккорд']},
+ {name:'Bossa nova fingerstyle',goal:'Thumb bass on 1 and 3, chord with the fingers in syncopation.',how:'The thumb plays the root on one and the fifth on three, steady like a surdo. Index, middle and ring pluck the top of the chord together in a two-bar pattern. Each variant has its own order of syncopations.',tip:'The bass never adjusts to the chords: it is the metronome. Say the pattern in syllables first. Think João Gilberto.',lvl:['Bass only: root and fifth','Bass and chord on 2 and 4','The pattern on one chord','The pattern through the changes','Chromatic bass approach into the next chord']},
+ A20V.map(([ps,pi,ru,en])=>{const cs=P(ps),S=comp(cs,5),pt=BP[pi];return [ru,en,[
+   bars(S.map(s=>`${s.b}:4 ${s.fifth}:4`)),bars(bossa(S,pt,'24')),bars(bossa([S[0],S[0]],pt)),bars(bossa(S,pt)),bars(bossa(S,pt,'walk'))]];}));
+
+/* A21 джаз-вальс пальцами */
+const WF=[[[0,'b'],[2,'c'],[4,'c']],[[0,'b'],[3,'c'],[5,'c']],[[0,'b'],[2,'t0'],[3,'t1'],[4,'t0'],[5,'t1']],[[0,'b'],[2,'c'],[4,'f']],[[0,'bc'],[4,'c']],[[0,'b'],[1,'t1'],[2,'c'],[5,'c']]];
+const A21V=[['Cmaj7 Am7 Dm7 G7',0,'{C}: бас и аккорд на 2 и 3','{C}: bass, chord on 2 and 3'],['Fmaj7 Dm7 Gm7 C7',1,'{F}: аккорд на «и» второй и третьей доли','{F}: chord on the “and” of 2 and 3'],
+  ['Em7b5 A7 Dm6 Dm6',2,'{D}m: арпеджио по верхним голосам','{D}m: arpeggio on the top voices'],['Cm7 F7 Bbmaj7 Gm7',3,'{Bb}: бас на 1 и 3','{Bb}: bass on 1 and 3'],
+  ['Gmaj7 E7 Am7 D7',4,'{G}: щипок на раз, аккорд на 3','{G}: pinch on one, chord on 3'],['Am6 Bm7b5 E7 Am6',5,'{A}m: подхват верхнего голоса','{A}m: top-voice pickup']];
+function waltz(S,f,mode){return S.map((s,i)=>{const a=Array(6).fill(''),top=s.top.join('+'),nx=S[(i+1)%S.length],bb=mode==='5'&&i%2?s.fifth:s.b;
+  WF[f].forEach(([k,w])=>{a[k]=w==='b'?bb:w==='c'?top:w==='bc'?plus(bb,top):w==='f'?plus(s.fifth,top):s.top[w==='t0'?0:1];});
+  if(mode==='walk')a[5]=plus(appr(nx),a[5]);
+  return cells(a);});}
+add('A21',21,2,
+ {name:'Джаз-вальс пальцами',goal:'Счёт на три: бас на раз, аккорд отвечает.',how:'Размер 3/4. Большой палец — тоника на первую долю, пальцы — верх шелла по рисунку варианта. Сильная доля одна, вальс не должен превращаться в марш.',tip:'Считай «раз-два-три» с ударением на раз. Послушай джаз-вальсы Билла Эванса.',lvl:['Только бас на раз','Рисунок на двух аккордах','Рисунок по всей гармонии','Квинта в басу каждого второго такта','Хроматический подход басом']},
+ {name:'Jazz waltz fingerstyle',goal:'Counting in three: bass on one, the chord answers.',how:'3/4 time. The thumb plays the root on beat one, the fingers play the top of the shell in the variant’s pattern. There is one strong beat: a waltz must not turn into a march.',tip:'Count “one-two-three” with the stress on one. Listen to Bill Evans’ jazz waltzes.',lvl:['Bass only on one','The pattern on two chords','The pattern through the changes','Fifth in the bass every other bar','Chromatic bass approach']},
+ A21V.map(([ps,f,ru,en])=>{const cs=P(ps),S=comp(cs,5);return [ru,en,[bars(S.map(s=>s.b+':6')),bars(waltz(S.slice(0,2),f)),bars(waltz(S,f)),bars(waltz(S,f,'5')),bars(waltz(S,f,'walk'))],{meter:'3/4'}];}));
+
+/* A22 ла помп */
+const A22V=[['Am6 Am6 Dm6 E7','Минорный свинг: {A}m6 – {D}m6 – {E}7','Minor swing: {A}m6 – {D}m6 – {E}7'],['G6 E7 A7 D7','{G}6 – {E}7 – {A}7 – {D}7','{G}6 – {E}7 – {A}7 – {D}7'],
+  ['Dm6 Dm6 A7 A7','{D}m6 – {A}7','{D}m6 – {A}7'],['C6 C#dim7 Dm7 G7','Уменьшённый проходящий в {C}','Passing diminished in {C}'],
+  ['Gm6 Gm6 D7 D7','{G}m6 – {D}7','{G}m6 – {D}7'],['Bm7b5 E7 Am6 Am6','Минорный ii–V–i в {A}','Minor ii–V–i in {A}']];
+const pmp=(s,g,beats)=>{const o=[];for(let b=0;b<beats;b++)o.push(b%2?[s.all,'','.']:[s.all,'.',g?X(s.all):'']);return o.flat();};
+add('A22',22,2,
+ {name:'Ла помп',goal:'Цыганский аккомпанемент: короткий удар на 1 и 3, акцент на 2 и 4.',how:'Все удары вниз. На 1 и 3 аккорд сразу глушится, на 2 и 4 — звучит дольше и громче. С третьего уровня перед 2 и 4 — быстрый глухой удар вверх, левая рука ослабляет нажим.',tip:'Кисть свободная, акцент — весом руки, а не силой. Ориентир — ритм-гитара в квинтете Джанго Рейнхардта.',lvl:['Четыре удара вниз','Ла помп: коротко-долго','Глухой удар перед 2 и 4','Два аккорда в такте','Басовый подход на четвёртой доле']},
+ {name:'La pompe',goal:'Gypsy jazz comping: a short hit on 1 and 3, an accent on 2 and 4.',how:'All downstrokes. On 1 and 3 the chord is cut at once, on 2 and 4 it rings longer and louder. From level 3 a quick muted upstroke comes before 2 and 4 while the fretting hand eases off.',tip:'Keep the wrist loose: the accent comes from the weight of the arm, not force. Think the rhythm guitar in Django Reinhardt’s quintet.',lvl:['Four downstrokes','La pompe: short-long','Muted stroke before 2 and 4','Two chords per bar','Bass approach on beat four']},
+ A22V.map(([ps,ru,en])=>{const cs=P(ps),S=comp(cs,5);return [ru,en,[
+   bars(S.map(s=>J(Array(4).fill(s.all+':3')))),J('/3',bars(S.map(s=>cells(pmp(s,0,4))))),J('/3',bars(S.map(s=>cells(pmp(s,1,4))))),
+   J('/3',cells(pmp(S[0],1,2).concat(pmp(S[1],1,2))),'|',cells(pmp(S[2],1,2).concat(pmp(S[3],1,2)))),
+   J('/3',bars(S.map((s,i)=>cells(pmp(s,1,3).concat([appr(S[(i+1)%4]),'','.'])))))]];}));
+
+/* A23 цыганские арпеджио */
+const A23V=[['Am6',4,'m6','{A}m6 в позиции 4','{A}m6 in position 4'],['C#dim7',2,'shift','{C#}dim7: форма сдвигается на три лада','{C#}dim7: the shape moves by three frets'],
+  ['Dm6',9,'appr','{D}m6 с подходом снизу','{D}m6 with an approach from below'],['G#dim7',4,'e7','{E}7(b9): уменьшённый от терции','{E}7(b9): diminished from the third'],
+  ['Gm6',2,'two','{G}m6 через две позиции','{G}m6 across two positions'],['Dm6',4,'pair','{D}m6 – {C#}dim7 – {D}m6','{D}m6 – {C#}dim7 – {D}m6']];
+add('A23',23,2,
+ {name:'Цыганские арпеджио',goal:'Минорный секстаккорд и уменьшённый: словарь цыганского джаза.',how:'Арпеджио m6 и dim7 медиатором с упором или пальцами. В цыганском джазе вместо m7 играют m6, а над доминантой — уменьшённый от её терции. Вариант задаёт фигуру: позиция, сдвиг, подход, пара аккордов.',tip:'Каждая нота — отдельный удар, громко и коротко. Джанго играл двумя пальцами, поэтому его арпеджио идут по две ноты на струну.',lvl:['Тоника — октава вверх четвертями','Вверх и вниз','Свинг','Тройки триолями','Свинг легато, вибрато в конце']},
+ {name:'Gypsy arpeggios',goal:'The minor sixth and diminished chords: the vocabulary of gypsy jazz.',how:'m6 and dim7 arpeggios with rest strokes or fingers. Gypsy jazz uses m6 instead of m7 and, over a dominant, the diminished chord from its third. The variant sets the figure: position, shift, approach, a pair of chords.',tip:'Every note is its own stroke, loud and short. Django played with two fingers, so his arpeggios go two notes per string.',lvl:['Root up an octave in quarters','Up and down','Swing','Groups of three in triplets','Swing legato, vibrato at the end']},
+ A23V.map(([cn,p,m,ru,en])=>{const c=C(cn);let T;
+   if(m==='shift'){const b=pos(c.pcs,p).slice(0,4);T=[0,3,6,9].flatMap(k=>b.map(x=>x[0]+(+x.slice(1)+k)));}
+   else if(m==='two'){const a=pos(c.pcs,p),hi=mid(a[a.length-1]);T=a.concat(pos(c.pcs,p+7).filter(x=>mid(x)>hi));}
+   else if(m==='pair'){const d=C('C#dim7');T=pos(c.pcs,p).slice(2,6).concat(pos(d.pcs,p).slice(3,7),pos(c.pcs,p).slice(4,8));}
+   else if(m==='appr'){T=pos(c.pcs,p).flatMap(x=>[at(mid(x)-1,p),x]);}
+   else T=pos(c.pcs,p);
+   const i=Math.max(0,T.findIndex(x=>mid(x)%12===c.r));
+   return [ru,en,lineLv(T,{g:3}).map((x,k)=>k===0?J(q(T.slice(i,i+8))):x)];}));
+
+/* A38 энклоужеры */
+const A38V=[['Cmaj7',7,[2,-1],'Сверху по гамме, снизу хроматически: {C}maj7','Scale step above, chromatic below: {C}maj7'],
+  ['Fmaj7',5,[-1,2],'Снизу хроматически, сверху по гамме: {F}maj7','Chromatic below, scale step above: {F}maj7'],
+  ['G7',2,[2,1],'Два хроматических сверху: {G}7','Two chromatic notes from above: {G}7'],
+  ['Dm7',4,[1,-1],'Полутон сверху и снизу: {D}m7','Half step above and below: {D}m7'],
+  ['Am7',4,[2,1,-1],'Три ноты: сверху, хроматика, снизу: {A}m7','Three notes: above, chromatic, below: {A}m7'],
+  ['Bbmaj7',5,[-2,-1],'Два хроматических снизу: {Bb}maj7','Two chromatic notes from below: {Bb}maj7']];
+add('A38',38,2,
+ {name:'Энклоужеры',goal:'Окружить ноту аккорда соседями и попасть в неё точно на долю.',how:'Перед целевой нотой — одна-три ноты вокруг неё: сверху, снизу, хроматически. Цель — нота аккорда, она всегда на сильной доле. Вариант задаёт тип окружения.',tip:'Целевая нота громче окружения. Это главный приём бибопа: послушай Чарли Паркера и Бадди Де Франко, на гитаре — Пэта Мартино.',lvl:['Подход снизу и цель','Полное окружение и цель','Свинг: окружение, цель, следующая нота','Цели вверх и вниз','Свинг легато, вибрато на последней цели']},
+ {name:'Enclosures',goal:'Surround a chord tone with its neighbours and land on it right on the beat.',how:'Before the target note come one to three notes around it: above, below, chromatic. The target is a chord tone and always falls on a strong beat. The variant sets the kind of enclosure.',tip:'The target is louder than the notes around it. The core bebop device: listen to Charlie Parker and Buddy DeFranco, on guitar to Pat Martino.',lvl:['Approach from below and target','Full enclosure and target','Swing: enclosure, target, next note','Targets up and down','Swing legato, vibrato on the last target']},
+ A38V.map(([cn,p,e,ru,en])=>{const c=C(cn),L=pos(c.pcs,p),i=L.findIndex(x=>mid(x)%12===c.r),tg=L.slice(i,i+4),tgd=L.slice(i,i+5).reverse(),
+   en1=t=>e.map(d=>at(mid(t)+d,p)),g=(ts,nx)=>ts.flatMap((t,k)=>{const o=en1(t).concat(t);return nx&&e.length===2?o.concat(L[L.indexOf(t)+1]||t):o;});
+   return [ru,en,[J(tg.map(t=>`${at(mid(t)-1,p)} ${t}:3`)),J('/2',tg.map(t=>J(en1(t),t+':'+(e.length===2?2:1)))),sw(g(tg,1)),sw(g(tg.concat(tgd.slice(1)))),sw(vib(leg(g(tg.concat(tgd.slice(1))))))]];}));
+
+/* A39 аккордовое соло */
+const A39V=[['Dm7 G7 Cmaj7 A7','bass','Мелодия и бас: ii–V–I в {C}','Melody and bass: ii–V–I in {C}'],
+  ['Gm7 C7 Fmaj7 D7','shell','Шелл под мелодией: ii–V–I в {F}','Shell under the melody: ii–V–I in {F}'],
+  ['Cm7 F7 Bbmaj7 G7','fill','Аккорд на раз, мелодия между: {Bb}','Chord on one, melody in between: {Bb}'],
+  ['Am7 D7 Gmaj7 E7','every','Аккорд под каждой нотой: {G}','A chord under every note: {G}'],
+  ['Em7b5 A7 Dm6 Dm6','24','Мелодия и бас на 2 и 4: {D}m','Melody, bass on 2 and 4: {D}m'],
+  ['Fmaj7 Fm6 Cmaj7 A7','walk','Мелодия над ходом баса: {C}','Melody over a bass line: {C}']];
+const mel=(c,s,n)=>{const r=mel0(c,s,n);if(r.length<n||r.includes(undefined))throw Error('JZA2 mel '+c.name);return r;};
+const mel0=(c,s,n)=>{const o=[];for(let m=59;m<=84;m++)if(c.pcs.concat(md(c.r+2,12)).includes(m%12)){const t=tryAt(m,s.r+1,2,['B','e']);if(t)o.push(t);}return o.slice(-n-1).slice(0,n).reverse();};
+function a39bar(c,s,ty,lv){const M=mel(c,s,4),top=s.top.slice(0,2).join('+'),b=s.b;
+  if(lv===1)return `${plus(b,M[0])}:4 ${plus(b,M[1])}:4`;
+  if(ty==='bass')return lv===2?`${plus(b,M[0])}:4 ${M[1]}:2 ${M[2]}:2`:`${plus(b,M[0])}:2 ${M[1]} ${M[2]} ${plus(s.fifth,M[3])}:2 ${M[2]}:2`;
+  if(ty==='shell'||ty==='fill')return lv===2?`${plus(s.all,M[0])}:4 ${M[1]}:2 ${M[2]}:2`:ty==='shell'?`${plus(s.all,M[0])}:2 ${M[1]}:2 ${plus(top,M[2])}:2 ${M[3]}:2`:`${plus(s.all,M[0])}:2 ${M[1]} ${M[2]} ${M[3]} ${M[2]} ${M[1]}:2`;
+  if(ty==='every')return lv===2?`${plus(s.all,M[0])}:4 ${plus(top,M[1])}:4`:`${plus(s.all,M[0])}:2 ${plus(top,M[1])}:2 ${plus(top,M[2])}:2 ${plus(top,M[3])}:2`;
+  if(ty==='24')return lv===2?`${plus(b,M[0])}:2 ${top}:2 ${M[1]}:2 ${top}:2`:`${plus(b,M[0])}:2 ${plus(top,M[1])}:2 ${plus(s.fifth,M[2])}:2 ${plus(top,M[3])}:2`;
+  return lv===2?`${plus(b,M[0])}:2 ${s.fifth}:2 ${plus(b,M[1])}:2 ${s.fifth}:2`:`${plus(b,M[0])}:2 ${plus(s.fifth,M[1])}:2 ${plus(b,M[2])}:2 ${M[3]}:2`;}
+add('A39',39,2,
+ {name:'Аккордовое соло',goal:'Мелодия сверху и гармония под ней одной гитарой (chord melody).',how:'Мелодия на верхних струнах, под ней — бас или шелл. Мелодия всегда громче. Вариант задаёт фактуру: бас, шелл, заполнение, аккорд под каждой нотой, бас на слабые доли, ход баса.',tip:'Сначала сыграй одну мелодию и спой её, потом добавь низ. Так играют Джо Пасс, Тед Гринн и Ленни Бро.',lvl:['Мелодия и бас половинными','Мелодия и гармония на раз','Фактура варианта четвертями','Свинговые восьмые','Свинг, последний аккорд с вибрато']},
+ {name:'Chord melody',goal:'Melody on top and harmony under it on one guitar.',how:'The melody on the top strings, a bass note or a shell under it. The melody is always louder. The variant sets the texture: bass, shell, fill, a chord under every note, bass on the weak beats, a bass line.',tip:'Play and sing the melody alone first, then add the low part. Joe Pass, Ted Greene and Lenny Breau play like this.',lvl:['Melody and bass in half notes','Melody and harmony on one','The variant’s texture in quarters','Swung eighths','Swing, vibrato on the last chord']},
+ A39V.map(([ps,ty,ru,en])=>{const cs=P(ps),S=comp(cs,5),B=lv=>bars(cs.map((c,i)=>a39bar(c,S[i],ty,lv)));
+   const swg=swc;
+   return [ru,en,[B(1),B(2),B(3),swg(B(3)),J(swg(B(3)).replace(/(\S+):(\d+)$/,'$1~:$2'))]];}));
+
+/* L24 бибоп-гаммы */
+const L24V=[['G',[0,2,4,5,7,9,10,11],2,'Доминантовая бибоп-гамма {G}7','Dominant bebop scale {G}7'],['C',[0,2,4,5,7,8,9,11],7,'Мажорная бибоп-гамма {C}','Major bebop scale {C}'],
+  ['D',[0,2,3,4,5,7,9,10],4,'Дорийская бибоп-гамма {D}m7','Dorian bebop scale {D}m7'],['Bb',[0,2,4,5,7,9,10,11],5,'{Bb}7: арпеджио вверх, гамма вниз','{Bb}7: arpeggio up, scale down'],
+  ['A',[0,2,3,5,7,8,9,11],4,'Мелодический минор с проходящей: {A}m(maj7)','Melodic minor with a passing note: {A}m(maj7)'],['E',[0,2,3,4,5,7,9,10],7,'Дорийская бибоп-гамма {E}m7','Dorian bebop scale {E}m7']];
+add('L24',24,2,
+ {name:'Бибоп-гаммы',goal:'Восемь нот в октаве: ноты аккорда попадают на сильные доли.',how:'Гамма с одной хроматической проходящей. Сверху вниз от тоники ноты аккорда ложатся на доли — так звучит бибоп. Рука в позиции, по пальцу на лад.',tip:'Начинай фразу сверху и иди вниз. Ориентир — Барри Харрис: его система построена на этих гаммах.',lvl:['Первые восемь нот четвертями','Позиция вверх и вниз','Свинг','Секвенция по четыре','Свинг легато']},
+ {name:'Bebop scales',goal:'Eight notes per octave: chord tones land on the strong beats.',how:'A scale with one chromatic passing note. Going down from the root, the chord tones fall on the beats: that is the bebop sound. The hand stays in position, one finger per fret.',tip:'Start the phrase at the top and go down. Think Barry Harris: his whole system is built on these scales.',lvl:['First eight notes in quarters','The position up and down','Swing','Four-note sequence','Swing legato']},
+ L24V.map(([r,iv,p,ru,en],vi)=>{const R=PC[r],T=pos(sc(R,iv),p),i=T.findIndex(x=>mid(x)%12===R),top=T.slice(i),dn=top.slice().reverse();let lv=lineLv(T);
+   if(vi===3){const ar=pos(C('Bb7').pcs,p),k=ar.findIndex(x=>mid(x)%12===R),a=ar.slice(k,k+4),hi=T.indexOf(T.find(x=>mid(x)>mid(a[3]))),s=T.slice(Math.max(0,hi-3),hi+1).reverse();
+     const ph=a.concat(T[hi]||[],s).slice(0,8);lv=[lv[0],lv[1],sw(ph.concat(ph)),sw(dn),sw(vib(leg(ph.concat(dn.slice(0,8)))))];}
+   else lv[2]=sw(dn.concat(dn.slice(0,-1).reverse()));
+   return [ru,en,lv];}));
+
+/* L25 хроматические подходы */
+const L25V=[['Cmaj7',7,[-1],'Подход снизу к каждой ноте {C}maj7','Approach from below to every note of {C}maj7'],
+  ['G7',2,[1],'Подход сверху: {G}7','Approach from above: {G}7'],['Dm7',4,[-2,-1],'Два полутона снизу: {D}m7','Two half steps from below: {D}m7'],
+  ['Fmaj7',7,[2,1],'Два полутона сверху: {F}maj7','Two half steps from above: {F}maj7'],['A7',4,[-3,-2,-1],'Хроматический разбег в три ноты: {A}7','Three-note chromatic run-up: {A}7'],
+  ['Em7',6,[-1,1],'Снизу, потом сверху: {E}m7','From below, then above: {E}m7']];
+add('L25',25,2,
+ {name:'Хроматические подходы',goal:'Пальцы левой руки по одному на лад: хроматика ведёт в ноту аккорда.',how:'Перед каждой нотой аккорда — хроматические ноты с соседних ладов. Рука в позиции, каждый палец на своём ладу. Нота аккорда — на долю. С пятого уровня ноты на одной струне связываются легато.',tip:'Хроматика — это движение, на ней не стоят. Лучше медленнее, но каждый лад звучит чисто.',lvl:['Подход и цель четвертями','Подход и цель восьмыми','Свинг','Цели вверх и вниз','Свинг легато']},
+ {name:'Chromatic approaches',goal:'One fretting finger per fret: chromatic notes lead into a chord tone.',how:'Before each chord tone come chromatic notes from the neighbouring frets. The hand stays in position, each finger on its own fret. The chord tone lands on the beat. On level 5 notes on one string are joined with legato.',tip:'Chromatic notes are motion: never stop on them. Slower is fine, as long as every fret sounds clean.',lvl:['Approach and target in quarters','Approach and target in eighths','Swing','Targets up and down','Swing legato']},
+ L25V.map(([cn,p,e,ru,en])=>{const c=C(cn),L=pos(c.pcs,p),i=L.findIndex(x=>mid(x)%12===c.r),tg=L.slice(i,i+5),G=ts=>ts.flatMap(t=>e.map(d=>at(mid(t)+d,p)).concat(t));
+   const all=tg.concat(tg.slice(0,-1).reverse());
+   return [ru,en,[J(q(G(tg.slice(0,4)))),e8(G(tg)),sw(G(tg)),sw(G(all)),sw(vib(leg(G(all))))]];}));
+
+/* L26 октавы */
+const OCT={ED:['E','D',2],AG:['A','G',2],DB:['D','B',3],Ge:['G','e',3]};
+const L26V=[['ED','G',[0,2,4,5,7,9,11],'Октавы на {s:E} и {s:D}: мелодия в {G}','Octaves on {s:E} and {s:D}: melody in {G}'],
+  ['AG','C',[0,2,4,5,7,9,11],'Октавы на {s:A} и {s:G}: мелодия в {C}','Octaves on {s:A} and {s:G}: melody in {C}'],
+  ['DB','F',[0,2,4,5,7,9,10],'Октавы на {s:D} и {s:B}: миксолидийская {F}','Octaves on {s:D} and {s:B}: {F} Mixolydian'],
+  ['Ge','Bb',[0,2,4,5,7,9,11],'Октавы на {s:G} и {s:e}: мелодия в {Bb}','Octaves on {s:G} and {s:e}: melody in {Bb}'],
+  ['ED/AG','D',[0,2,3,5,7,9,10],'Смена пар струн: дорийская {D}','Switching string pairs: {D} Dorian'],
+  ['AG','A',[0,2,3,5,7,8,10],'Октавы с подходом: {A}m','Octaves with approaches: {A}m']];
+add('L26',26,2,
+ {name:'Октавы',goal:'Гитарные октавы: две ноты через струну, звучат как одна толстая.',how:'Нижний палец — указательный, верхний — безымянный или мизинец. Струна между ними заглушена мякотью указательного. Щипок большим пальцем или двумя пальцами одновременно.',tip:'Глушение середины важнее скорости. Уэс Монтгомери играл октавы большим пальцем — мягко и тепло.',lvl:['Четвертями','Гамма вверх и вниз','Мелодия в свинге','Подход с лада ниже','Длинная фраза, вибрато']},
+ {name:'Octaves',goal:'Guitar octaves: two notes with a string between them, sounding like one fat note.',how:'The lower note with the index finger, the upper with the ring finger or pinky. The string between them is muted by the flesh of the index finger. Pluck with the thumb or two fingers at once.',tip:'Muting the middle string matters more than speed. Wes Montgomery played octaves with his thumb: soft and warm.',lvl:['Quarters','Scale up and down','Melody in swing','Approach from a fret below','Long phrase, vibrato']},
+ L26V.map(([pr,r,iv,ru,en])=>{const R=PC[r],prs=pr.split('/').map(k=>OCT[k]);
+   const o=(m,k)=>{const [a,b,d]=prs[k%prs.length];let f=m-OP[a];while(f>13)f-=12;while(f<1)f+=12;return `${a}${f}+${b}${f+d}`;};
+   const deg=[0,1,2,3,4,5,6,7].map(k=>(R+iv[k%7]+(k>6?12:0))),scl=deg.map((m,k)=>o(OP[prs[0][0]]+md(m-OP[prs[0][0]],12)+(k>6?12:0),Math.floor(k/4)));
+   const melo=[0,2,4,3,2,1,0,4,5,4,2,1,0,1,2,0].map((d,k)=>o(OP[prs[0][0]]+md(deg[d]-OP[prs[0][0]],12),Math.floor(k/8)));
+   const dn=x=>x.replace(/\d+/g,d=>d-1);
+   return [ru,en,[J(q(scl)),e8(ud(scl)),sw(melo),sw(melo.slice(0,8).flatMap(x=>[dn(x),x])),sw(vib(melo.concat(melo.slice(0,8).reverse())))]];}));
+
+/* L27 кварты */
+const L27V=[['D',[0,2,3,5,7,9,10],'EAD',5,'Кварты на трёх нижних: дорийская {D}','Fourths on the low three strings: {D} Dorian'],
+  ['G',[0,2,3,5,7,9,10],'ADG',3,'Кварты на средних: дорийская {G}','Fourths on the middle strings: {G} Dorian'],
+  ['C',[0,2,4,5,7,9,11],'DGB',5,'Кварты на {s:D}, {s:G}, {s:B}: мажор {C}','Fourths on {s:D}, {s:G}, {s:B}: {C} major'],
+  ['E',[0,2,3,5,7,9,10],'EADGB',5,'Аккорд «So What»: {E}m','The “So What” chord: {E}m'],
+  ['F',[0,2,4,6,7,9,11],'GBe',5,'Кварты на верхних: лидийская {F}','Fourths on the top strings: {F} Lydian'],
+  ['A',[0,2,3,5,7,8,10],'ADG',5,'Квартовая линия по одной ноте: {A}m','A fourths line, one note at a time: {A}m']];
+add('L27',27,2,
+ {name:'Кварты',goal:'Квартовые аккорды и линии: звук модального джаза.',how:'Ноты, сложенные квартами, ходят по ладу вверх и вниз. Форма меняется: кварта бывает чистой и увеличенной, а между {s:G} и {s:B} — свой интервал строя, поэтому палец на {s:B} сдвигается.',tip:'Аккорд без терции не мажорный и не минорный, его окраску задаёт бас. Послушай «So What» Майлза Дэвиса и Маккой Тайнера.',lvl:['Два аккорда половинными','По ладу вверх четвертями','Вверх и вниз','Чарльстон','Подход с лада ниже']},
+ {name:'Fourths',goal:'Quartal chords and lines: the sound of modal jazz.',how:'Notes stacked in fourths move up and down the mode. The shape changes: a fourth can be perfect or augmented, and between {s:G} and {s:B} the tuning has its own interval, so the finger on {s:B} shifts.',tip:'A chord with no third is neither major nor minor: the bass gives it colour. Listen to Miles Davis’ “So What” and McCoy Tyner.',lvl:['Two chords in half notes','Up the mode in quarters','Up and down','Charleston','Approach from a fret below']},
+ L27V.map(([r,iv,strs,p,ru,en],vi)=>{const R=PC[r],ss=strs.split(''),sca=k=>{const o=Math.floor(k/7);return R+iv[md(k,7)]+12*o;};
+   const base=OP[ss[0]]+md(R-OP[ss[0]]-1,12)+1;
+   const W0=k=>base+iv[md(k,7)]+12*Math.floor(k/7)-iv[0];
+   const chord=k=>vi===3?ss.map((s,j)=>s+(W0(k)-OP[ss[0]]-(j===4?1:0))).join('+'):ss.map((s,j)=>s+(W0(k+3*j)-OP[s])).join('+');
+   let k0=0;while(W0(k0)-OP[ss[0]]>4)k0--;const K=[0,1,2,3].map(k=>chord(k+k0)),dn=x=>x.replace(/\d+/g,d=>d-1);
+   if(vi===5){const ln=[0,3,6,9,1,4,7,10].map(k=>at(base+iv[md(k,7)]+12*Math.floor(k/7),p));return [ru,en,[J(q(ln.slice(0,4))),J(q(ln)),e8(ud(ln)),sw(ud(ln)),sw(vib(leg(ud(ln))))]];}
+   return [ru,en,[J(K[0]+':4',K[1]+':4'),J(q(K.slice(0,4))),J(q(ud(K))),J(K.slice(0,4).map(x=>`${x}:3 ${x} .:4`)),J(K.slice(0,4).map(x=>`${dn(x)} ${x}:3`))]];}));
+
+/* L28 ведение голосов: терции и септимы */
+const L28V=[['Dm7 G7 Cmaj7 Cmaj7','ii–V–I в {C}','ii–V–I in {C}'],['E7 A7 D7 G7','Цепочка доминант: {E}7 – {A}7 – {D}7 – {G}7','Chain of dominants: {E}7 – {A}7 – {D}7 – {G}7'],
+  ['Em7b5 A7 Dm6 Dm6','Минорный ii–V–i в {D}','Minor ii–V–i in {D}'],['Fmaj7 D7 Gm7 C7','I–VI–ii–V в {F}','I–VI–ii–V in {F}'],
+  ['Bb7 Eb7 Bb7 F7','Блюз в {Bb}: I–IV–I–V','Blues in {Bb}: I–IV–I–V'],['Bm7 E7 Am7 D7','iii–VI–ii–V в {G}','iii–VI–ii–V in {G}']];
+function guide(cs){let lo=null;return cs.map((c,i)=>{const t3=md(c.r+CT[c.t][1],12),t7=md(c.r+CT[c.t][3],12);
+  const opts=[];for(let m=52;m<=63;m++)for(const [a,b] of [[t3,t7],[t7,t3]])if(m%12===a){let h=m+1;while(h%12!==b)h++;if(h-m<=7&&h>=56&&Math.abs((m-50)-(h-55))<=3)opts.push([m,h]);}
+  const pk=lo==null?opts.reduce((x,y)=>Math.abs(y[0]-56)<Math.abs(x[0]-56)?y:x):opts.reduce((x,y)=>Math.abs(y[0]-lo)<Math.abs(x[0]-lo)?y:x);lo=pk[0];return pk;});}
+add('L28',28,2,
+ {name:'Ведение голосов',goal:'Терция и септима через всю гармонию: голоса двигаются на ступень или стоят.',how:'Две ноты — терция и септима аккорда — на соседних средних струнах. Септима одного аккорда уходит на полтона вниз в терцию следующего, общая нота остаётся. Пальцы почти не прыгают.',tip:'Пропевай верхний голос: он сам складывается в мелодию. Так думают аранжировщики и пианисты, например Билл Эванс.',lvl:['Пары половинными','С тоникой в басу','Голоса по очереди восьмыми','Свинг: тоника, пара, верхний голос','Подход к каждой паре с лада ниже']},
+ {name:'Voice leading',goal:'Third and seventh through the changes: the voices step or hold.',how:'Two notes, the chord’s third and seventh, on adjacent middle strings. The seventh of one chord falls a half step into the third of the next, the common note holds. The fingers hardly jump.',tip:'Sing the top voice: it turns into a melody by itself. This is how arrangers and pianists like Bill Evans think.',lvl:['Pairs in half notes','With the root in the bass','The voices in turn in eighths','Swing: root, pair, top voice','Approach each pair from a fret below']},
+ L28V.map(([ps,ru,en])=>{const cs=P(ps),G=guide(cs),S=comp(cs,5),pr=([l,h])=>{const a='D'+(l-50),b='G'+(h-55);return {a,b,both:a+'+'+b};},X2=G.map(pr);
+   const lowB=(s,x)=>s.b[0]==='E'||s.b[0]==='A'?s.b:null,dn=x=>x.replace(/\d+/g,d=>d-1);
+   return [ru,en,[J(X2.map(x=>x.both+':4')),bars(X2.map((x,i)=>`${plus(S[i].b,x.both)}:4 ${x.both}:4`)),J('/2',bars(X2.map(x=>`${x.a} ${x.b} ${x.a} ${x.b}:5`))),
+   sw(X2.flatMap((x,i)=>[S[i].b,x.both,x.b,x.a])),J(X2.map(x=>`${dn(x.both)} ${x.both}:3 ${x.both}:4`))]];}));
+
+/* L29 мелодический минор и его лады */
+const MM=[0,2,3,5,7,9,11];
+const L29V=[['A','A',4,'{A}: мелодический минор','{A} melodic minor'],['G','D',2,'{G}7: лидийская доминанта','{G}7: Lydian dominant'],
+  ['E','F',7,'{E}7alt: альтерированная гамма','{E}7alt: altered scale'],['B','D',6,'{B}m7b5: локрийский с большой секундой','{B}m7b5: Locrian natural 2'],
+  ['C','C',7,'{C}m(maj7): терциями','{C}m(maj7): in thirds'],['F','D',0,'{F}maj7#5: лидийская увеличенная','{F}maj7#5: Lydian augmented']];
+add('L29',29,2,
+ {name:'Мелодический минор',goal:'Звукоряд современного джаза и его лады в позиции.',how:'Мелодический минор (джазовый: одинаковый вверх и вниз) и лады от его ступеней. Тоника варианта — нота аккорда, над которым звучит лад. Рука в позиции, растяжка на один лад.',tip:'Слушай, на каких нотах звук «острый» — это и есть краска лада. Альтерированная гамма над доминантой — язык Джо Пасса и Пэта Мартино.',lvl:['Первые восемь нот четвертями','Позиция вверх и вниз','Свинг','Секвенция','Свинг легато']},
+ {name:'Melodic minor',goal:'The scale of modern jazz and its modes in position.',how:'Melodic minor (the jazz form, the same up and down) and the modes on its degrees. The variant’s root is the chord the mode is played over. The hand stays in position with a one-fret stretch.',tip:'Listen for the notes that sound “sharp”: that is the mode’s colour. The altered scale over a dominant is the language of Joe Pass and Pat Martino.',lvl:['First eight notes in quarters','The position up and down','Swing','Sequence','Swing legato']},
+ L29V.map(([r,par,p,ru,en],vi)=>{const R=PC[r],T=pos(sc(PC[par],MM),p),i=T.findIndex(x=>mid(x)%12===R),lv=lineLv(T,{g:vi%2?3:4});
+   if(vi===4){const th=[];for(let k=0;k+2<T.length;k++)th.push(T[k],T[k+2]);lv[3]=sw(th);}
+   lv[0]=J(q(T.slice(i,i+8)));return [ru,en,lv];}));
+
+/* L30 уменьшённая гамма */
+const HW=[0,1,3,4,6,7,9,10],WH=[0,2,3,5,6,8,9,11];
+const L30V=[['hw','G',2,'Полутон–тон от {G}: над {G}7(b9)','Half-whole from {G}: over {G}7(b9)'],['wh','C',7,'Тон–полутон от {C}: над {C}dim7','Whole-half from {C}: over {C}dim7'],
+  ['cell','A',4,'Ячейка из четырёх нот через малую терцию: {A}','A four-note cell moved by minor thirds: {A}'],['tri','D',4,'Трезвучия по уменьшённой: {D}, {F}, {G#}, {B}','Triads over the diminished: {D}, {F}, {G#}, {B}'],
+  ['g4','E',6,'Полутон–тон от {E}: по четыре','Half-whole from {E}: groups of four'],['nb','Bb',5,'Уменьшённое арпеджио с соседями: {Bb}','Diminished arpeggio with neighbours: {Bb}']];
+add('L30',30,2,
+ {name:'Уменьшённая гамма',goal:'Симметричная гамма: тон и полутон по очереди, форма повторяется через три лада.',how:'Над доминантой — от тоники полутон–тон, над уменьшённым — тон–полутон. Любая фигура сдвигается на малую терцию (три лада) и остаётся в гамме. Вариант задаёт фигуру.',tip:'Не играй гамму подряд долго — звучит как упражнение. Бери из неё ячейки. Ориентир — Майкл Брекер и, на гитаре, Джордж Бенсон.',lvl:['Первые восемь нот четвертями','Вверх и вниз','Свинг','Секвенция','Свинг легато']},
+ {name:'Diminished scale',goal:'A symmetrical scale: whole and half steps in turn, the shape repeats every three frets.',how:'Over a dominant, half-whole from the root; over a diminished chord, whole-half. Any figure moved up a minor third (three frets) stays in the scale. The variant sets the figure.',tip:'Do not run the scale for long: it sounds like an exercise. Take cells from it. Think Michael Brecker and, on guitar, George Benson.',lvl:['First eight notes in quarters','Up and down','Swing','Sequence','Swing legato']},
+ L30V.map(([ty,r,p,ru,en])=>{const R=PC[r];let T;
+   if(ty==='cell'){const m0=OP.G+md(R-OP.G,12);T=[0,3,6,9].flatMap(k=>[0,1,3,4].map(d=>at(m0+k+d,m0-OP.G+k)));}
+   else if(ty==='tri'){const m0=OP.A+md(R-OP.A,12);T=[0,3,6,9].flatMap(k=>[0,4,7].map(d=>at(m0+k+d,p)));}
+   else if(ty==='nb'){const L=pos(sc(R,[0,3,6,9]),p);T=L.flatMap(x=>[at(mid(x)-1,p),x]);}
+   else T=pos(sc(R,ty==='wh'?WH:HW),p);
+   const lv=lineLv(T,{g:ty==='tri'?3:4});return [ru,en,lv];}));
+
+/* L31 три ноты на струну */
+const L31V=[['C',[0,2,4,5,7,9,11],'E',8,'{C} ионийский от тоники','{C} Ionian from the root'],['D',[0,2,3,5,7,9,10],'A',5,'{D} дорийский от тоники','{D} Dorian from the root'],
+  ['G',[0,2,4,5,7,9,10],'E',3,'{G} миксолидийский от тоники','{G} Mixolydian from the root'],['A',[0,2,3,5,7,9,11],'A',0,'{A} мелодический минор','{A} melodic minor'],
+  ['F',[0,2,4,6,7,9,11],'E',1,'{F} лидийский','{F} Lydian'],['B',[0,1,3,5,6,8,10],'E',7,'{B} локрийский: над {B}m7b5','{B} Locrian: over {B}m7b5']];
+add('L31',31,3,
+ {name:'Три ноты на струну',goal:'Гамма по диагонали грифа: позиция меняется сама, без рывков.',how:'По три ноты гаммы на каждой струне, на следующей струне рука сдвигается. Триоли сами ложатся на струны: одна доля — одна струна. С пятого уровня — легато, щипок только первой ноты на струне.',tip:'Сдвиг руки — во время последней ноты струны. Так длинные линии играет Фрэнк Гамбале, а в акустическом джазе — Бирели Лагрен.',lvl:['Две струны вверх и вниз','Четыре струны','Шесть струн вверх','Вверх и вниз','Легато']},
+ {name:'Three notes per string',goal:'A scale along the neck diagonally: the position changes by itself, smoothly.',how:'Three scale notes on each string, the hand shifts on the next string. Triplets fall naturally on the strings: one beat, one string. From level 5: legato, pick only the first note on each string.',tip:'Shift the hand during the last note on a string. Frank Gambale plays long lines like this, in acoustic jazz Biréli Lagrène.',lvl:['Two strings up and down','Four strings','Six strings up','Up and down','Legato']},
+ L31V.map(([r,iv,s0,f0,ru,en])=>{const R=PC[r],m0=OP[s0]+f0,ss=SS.slice(SS.indexOf(s0)),ms=[];let k=0;
+   for(const s of ss)for(let j=0;j<3;j++){const m=R+iv[md(k,7)]+12*Math.floor(k/7)+(m0-R-0);ms.push(s+(m-OP[s]));k++;}
+   const T=ms,U=n=>T.slice(0,n*3);return [ru,en,[J('/3',ud(U(2)),'.'),J('/3',ud(U(4)),'.'),J('/3',T),J('/3',ud(T),'.'),J('/3',leg(ud(T)),'.')]];}));
+
+/* L40 аккорды с расширениями */
+const EXT={'9':['A',[0,-1,0,0,0],'7',[0,-1,0,2]],'13':['E',[0,0,1,2],'7',[0,0,1,0]],'7#9':['A',[0,-1,0,1],'7',[0,-1,0,2]],'7b9':['A',[0,-1,0,-1],'7',[0,-1,0,2]],'m9':['A',[0,-2,0,0],'m7',[0,-2,0,1]],'maj9':['A',[0,-1,1,0],'maj7',[0,-1,1,2]]};
+const L40V=[['9',[3,8,10,3],'{C}9, {F}9, {G}9','{C}9, {F}9, {G}9'],['13',[3,8,10,3],'{G}13, {C}13, {D}13','{G}13, {C}13, {D}13'],['7#9',[7,5,2,7],'{E}7#9, {D}7#9, {B}7#9','{E}7#9, {D}7#9, {B}7#9'],
+  ['7b9',[5,12,10,5],'{D}7b9, {A}7b9, {G}7b9','{D}7b9, {A}7b9, {G}7b9'],['m9',[5,10,3,5],'{D}m9, {G}m9, {C}m9','{D}m9, {G}m9, {C}m9'],['maj9',[3,8,5,3],'{C}maj9, {F}maj9, {D}maj9','{C}maj9, {F}maj9, {D}maj9']];
+add('L40',40,2,
+ {name:'Аккорды с расширениями',goal:'Нона, тринадцатая, альтерации: один палец меняет краску аккорда.',how:'Подвижная форма с тоникой на нижней струне. Расширение добавляется к септаккорду одним пальцем на верхних струнах, остальные пальцы стоят. Вариант задаёт расширение.',tip:'Сравни на слух септаккорд и его расширение — запомни звук, а не форму. Этими аккордами комповал Джим Холл.',lvl:['Форма половинными','Четыре четверти по корням','Чарльстон','Подход с лада ниже','Септаккорд и расширение по очереди']},
+ {name:'Extended chords',goal:'Ninths, thirteenths, alterations: one finger changes the colour of the chord.',how:'A movable shape with the root on a low string. The extension is added to the seventh chord with one finger on the top strings while the rest stay put. The variant sets the extension.',tip:'Compare the seventh chord and its extension by ear: remember the sound, not the shape. Jim Hall comped with these chords.',lvl:['The shape in half notes','Four quarters through the roots','Charleston','Approach from a fret below','Seventh chord and extension in turn']},
+ L40V.map(([k,rs,ru,en])=>{const [s0,d,,d7]=EXT[k],strs=s0==='E'?['E','D','G','B']:['A','D','G','B','e'].slice(0,d.length),mk=(r,dd)=>dd.map((x,i)=>strs[i]+(r+x)).join('+');
+   const Ch=rs.map(r=>mk(r,d)),C7=rs.map(r=>mk(r,d7)),dn=x=>x.replace(/\d+/g,v=>v-1);
+   return [ru,en,[J(Ch.map(x=>x+':4')),bars(Ch.map(x=>J(q([x,x,x,x])))),J(Ch.map(x=>`${x}:3 ${x} .:4`)),J(Ch.map(x=>`${dn(x)} ${x}:3 ${x}:2 ${x}:2`)),J(Ch.map((x,i)=>`${C7[i]}:2 ${x}:2 ${C7[i]}:2 ${x}:2`))]];}));
+
+/* C32 шеллы → линия */
+const C32V=[['Dm7 G7 Cmaj7 A7',5,'ii–V–I–VI в {C}','ii–V–I–VI in {C}'],['Gm7 C7 Fmaj7 D7',3,'ii–V–I–VI в {F}','ii–V–I–VI in {F}'],['Em7b5 A7 Dm6 Dm6',5,'Минорный ii–V–i в {D}','Minor ii–V–i in {D}'],
+  ['Cm7 F7 Bbmaj7 Bbmaj7',6,'ii–V–I в {Bb}','ii–V–I in {Bb}'],['F7 Bb7 F7 C7',5,'Джаз-блюз в {F}: I–IV–I–V','Jazz blues in {F}: I–IV–I–V'],['Am7 D7 Gmaj7 E7',3,'ii–V–I–VI в {G}','ii–V–I–VI in {G}']];
+add('C32',32,2,
+ {name:'Шеллы → линия',goal:'Из аккомпанемента в соло и обратно, не теряя гармонию.',how:'Такт шеллов четвертями, потом такт арпеджио следующего аккорда. Линия начинается на долю, рука переезжает во время последнего аккорда.',tip:'Линия должна звучать над тем же аккордом, что и аккомпанемент. Если стык рвётся, сыграй последний аккорд и первую ноту линии.',lvl:['Такт аккордов, такт линии четвертями','Линия восьмыми','Свинг','Стык внутри такта','Вся гармония: аккорд и линия по очереди']},
+ {name:'Shells → line',goal:'From comping into a solo and back without losing the harmony.',how:'A bar of shells in quarters, then a bar of arpeggio over the next chord. The line starts on the beat, the hand moves during the last chord.',tip:'The line must sound over the same chord as the comping. If the joint breaks, play the last chord and the first note of the line.',lvl:['A bar of chords, a bar of line in quarters','Line in eighths','Swing','Joint mid-bar','Through the changes: chord and line in turn']},
+ C32V.map(([ps,p,ru,en])=>{const cs=P(ps),S=comp(cs,p),ln=cs.map(c=>{const L=pos(c.pcs,p),i=L.findIndex(x=>mid(x)%12===c.r);return bounce(L,i,1,8);});
+   const ch=(s,n)=>'/2 '+Array(n).fill(s.all+':2').join(' ');
+   return [ru,en,[J(ch(S[0],4),'|',q(ln[1].slice(0,4))),J(ch(S[0],4),'|',e8(ln[1])),J(ch(S[0],4),'|',sw(ln[1])),
+   J(ch(S[0],2),sw(ln[1].slice(0,4)),'|',ch(S[2],2),sw(ln[3].slice(0,4))),J(ch(S[0],4),'|',sw(ln[1]),'|',ch(S[2],4),'|',sw(ln[3]))]];}));
+
+/* C33 ла помп → соло */
+const C33V=[['Am6 E7',4,'{A}m6 – {E}7','{A}m6 – {E}7'],['Dm6 A7',9,'{D}m6 – {A}7','{D}m6 – {A}7'],['G6 D7',2,'{G}6 – {D}7','{G}6 – {D}7'],
+  ['Gm6 D7',2,'{G}m6 – {D}7','{G}m6 – {D}7'],['C6 G7',7,'{C}6 – {G}7','{C}6 – {G}7'],['Em6 B7',6,'{E}m6 – {B}7','{E}m6 – {B}7']];
+add('C33',33,2,
+ {name:'Ла помп → соло',goal:'Из ритм-гитары в соло, как в цыганском квинтете.',how:'Такт ла помп на первом аккорде, потом такт арпеджио второго. Над доминантой — уменьшённое арпеджио от её терции. Правая рука из размаха собирается для удара с упором.',tip:'Метроном не ждёт: последний удар помпа и первая нота соло — соседние доли. В квинтете Джанго соло и ритм менялись прямо так.',lvl:['Такт аккорда, такт четвертями','Арпеджио восьмыми','Свинг','Обратно в помп','Помп с глухим ударом, соло легато']},
+ {name:'La pompe → solo',goal:'From rhythm guitar into a solo, like in a gypsy quintet.',how:'A bar of la pompe on the first chord, then a bar of arpeggio over the second. Over the dominant, the diminished arpeggio from its third. The picking hand gathers from the strum into a rest stroke.',tip:'The metronome does not wait: the last pompe stroke and the first solo note are neighbouring beats. In Django’s quintet solo and rhythm swapped just like this.',lvl:['A bar of chord, a bar in quarters','Arpeggio in eighths','Swing','Back into the pompe','Pompe with the muted stroke, legato solo']},
+ C33V.map(([ps,p,ru,en])=>{const cs=P(ps),S=comp(cs,5),d=cs[1],dim={pcs:CT.dim7.map(i=>md(d.r+4+i,12))},L=pos(dim.pcs,p),
+   i=L.findIndex(x=>mid(x)%12===md(d.r+4,12)),ln=bounce(L,i,1,8),pm=g=>J('/3',cells(pmp(S[0],g,4)));
+   return [ru,en,[J(S[0].all+':2',S[0].all+':2',S[0].all+':2',S[0].all+':2','|',q(ln.slice(0,4))),J(pm(0),'|',e8(ln)),J(pm(0),'|',sw(ln)),J(pm(0),'|',sw(ln),'|',pm(0)),J(pm(1),'|',sw(leg(ln)),'|',pm(1))]];}));
+
+/* C34 уокинг и аккорды */
+const C34V=[['Dm7 G7 Cmaj7 Cmaj7','ii–V–I в {C}','ii–V–I in {C}'],['Fmaj7 D7 Gm7 C7','I–VI–ii–V в {F}','I–VI–ii–V in {F}'],['Em7b5 A7 Dm6 Dm6','Минорный ii–V–i в {D}','Minor ii–V–i in {D}'],
+  ['Bb7 Eb7 Bb7 F7','Блюз в {Bb}','Blues in {Bb}'],['Cmaj7 A7 Dm7 G7','I–VI–ii–V в {C}','I–VI–ii–V in {C}'],['Gm7 C7 Am7 D7','ii–V в {F}, ii–V в {G}','ii–V in {F}, ii–V in {G}']];
+const atL=(m,r)=>{let best=null;for(const s of ['E','A'])for(const o of [0,12,-12]){const f=m+o-OP[s];if(f>=0&&f<=12&&(!best||Math.abs(f-r)<Math.abs(best[1]-r)))best=[s,f];}return best[0]+best[1];};
+function walk(cs,S){return cs.map((c,i)=>{const s=S[i],nx=cs[(i+1)%cs.length],r=s.r,rm=mid(s.b),t3=rm+CT[c.t][1],t5=rm+CT[c.t][2],nr=mid(S[(i+1)%cs.length].b);
+  return [s.b,atL(t3,r),atL(t5,r),atL(nr-1,r)];});}
+add('C34',34,2,
+ {name:'Уокинг и аккорды',goal:'Бас ходит четвертями, аккорд отвечает на 2 и 4: целый оркестр на одной гитаре.',how:'Большой палец ведёт уокинг на нижних струнах: тоника, терция, квинта, подход к следующей тонике. Пальцы берут верх шелла вместе с басом на 2 и 4.',tip:'Бас ровный и связный, аккорд короткий. Если не успевает левая рука — сначала только бас. Так играли Джо Пасс и Ленни Бро.',lvl:['Только тоники четвертями','Уокинг без аккордов','Уокинг, аккорд на раз','Уокинг, аккорд на 2 и 4','Уокинг в свинге с подхватом аккорда']},
+ {name:'Walking bass and chords',goal:'The bass walks in quarters, the chord answers on 2 and 4: a whole band on one guitar.',how:'The thumb walks on the low strings: root, third, fifth, approach to the next root. The fingers take the top of the shell together with the bass on 2 and 4.',tip:'Even, connected bass, short chord. If the fretting hand cannot keep up, play the bass alone first. Joe Pass and Lenny Breau played like this.',lvl:['Roots only in quarters','Walking without chords','Walking, chord on one','Walking, chord on 2 and 4','Walking in swing with a chord pickup']},
+ C34V.map(([ps,ru,en])=>{const cs=P(ps),S=comp(cs,4),Wk=walk(cs,S);
+   const okT=(b,s)=>b[0]==='E'||b[0]==='A'?plus(b,s.top.join('+')):b;
+   return [ru,en,[bars(S.map(s=>J(q([s.b,s.b,s.b,s.b])))),bars(Wk.map(w=>J(q(w)))),bars(Wk.map((w,i)=>J(q([plus(w[0],S[i].top.join('+')),w[1],w[2],w[3]])))),
+   bars(Wk.map((w,i)=>J(q([w[0],okT(w[1],S[i]),w[2],okT(w[3],S[i])])))),
+   J('/3',bars(Wk.map((w,i)=>`${w[0]}:3 ${okT(w[1],S[i])}:2 ${S[i].top.join('+')} ${w[2]}:3 ${okT(w[3],S[i])}:3`)))]];}));
+
+/* C35 джаз-блюз */
+const C35V=[['F7 Bb7 F7 F7 Bb7 Bb7 F7 D7 Gm7 C7 F7 C7','Джаз-блюз в {F}','Jazz blues in {F}'],
+  ['Bb7 Eb7 Bb7 Fm7 Eb7 Edim7 Bb7 G7 Cm7 F7 Bb7 F7','Джаз-блюз в {Bb} с ii–V в IV','Jazz blues in {Bb} with ii–V to IV'],
+  ['Cm7 Cm7 Cm7 Cm7 Fm7 Fm7 Cm7 Cm7 Ab7 G7 Cm7 G7','Минорный блюз в {C}','Minor blues in {C}'],
+  ['Fmaj7 Em7b5 Dm7 Cm7 Bb7 Bbm7 Am7 Abm7 Gm7 C7 Fmaj7 C7','«Птичий» блюз в {F}: нисходящие ii–V','“Bird” blues in {F}: descending ii–Vs'],
+  ['G7 C7 G7 G7 C7 C#dim7 G7 E7 Am7 D7 G7 D7','Блюз в {G} с уменьшённым','Blues in {G} with a diminished chord'],
+  ['Am6 Am6 Am6 Am6 Dm6 Dm6 Am6 Am6 E7 E7 Am6 E7','Минорный блюз в {A}, ла помп','Minor blues in {A}, la pompe']];
+add('C35',35,2,
+ {name:'Джаз-блюз',goal:'Двенадцать тактов джазового блюза шеллами без остановки.',how:'Блюз с джазовыми заменами: ii–V, уменьшённый, VI ступень перед ii. Шеллы с ближайшим ходом, рука почти не прыгает. Вариант — свой вид блюза.',tip:'Считай такты. Потеряться в квадрате хуже, чем ошибиться в аккорде. Послушай блюзы Чарли Паркера и Кенни Баррелла.',lvl:['Первые четыре такта половинными','Весь квадрат половинными','Весь квадрат четвертями','Чарльстон','Ла помп с глухим ударом']},
+ {name:'Jazz blues',goal:'Twelve bars of jazz blues in shells without stopping.',how:'A blues with jazz substitutions: ii–V, diminished, the VI chord before ii. Shells with the nearest move, the hand hardly jumps. Each variant is its own kind of blues.',tip:'Count the bars. Getting lost in the form is worse than a wrong chord. Listen to blues by Charlie Parker and Kenny Burrell.',lvl:['First four bars in half notes','The whole form in half notes','The whole form in quarters','Charleston','La pompe with the muted stroke']},
+ C35V.map(([ps,ru,en])=>{const cs=P(ps),S=comp(cs,5),rows=f=>[0,1,2].map(i=>bars(S.slice(i*4,i*4+4).map(f)));
+   return [ru,en,[bars(S.slice(0,4).map(s=>`${s.all}:4 ${s.all}:4`)),rows(s=>`${s.all}:4 ${s.all}:4`),rows(fg),rows(s=>`${s.all}:3 ${s.all} .:4`),rows(s=>J('/3',cells(pmp(s,1,4))))]];}));
+
+/* C36 этюд: шеллы, линия, аккордовое соло, ритм (босса или помп) — по системе на фрагмент */
+const C36V=[['Dm7 G7 Cmaj7 A7',7,'b','ii–V–I в {C}, финал — босса','ii–V–I in {C}, bossa ending'],['Gm7 C7 Fmaj7 D7',5,'p','ii–V–I в {F}, финал — ла помп','ii–V–I in {F}, la pompe ending'],
+  ['Em7b5 A7 Dm6 Dm6',4,'p','Минорный в {D}, финал — ла помп','Minor in {D}, la pompe ending'],['Cm7 F7 Bbmaj7 G7',5,'b','ii–V–I в {Bb}, финал — босса','ii–V–I in {Bb}, bossa ending'],
+  ['Am7 D7 Gmaj7 E7',2,'w','ii–V–I в {G}, финал — уокинг','ii–V–I in {G}, walking ending'],['Bm7b5 E7 Am6 Am6',4,'w','Минорный в {A}, финал — уокинг','Minor in {A}, walking ending']];
+add('C36',36,2,
+ {name:'Этюд',goal:'Четыре приёма джазовой акустики подряд, как в настоящей пьесе.',how:'Четыре фрагмента на одной гармонии: шеллы, линия арпеджио, аккордовое соло, ритм (босса, ла помп или уокинг — по варианту). Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон на телефон. Слабое место почти всегда на стыке фрагментов: правая рука меняет роль.',lvl:['По такту на фрагмент, четверти','Восьмые','Свинг, два такта','Вся гармония в каждом фрагменте','Подходы и энклоужеры, длинные фрагменты']},
+ {name:'Étude',goal:'Four acoustic jazz techniques in a row, like a real piece.',how:'Four fragments over the same changes: shells, an arpeggio line, chord melody, rhythm (bossa, la pompe or walking, depending on the variant). Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a full run on your phone. The weak spot is almost always the joint between fragments, where the right hand changes its role.',lvl:['A bar per fragment, quarters','Eighths','Swing, two bars','All the changes in each fragment','Approaches and enclosures, longer fragments']},
+ C36V.map(([ps,p,ty,ru,en])=>{const cs=P(ps),S=comp(cs,5),f8=a17line(cs,p,'near',8),f4=a17line(cs,p,'near',4),cm=lv=>bars(cs.map((c,i)=>a39bar(c,S[i],'shell',lv)));
+   const rh=(n,g)=>ty==='b'?bars(bossa(S.slice(0,n),BP[0],n>2?'walk':undefined)):ty==='p'?J('/3',bars(S.slice(0,n).map(s=>cells(pmp(s,g,4))))):bars(walk(cs,S).slice(0,n).map(w=>J(q(w))));
+   const sh=n=>bars(S.slice(0,n).map(fg)),l5=f8.map((b,i)=>{const nx=f8[i+1];return nx?b.slice(0,6).concat(encl(nx[0],p)):b;}).flat();
+   return [ru,en,[
+   [sh(1),J(q(f4[0])),bars(cs.slice(0,1).map((c,i)=>a39bar(c,S[i],'shell',2))),rh(1,0)],
+   [sh(1),e8(f8[0]),bars(cs.slice(0,1).map((c,i)=>a39bar(c,S[i],'shell',3))),rh(1,0)],
+   [sh(2),sw(f8[0].concat(f8[1])),swc(bars(cs.slice(0,2).map((c,i)=>a39bar(c,S[i],'shell',3)))),rh(2,1)],
+   [sh(4),sw(f8.flat()),swc(cm(3)),rh(4,1)],
+   [bars(S.map((s,i)=>`${s.b}:2 ${s.top.join('+')}:2 ${appr(S[(i+1)%4])}:2 ${s.top.join('+')}:2`)),sw(l5),swc(cm(3)),rh(4,1)]]];}));
+
+return {EX,EXEN:EN,COACH:{C36:{stages:COACH_GUITAR.C36.stages}}};
+})();
 /*@JZA2_END@*/
 
 // ----- JZB1: джаз, бас, часть 1 -----
