@@ -210,7 +210,7 @@ test('drop: все упражнения играбельны, подписи б�
               const where = `${inst}${n} ${o} ${lang} ${id}.v${k} L${lv}`;
               if (r.tu.endsWith('k')) key++;
               G.parseTab(r.v.t, r.sub, r.tu).forEach(s => s.errs.forEach(e => errs.push(`${where}: ${e}`)));
-              [r.v.l, r.v.note].forEach(x => { if (/2-й лад|fret 2|\{/.test(x || '')) errs.push(`${where}: «${x}»`); });
+              [r.v.l, r.v.note].forEach(x => { if (/\(2-й лад\)|\(fret 2\)|\{/.test(x || '')) errs.push(`${where}: «${x}»`); });
               if (!ex.gen && r.tu.endsWith('k')) {
                 const have = strsOf(r.v.t);
                 const e = ex.v[k].lv ? ex.v[k].lv[lv - 1] : ex.v[k], kv = (inst.endsWith('bass') ? [6, 5] : [8, 7]).find(x => n >= x && e['t' + x]) || '';
