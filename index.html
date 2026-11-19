@@ -4141,7 +4141,183 @@ const JZA2={EX:{},EXEN:{},COACH:{}};
 /*@JZA2_END@*/
 
 // ----- JZB1: джаз, бас, часть 1 -----
-const JZB1={EX:{},EXEN:{},COACH:{}};
+// Табы строятся из прогрессии: аккорд = [сдвиг тоники от тональности, тип]; фигура такта — ступени аккорда.
+// Вариант = гармония (прогрессия), тональность и позиция грифа; уровень = длина фразы и фигура.
+const JZB1=(function(){
+const SN='EADG';
+const Q={maj7:[4,7,11],'7':[4,7,10],m7:[3,7,10],m7b5:[3,6,10],dim7:[3,6,9],m6:[3,7,9]};
+// прогрессии: такты, в такте один или два аккорда [сдвиг, тип]
+const PR={
+  iiVI:[[2,'m7'],[7,'7'],[0,'maj7'],[0,'maj7']],
+  min:[[2,'m7b5'],[7,'7'],[0,'m6'],[0,'m6']],
+  turn:[[0,'maj7'],[9,'7'],[2,'m7'],[7,'7']],
+  tri:[[0,'maj7'],[9,'7'],[2,'m7'],[1,'7']],
+  dimp:[[0,'maj7'],[1,'dim7'],[2,'m7'],[7,'7']],
+  cyc:[[2,'m7'],[7,'7'],[0,'maj7'],[5,'maj7'],[11,'m7b5'],[4,'7'],[9,'m7'],[9,'m7']],
+  long:[[2,'m7'],[2,'m7'],[7,'7'],[7,'7'],[0,'maj7'],[0,'maj7'],[9,'7'],[9,'7']],
+  blues:[[0,'7'],[5,'7'],[0,'7'],[0,'7'],[5,'7'],[5,'7'],[0,'7'],[9,'7'],[2,'m7'],[7,'7'],[[0,'7'],[9,'7']],[[2,'m7'],[7,'7']]],
+  mblues:[[0,'m7'],[0,'m7'],[0,'m7'],[0,'m7'],[5,'m7'],[5,'m7'],[0,'m7'],[0,'m7'],[8,'7'],[7,'7'],[0,'m7'],[7,'7']],
+  rhy:[[[0,'maj7'],[9,'m7']],[[2,'m7'],[7,'7']],[[4,'m7'],[9,'7']],[[2,'m7'],[7,'7']],[[0,'maj7'],[0,'7']],[[5,'maj7'],[5,'m6']],[[4,'m7'],[9,'7']],[[2,'m7'],[7,'7']]],
+  bridge:[[4,'7'],[4,'7'],[9,'7'],[9,'7'],[2,'7'],[2,'7'],[7,'7'],[7,'7']],
+  modal:[[0,'m7'],[0,'m7'],[0,'m7'],[0,'m7'],[1,'m7'],[1,'m7'],[0,'m7'],[0,'m7']],
+  bossa:[[0,'m7'],[0,'m7'],[5,'m7'],[5,'m7'],[2,'m7b5'],[7,'7'],[0,'m7'],[0,'m7']],
+  bossaM:[[0,'maj7'],[0,'maj7'],[2,'7'],[2,'7'],[2,'m7'],[7,'7'],[0,'maj7'],[0,'maj7']]
+};
+const PN={iiVI:['ii–V–I','ii–V–I'],min:['минорный ii–V–i','minor ii–V–i'],turn:['оборот I–VI–ii–V','I–VI–ii–V turnaround'],tri:['оборот с тритоновой заменой','turnaround with a tritone sub'],
+  dimp:['оборот через уменьшённый','turnaround through a diminished chord'],cyc:['ход по квартам','cycle of fourths'],long:['ii–V–I по два такта','ii–V–I, two bars each'],blues:['джазовый блюз','jazz blues'],
+  mblues:['минорный блюз','minor blues'],rhy:['ритм-ченджи, часть A','rhythm changes, A section'],bridge:['ритм-ченджи, бридж','rhythm changes, bridge'],modal:['модальный вэмп','modal vamp'],
+  bossa:['минорная босса','minor bossa'],bossaM:['мажорная босса','major bossa']};
+const KN={0:'{E}',1:'{F}',3:'{G}',5:'{A}',6:'{Bb}',8:'{C}',10:'{D}',11:'{Eb}'};
+const POS=a=>a<=3?['у порожка','near the nut']:a<=5?['пятая позиция','fifth position']:a<=7?['седьмая позиция','seventh position']:['высокая позиция','high position'];
+// выбор струны: лад ближе к позиции a; h/p — на струне предыдущей ноты
+function place(p,a,prev,leg){
+  while(p>29)p-=12;while(p<0)p+=12;
+  if(leg&&prev!=null){const f=p-5*prev;if(f>=0&&f<=17)return [prev,f];}
+  let b=null;for(let s=0;s<4;s++){const f=p-5*s;if(f<0||f>17)continue;const c=Math.abs(f-a)+(f===0?1:0);if(!b||c<b[2])b=[s,f,c];}
+  return b;
+}
+// ступени: r t f s o (октава) T (децима), +k/-k — полутона от тоники; A/A2/B/N — подходы к тонике следующего аккорда
+function deg(w,ch,rp,np){
+  const q=Q[ch[1]];
+  switch(w){case 'r':return rp;case 't':return rp+q[0];case 'f':return rp+q[1];case 's':return rp+q[2];case 'o':return rp+12;case 'T':return rp+12+q[0];
+    case 'N':return np;case 'A':return np>0?np-1:np+1;case 'A2':return np>1?np-2:np+2;case 'B':return np+1;}
+  if(/^[+-]\d+$/.test(w))return rp+(+w);throw Error('JZB1 deg '+w);
+}
+// fig: (доли, аккорд, номер аккорда) → строка; vr: {pr,k,lo,a,meter}; nb — число тактов
+function build(vr,fig,nb,sub){
+  const pr=PR[vr.pr].slice(0,nb||99),beats=vr.meter==='3/4'?3:4,rp=c=>vr.lo+mod(vr.k+c[0]-vr.lo,12);
+  const slots=[];pr.forEach((b,i)=>{const cs=Array.isArray(b[0])?b:[b];cs.forEach(c=>slots.push({c,bar:i,b:beats/cs.length}));});
+  let prev=null;const bars=pr.map(()=>[]);
+  slots.forEach((sl,j)=>{
+    const nx=slots[(j+1)%slots.length].c,r=rp(sl.c),np=rp(nx),str=fig(sl.b,sl.c,j);let sum=0;
+    str.trim().split(/\s+/).forEach(w=>{
+      const m=/^([xhp]?)([A-Za-z0-9+.-]+?)(~?)(m?)(?::(\d+))?$/.exec(w);if(!m)throw Error('JZB1 tok '+w);
+      const k=m[5]?+m[5]:1;sum+=k;
+      if(m[2]==='.'){bars[sl.bar].push('.'+(m[5]?':'+k:''));return;}
+      const [s,f]=place(deg(m[2],sl.c,r,np),vr.a,prev,m[1]==='h'||m[1]==='p');prev=s;
+      bars[sl.bar].push((m[1]==='x'?SN[s]+'x':(m[1]==='h'||m[1]==='p'?SN[s]+m[1]+f:SN[s]+f)+m[3])+m[4]+(m[5]?':'+k:''));
+    });
+    if(sum!==sl.b*sub)throw Error('JZB1 sum '+str+' '+sum);
+  });
+  const out=[];for(let i=0;i<bars.length;i+=4)out.push(bars.slice(i,i+4).map(b=>b.join(' ')).join(' | '));
+  return out;
+}
+// fb({4:…,3:…,2:…}) — фигура по числу долей аккорда; alt — чётные и нечётные аккорды
+const fb=m=>(b)=>{if(m[b]==null)throw Error('JZB1 beats '+b);return m[b];};
+const alt=(x,y)=>(b,c,j)=>(j%2?y:x)(b,c,j);
+// упражнение: vs — 6 вариантов [прогрессия, тональность (лад на E), нижняя тоника, позиция, размер?], lvs — 5 уровней [тактов, фигура, sub?]
+function ex(o,vs,lvs,sub){
+  o.sub=sub;
+  o.v=vs.map(([pr,k,lo,a,meter])=>{const vr={pr,k,lo,a,meter},v={l:PN[pr][0]+' в '+KN[k]+', '+POS(a)[0],lv:lvs.map(([nb,fig])=>({t:build(vr,fig,nb,sub)}))};if(meter)v.meter=meter;return v;});
+  return o;
+}
+const en=(vs)=>vs.map(([pr,k,lo,a])=>PN[pr][1]+' in '+KN[k]+', '+POS(a)[1]);
+
+const VS={
+  B1:[['iiVI',1,0,3],['min',8,3,5],['turn',6,4,6],['cyc',3,0,5],['blues',1,0,3],['dimp',11,6,8]],
+  B2:[['blues',6,4,6],['iiVI',8,3,5],['tri',1,0,3],['mblues',5,2,5],['cyc',11,5,8],['min',10,5,7]],
+  B3:[['iiVI',3,2,5],['turn',1,0,3],['min',5,4,7],['long',6,4,6],['dimp',8,3,5],['blues',11,6,8]],
+  B4:[['long',1,0,3],['blues',6,4,5],['bridge',6,0,5],['mblues',8,3,5],['turn',10,5,7],['cyc',5,4,7]],
+  B5:[['modal',10,5,7],['iiVI',6,4,6],['min',3,2,5],['turn',8,3,5],['blues',1,0,3],['cyc',1,0,3]],
+  R6:[['blues',1,0,3],['iiVI',11,6,8],['long',8,3,5],['tri',3,2,5],['mblues',10,5,7],['turn',6,4,6]],
+  R7:[['turn',1,0,3],['cyc',6,4,6],['blues',8,3,5],['min',1,0,3],['iiVI',10,5,7],['bridge',1,0,5]],
+  R8:[['iiVI',6,4,6,'3/4'],['min',10,5,7,'3/4'],['long',3,2,5,'3/4'],['cyc',8,3,5,'3/4'],['turn',11,6,8,'3/4'],['dimp',1,0,3,'3/4']],
+  R9:[['bossa',5,4,5],['bossaM',1,0,3],['bossa',10,5,7],['bossaM',8,3,5],['min',3,2,5],['iiVI',6,4,6]],
+  R10:[['turn',1,0,3],['tri',6,4,6],['dimp',3,2,5],['turn',8,3,5],['tri',11,6,8],['dimp',10,5,7]],
+  R11:[['rhy',6,4,6],['bridge',6,0,5],['rhy',1,0,3],['bridge',1,0,3],['rhy',11,6,8],['rhy',8,3,5]],
+  R12:[['blues',1,0,3],['blues',6,4,6],['mblues',8,3,5],['blues',8,3,5],['mblues',5,2,5],['blues',3,2,5]],
+  R13:[['modal',10,5,7],['modal',5,4,5],['modal',3,2,5],['bossa',8,3,5],['mblues',10,5,7],['modal',8,3,8]],
+  R14:[['iiVI',1,0,3],['blues',6,4,6],['turn',3,2,5],['min',8,3,5],['cyc',10,5,7],['rhy',6,4,6]],
+  R15:[['blues',1,0,3],['long',6,4,6],['turn',11,6,8],['mblues',3,2,5],['iiVI',8,3,5],['min',5,4,7]]
+};
+
+const EX={
+W0:{name:'Разминка',goal:'Разогреть руки и включить слух на свинг.',how:'Без баса минуту: потри ладони до тепла, круги кистями и плечами, сожми и раскрой кулаки 20 раз. Затем медленная хроматика в пятой позиции свинговыми восьмыми: долгая нота и короткая.',hf:'Указательный и средний по очереди, мягкий опорный удар.',hp:'Вниз на долгую ноту, вверх на короткую, медиатор неглубоко.',tip:'Только мягкие движения. Свинг здесь важнее точности: «ду-ба, ду-ба».',sub:3,v:[{l:'Хроматика свингом',t:['E5:2 E6 E7:2 E8 A5:2 A6 A7:2 A8 | D5:2 D6 D7:2 D8 G5:2 G6 G7:2 G8','G8:2 G7 G6:2 G5 D8:2 D7 D6:2 D5 | A8:2 A7 A6:2 A5 E8:2 E7 E6:2 E5']}]},
+W1:{name:'Мобилизация без баса',goal:'Разогнать кровь в кистях, предплечьях и плечах.',how:'Потри ладони до тепла. Круги кистями в обе стороны по 10 раз. Плечи вверх, назад, вниз. Сожми и раскрой кулаки 20 раз. Разведи пальцы левой руки веером и сведи 10 раз: уокинг требует растяжки на четыре лада.',hf:'Отдельно разомни подушечки указательного и среднего: на них весь уокинг.',hp:'Покрути запястьем правой руки, как будто играешь медиатором в воздухе, — свободно, без зажима.',tip:'Никакой растяжки через боль: только тепло и подвижность.'},
+W2:{name:'Медленный уокинг',goal:'Синхронизировать руки на четвертях.',how:'Чистый звук, темп заведомо низкий. ii–V–I в {F} четвертями: вверх по аккорду, последняя доля — подход к следующему. Каждая нота звучит до следующей.',hf:'Чередуй указательный и средний, опорный удар.',hp:'Только вниз, ровная атака.',tip:'Между нотами не должно быть дыр: уокинг — одна непрерывная линия.',sub:3,v:[{l:'ii–V–I в {F} четвертями',t:build({pr:'iiVI',k:1,lo:0,a:3},fb({4:'r:3 t:3 f:3 A:3'}),4,3)}]},
+W3:{name:'Децимы и октавы',goal:'Подготовить левую руку к растяжке, правую — к перескокам.',how:'Чистый звук, половина рабочего темпа. Тоника, квинта, октава, децима аккорда — для каждого аккорда ii–V–I в {Bb}.',hf:'Пальцы правой руки перешагивают через струну, не задевая соседние.',hp:'Альтернейт, медиатор перелетает через струну коротким движением.',tip:'Цель — тёплые руки, а не скорость.',sub:3,v:[{l:'Децимы ii–V–I в {Bb}',t:build({pr:'iiVI',k:6,lo:4,a:6},fb({4:'r:3 f:3 o:3 T:3'}),4,3)}]},
+
+B1:{n:1,name:'Уокинг по тонам аккорда',goal:'Тоника на сильной доле, тоны аккорда между ними.',how:'Четыре ноты на такт по аккорду: тоника, терция, квинта, септима. На старших уровнях линия идёт вниз с октавы и ведёт к следующему аккорду.',hf:'Указательный и средний строго по очереди, опорный удар: палец ложится на соседнюю струну.',hp:'Только вниз, медиатор у грифа — звук круглее, ближе к контрабасу.',tip:'Тоника на первой доле — опора всего ансамбля. Остальные ноты чуть тише.',lvl:['Два такта: тоника, терция, квинта','Четыре такта: арпеджио с септимой','Вся форма: вверх и вниз с октавы','Последняя доля — подход к следующему аккорду','Скип-триоль с мёртвой нотой на третьей доле']},
+B2:{n:2,name:'Хроматические подходы',goal:'Приходить в тонику следующего аккорда на полтона снизу или сверху.',how:'Последняя доля такта — нота на полтона ниже или выше следующей тоники. На старших уровнях — двойной хроматический подход.',hf:'Подход тем же движением пальцев, что и вся линия: без акцента.',hp:'Подход вниз, как и остальные ноты.',tip:'Подход звучит «неправильно» сам по себе и правильно — только когда приходит в цель.',lvl:['Два такта: тоника три доли и подход','Четыре такта: тоника, квинта, подход','Вся форма: тоника, терция, квинта, подход','Подход сверху и снизу','Двойной подход снизу']},
+B3:{n:3,name:'Энклоужеры',goal:'Окружить цель: нота выше, нота ниже, потом сама цель.',how:'Перед тоникой следующего аккорда — нота на полтона выше, затем на полтона ниже. На старших уровнях окружение ложится свинговыми восьмыми.',hf:'На двух нотах окружения пальцы чередуются особенно строго.',hp:'Окружение восьмыми — вниз-вверх.',tip:'Цель — на первую долю. Окружение без цели звучит как ошибка.',lvl:['Два такта: тоника, квинта, окружение','Четыре такта','Вся форма: тоника, терция, окружение','Окружение свинговыми восьмыми','Мёртвая нота в начале такта']},
+B4:{n:4,name:'Две доли (two-feel)',goal:'Половинные ноты: спокойный бас для темы и баллады.',how:'Две ноты на такт: тоника и квинта. Дальше на четвёртой доле — подход к следующему аккорду, затем мёртвая нота перед квинтой.',hf:'Каждая половинная держится до следующей: не отпускай раньше.',hp:'Вниз, медиатор у грифа, нота держится полностью.',tip:'Two-feel — ощущение двух широких шагов. Метроном на 2 и 4 помогает.',lvl:['Два такта: тоника и квинта','Четыре такта','Вся форма','Квинта и подход на четвёртой доле','Скип с мёртвой нотой']},
+B5:{n:5,name:'Свинговые восьмые',goal:'Линия восьмыми в свинге: долгая и короткая.',how:'Каждая доля — две ноты, долгая на две трети, короткая на треть. По аккорду и с проходящими нотами, в конце такта — подход.',hf:'Указательный на долгую, средний на короткую. Короткая тише, но звучит.',hp:'Вниз на долгую, вверх на короткую.',tip:'Свинг держится на короткой ноте: она мягче и чуть позже ровной восьмой.',lvl:['Два такта: пары на тонах аккорда','Четыре такта с проходящими','Вся форма с подходом','Через аккорд — вниз с октавы','Триоль в начале такта']},
+
+R6:{name:'Чарльстон',goal:'Ритм чарльстона: удар на раз и на «и» второй доли.',how:'Две ноты на такт: на первую долю и на свинговое «и» второй. Дальше добавляется подход на четвёртую долю.',hf:'Вторая нота — короткий акцент, не глуши её раньше времени.',hp:'Вниз на первую, вверх на «и».',tip:'Считай вслух «раз — и-два-И»: вторая нота на последнюю треть второй доли.',lvl:['Два такта: тоника и квинта','Четыре такта','Вся форма','Подход на четвёртую долю','Мёртвая нота перед «и»']},
+R7:{name:'Предвосхищение',goal:'Следующий аккорд на «и» четвёртой доли.',how:'Последняя короткая нота такта — уже тоника следующего аккорда. Так бас толкает форму вперёд.',hf:'Предвосхищение и следующая доля — разными пальцами.',hp:'Предвосхищение — апстрок, первая доля — вниз.',tip:'Нота предвосхищения длится через тактовую черту: первую долю не повторяй громче.',lvl:['Два такта: тоника и предвосхищение','Четыре такта: тоника, квинта','Вся форма','Арпеджио и предвосхищение','Мёртвая нота и подход перед предвосхищением']},
+R8:{name:'Джаз-вальс',goal:'Уокинг в 3/4: три доли, тяжёлая первая.',how:'Три ноты на такт: тоника, дальше по аккорду. На старших уровнях — подход на третьей доле и свинговые восьмые внутри такта.',hf:'Опорный удар на первую долю, две другие мягче.',hp:'Вниз на каждую долю, первая громче.',tip:'Вальс качается «РАЗ-два-три»: не превращай его в 4/4 без доли.',lvl:['Два такта: тоника и квинта','Четыре такта','Вся форма: тоны аккорда','Подход на третьей доле','Свинговая восьмая на второй доле']},
+R9:{name:'Босса-нова',goal:'Ровные восьмые: тоника и квинта с предвосхищением.',how:'Прямые восьмые, не свинг. Тоника на долю с точкой, квинта на «и» второй и на третью долю. Дальше предвосхищение следующего аккорда.',hf:'Большой палец или указательный, мягко у грифа — звук как у контрабаса.',hp:'Медиатор у грифа, ладонь слегка глушит у бриджа.',tip:'Босса не свингует: восьмые ровные, долгая нота ровно три восьмых.',lvl:['Два такта: тоника и квинта половинными','Четыре такта: квинта на «и» второй доли','Вся форма: классическая фигура','Предвосхищение следующего аккорда','Октава в фигуре']},
+R10:{name:'Обороты',goal:'Последние такты темы, которые возвращают к началу.',how:'Четыре аккорда по такту: обычный оборот, с тритоновой заменой или через уменьшённый. Уокинг ведёт от аккорда к аккорду.',hf:'Чередуй пальцы и на смене струны, и на одной струне.',hp:'Только вниз, ровно.',tip:'В тритоновой замене тоника аккорда — на полтона выше цели: подход получается сам.',lvl:['Два такта: тоники и квинты','Четыре такта: арпеджио','Уокинг с подходом','Окружение цели','Скип-триоль с мёртвой нотой']},
+R11:{name:'Ритм-ченджи',goal:'Два аккорда в такте: тоника на каждую смену.',how:'В части A аккорды меняются через две доли: тоника и подход. В бридже — доминанты по два такта, уокинг по аккорду.',hf:'Быстрая смена аккордов — пальцы правой руки не останавливаются.',hp:'Только вниз, атака одинаковая.',tip:'На двух долях на аккорд главное — тоника на смене. Лишнее не нужно.',lvl:['Тоники на каждую долю','Тоника и квинта','Тоника и подход','Свинговая восьмая перед подходом','Триоль по аккорду и подход']},
+R12:{name:'Джазовый блюз',goal:'12 тактов с джазовой гармонией.',how:'Квадрат блюза, но с ii–V в девятом-десятом тактах и оборотом в конце. Сначала two-feel, потом уокинг четвертями.',hf:'Чередуй пальцы, опорный удар на первую долю.',hp:'Вниз, медиатор у грифа.',tip:'В джазовом блюзе две формы — two-feel на первом квадрате, уокинг на втором. Привыкай к обеим.',lvl:['Четыре такта two-feel','Восемь тактов: тоника и подход половинными','Весь квадрат уокингом','Окружение цели','Мёртвая нота и подход']},
+R13:{name:'Модальный вэмп',goal:'Долгий минорный аккорд: линия по дорийскому ладу.',how:'Восемь тактов минорных аккордов. Линия идёт по ладу: тоника, нона, терция, кварта, квинта; в конце такта — подход к следующему.',hf:'Указательный и средний, опорный удар; не заваливай темп на долгих аккордах.',hp:'Только вниз.',tip:'На долгом аккорде легко потеряться: считай такты вслух.',lvl:['Тоника, квинта, септима','Гамма вверх','Гамма и подход','Кварты по ладу','Октава и восьмые']},
+R14:{name:'Триоли',goal:'Триоль на долю внутри уокинга.',how:'Уокинг четвертями, одна доля такта — триоль по аккорду. Дальше триоли на разных долях.',hf:'Триоль: указательный — средний — указательный, без рывка.',hp:'Альтернейт на триоли: вниз-вверх-вниз.',tip:'Триоль ровно на долю: не ускоряйся и не опаздывай на следующую.',lvl:['Два такта: триоль на первую долю','Четыре такта','Вся форма: триоль на третью долю','Две триоли в такте','Триоль, восьмые и подход']},
+R15:{name:'Мёртвые ноты в уокинге',goal:'Перкуссия в линии: глухой щелчок на короткой восьмой.',how:'Уокинг, но короткая свинговая восьмая — мёртвая нота (x). Дальше мёртвые ноты на разных долях.',hf:'Мёртвая нота — тот же удар, левая рука ослабляет нажим.',hp:'Мёртвая нота — апстрок по приглушённой струне.',tip:'Мёртвая нота тише настоящей, но ритмически такая же чёткая.',lvl:['Два такта: тоника и щелчок','Четыре такта','Вся форма','Щелчок перед подходом','Щелчки на каждой доле']}
+};
+const LV={
+  B1:[[2,fb({4:'r:3 t:3 f:3 t:3',2:'r:3 f:3'})],[4,fb({4:'r:3 t:3 f:3 s:3',2:'r:3 t:3'})],[99,alt(fb({4:'r:3 t:3 f:3 s:3',2:'r:3 t:3'}),fb({4:'o:3 s:3 f:3 t:3',2:'o:3 f:3'}))],
+   [99,alt(fb({4:'r:3 t:3 f:3 A:3',2:'r:3 A:3'}),fb({4:'o:3 s:3 f:3 A:3',2:'o:3 A:3'}))],[99,alt(fb({4:'r:3 t:3 f:2 xf A:3',2:'r:2 xr A:3'}),fb({4:'o:3 s:3 f:2 xf A:3',2:'o:2 xo A:3'}))]],
+  B2:[[2,fb({4:'r:3 r:3 r:3 A:3',2:'r:3 A:3'})],[4,fb({4:'r:3 r:3 f:3 A:3',2:'r:3 A:3'})],[99,fb({4:'r:3 t:3 f:3 A:3',2:'r:3 A:3'})],
+   [99,alt(fb({4:'r:3 t:3 f:3 A:3',2:'r:3 A:3'}),fb({4:'r:3 f:3 t:3 B:3',2:'r:3 B:3'}))],[99,fb({4:'r:3 t:3 A2:3 A:3',2:'A2:3 A:3'})]],
+  B3:[[2,fb({4:'r:3 f:3 B:3 A:3',2:'B:3 A:3'})],[4,fb({4:'r:3 f:3 B:3 A:3',2:'B:3 A:3'})],[99,fb({4:'r:3 t:3 B:3 A:3',2:'B:3 A:3'})],
+   [99,fb({4:'r:3 t:3 f:3 B:2 A',2:'r:3 B:2 A'})],[99,fb({4:'r:2 xr t:3 B:3 A:3',2:'B:2 xB A:3'})]],
+  B4:[[2,fb({4:'r:6 f:6',2:'r:6'})],[4,fb({4:'r:6 f:6',2:'r:6'})],[99,fb({4:'r:6 f:6',2:'r:6'})],
+   [99,fb({4:'r:6 f:3 A:3',2:'r:3 A:3'})],[99,fb({4:'r:5 xr f:3 A:3',2:'r:2 xr A:3'})]],
+  B5:[[2,fb({4:'r:2 r t:2 t f:2 f t:2 t',2:'r:2 r t:2 t'})],[4,fb({4:'r:2 +2 t:2 f s:2 f t:2 +2',2:'r:2 +2 t:2 f'})],[99,fb({4:'r:2 +2 t:2 f s:2 f t:2 A',2:'r:2 t f:2 A'})],
+   [99,alt(fb({4:'r:2 +2 t:2 f s:2 f t:2 A',2:'r:2 t f:2 A'}),fb({4:'o:2 s f:2 t r:2 +2 t:2 A',2:'o:2 s f:2 A'}))],[99,fb({4:'r +2 t f:2 s o:2 s f:2 A',2:'r t f s:2 A'})]],
+  R6:[[2,fb({4:'r:5 f:7',2:'r:6'})],[4,fb({4:'r:5 f:7',2:'r:6'})],[99,fb({4:'r:5 f:7',2:'r:5 f'})],
+   [99,fb({4:'r:5 f:4 A:3',2:'r:5 A'})],[99,fb({4:'r:2 xr:3 f:4 A:3',2:'r:2 xr:3 A'})]],
+  R7:[[2,fb({4:'r:9 .:2 N',2:'r:3 .:2 N'})],[4,fb({4:'r:6 f:3 .:2 N',2:'r:3 .:2 N'})],[99,fb({4:'r:6 f:3 .:2 N',2:'r:3 .:2 N'})],
+   [99,fb({4:'r:3 t:3 f:3 .:2 N',2:'r:3 .:2 N'})],[99,fb({4:'r:3 t:2 xt f:3 A:2 N',2:'r:2 xr A:2 N'})]],
+  R8:[[2,fb({3:'r:6 f:3'})],[4,fb({3:'r:6 f:3'})],[99,fb({3:'r:3 t:3 f:3'})],[99,fb({3:'r:3 f:3 A:3'})],[99,fb({3:'r:3 t:2 f A:3'})]],
+  R9:[[2,fb({4:'r:4 f:4'})],[4,fb({4:'r:3 f:5'})],[99,fb({4:'r:3 f f:3 r'})],[99,fb({4:'r:3 f f:3 N'})],[99,fb({4:'r:3 f o:2 f N'})]],
+  R10:[[2,fb({4:'r:6 f:6'})],[4,fb({4:'r:3 t:3 f:3 s:3'})],[99,fb({4:'r:3 t:3 f:3 A:3'})],[99,fb({4:'r:3 f:3 B:3 A:3'})],[99,fb({4:'r:3 t:2 xt B:3 A:3'})]],
+  R11:[[99,fb({2:'r:3 r:3',4:'r:3 r:3 r:3 r:3'})],[99,fb({2:'r:3 f:3',4:'r:3 f:3 r:3 f:3'})],[99,fb({2:'r:3 A:3',4:'r:3 t:3 f:3 A:3'})],
+   [99,fb({2:'r:2 t A:3',4:'r:3 t:3 f:2 s A:3'})],[99,fb({2:'r t f A:3',4:'r t f s:3 f:3 A:3'})]],
+  R12:[[4,fb({4:'r:6 f:6',2:'r:6'})],[8,fb({4:'r:6 A:6',2:'r:3 A:3'})],[99,fb({4:'r:3 t:3 f:3 A:3',2:'r:3 A:3'})],[99,fb({4:'r:3 t:3 B:3 A:3',2:'B:3 A:3'})],[99,fb({4:'r:2 xr t:3 f:3 A:3',2:'r:2 xr A:3'})]],
+  R13:[[99,fb({4:'r:3 f:3 s:3 f:3'})],[99,fb({4:'r:3 +2:3 t:3 +5:3'})],[99,fb({4:'r:3 +2:3 t:3 A:3'})],[99,fb({4:'r:3 +5:3 s:3 A:3'})],[99,fb({4:'r:3 f:3 o:2 s A:3'})]],
+  R14:[[2,fb({4:'r t f t:3 f:3 A:3',2:'r t f A:3'})],[4,fb({4:'r t f t:3 f:3 A:3',2:'r t f A:3'})],[99,fb({4:'r:3 t:3 f s o A:3',2:'r t f A:3'})],
+   [99,fb({4:'r t f f:3 s f t A:3',2:'r t f A:3'})],[99,fb({4:'r t f s:2 f t:2 r A:3',2:'r t f A:3'})]],
+  R15:[[2,fb({4:'r:2 xr r:2 xr r:2 xr r:2 xr',2:'r:2 xr r:2 xr'})],[4,fb({4:'r:2 xr t:3 f:2 xf t:3',2:'r:2 xr f:3'})],[99,fb({4:'r:2 xr t:3 f:2 xf A:3',2:'r:2 xr A:3'})],
+   [99,fb({4:'r:3 t:3 f:2 xf A:3',2:'r:2 xA A:3'})],[99,fb({4:'r:2 xr t:2 xt f:2 xf A:2 xA',2:'r:2 xr A:2 xA'})]]
+};
+Object.keys(LV).forEach(id=>ex(EX[id],VS[id],LV[id],id==='R9'?2:3));
+
+const EXEN={
+W0:{name:'Warm-up',goal:'Warm up the hands and get the ears into swing.',how:'One minute without the bass: rub your palms until warm, circle your wrists and shoulders, clench and open your fists 20 times. Then slow chromatics in fifth position in swing eighths: a long note and a short one.',hf:'Alternate index and middle, soft rest strokes.',hp:'Down on the long note, up on the short one, keep the pick shallow.',tip:'Gentle movements only. Here the swing matters more than precision: “doo-ba, doo-ba”.',v:['Swing chromatics']},
+W1:{name:'Mobility without the bass',goal:'Get blood flowing in the hands, forearms and shoulders.',how:'Rub your palms until warm. Circle your wrists both ways 10 times. Shoulders up, back, down. Clench and open your fists 20 times. Spread the fretting-hand fingers like a fan and close them 10 times: walking lines need a four-fret stretch.',hf:'Work the pads of the index and middle fingers: every walking line sits on them.',hp:'Roll the picking wrist as if picking in the air: loose, no tension.',tip:'No stretching into pain: just warmth and mobility.'},
+W2:{name:'Slow walking',goal:'Sync the hands on quarter notes.',how:'Clean tone, deliberately slow tempo. A ii–V–I in {F} in quarter notes: up the chord, the last beat approaches the next one. Every note lasts until the next.',hf:'Alternate index and middle, rest strokes.',hp:'Downstrokes only, even attack.',tip:'No gaps between notes: a walking line is one continuous line.',v:['ii–V–I in {F} in quarter notes']},
+W3:{name:'Tenths and octaves',goal:'Prepare the fretting hand for the stretch and the plucking hand for string skips.',how:'Clean tone, half your working tempo. Root, fifth, octave and tenth of the chord, for every chord of a ii–V–I in {Bb}.',hf:'The plucking fingers step over a string without touching the neighbours.',hp:'Alternate picking, the pick hops over the string with a short motion.',tip:'The goal is warm hands, not speed.',v:['Tenths through a ii–V–I in {Bb}']},
+B1:{name:'Walking on chord tones',goal:'The root on the strong beat, chord tones in between.',how:'Four notes a bar through the chord: root, third, fifth, seventh. On the higher levels the line comes down from the octave and leads into the next chord.',hf:'Index and middle strictly alternating, rest strokes: the finger comes to rest on the next string.',hp:'Downstrokes only, pick near the neck for a rounder, upright-like sound.',tip:'The root on beat one anchors the whole band. The other notes a little softer.',lvl:['Two bars: root, third, fifth','Four bars: arpeggio with the seventh','The whole form: up, and down from the octave','The last beat approaches the next chord','A skip triplet with a dead note on beat three'],v:en(VS.B1)},
+B2:{name:'Chromatic approaches',goal:'Land on the next root from a half step below or above.',how:'The last beat of the bar is a half step below or above the next root. On the higher levels, a double chromatic approach.',hf:'Pluck the approach with the same finger motion as the rest of the line: no accent.',hp:'The approach is a downstroke like every other note.',tip:'An approach sounds “wrong” on its own and right only when it lands on the target.',lvl:['Two bars: root for three beats and an approach','Four bars: root, fifth, approach','The whole form: root, third, fifth, approach','Approach from above and below','Double approach from below'],v:en(VS.B2)},
+B3:{name:'Enclosures',goal:'Surround the target: a note above, a note below, then the target.',how:'Before the next root: a half step above, then a half step below. On the higher levels the enclosure falls on swing eighths.',hf:'Alternate fingers especially strictly on the two enclosure notes.',hp:'An eighth-note enclosure: down-up.',tip:'The target lands on beat one. An enclosure without its target sounds like a mistake.',lvl:['Two bars: root, fifth, enclosure','Four bars','The whole form: root, third, enclosure','Enclosure in swing eighths','A dead note at the top of the bar'],v:en(VS.B3)},
+B4:{name:'Two-feel',goal:'Half notes: a calm bass for the head and for ballads.',how:'Two notes a bar: root and fifth. Then an approach to the next chord on beat four, then a dead note before the fifth.',hf:'Hold every half note until the next: do not let go early.',hp:'Downstrokes, pick near the neck, let the note ring fully.',tip:'Two-feel feels like two wide steps. A metronome on 2 and 4 helps.',lvl:['Two bars: root and fifth','Four bars','The whole form','Fifth and an approach on beat four','A skip with a dead note'],v:en(VS.B4)},
+B5:{name:'Swing eighths',goal:'An eighth-note line in swing: long and short.',how:'Every beat is two notes, the long one two thirds, the short one a third. Through the chord and with passing notes, an approach at the end of the bar.',hf:'Index on the long note, middle on the short one. The short note is softer but still sounds.',hp:'Down on the long note, up on the short one.',tip:'Swing lives in the short note: softer and a touch later than a straight eighth.',lvl:['Two bars: pairs on chord tones','Four bars with passing notes','The whole form with an approach','Every other chord down from the octave','A triplet at the top of the bar'],v:en(VS.B5)},
+R6:{name:'Charleston',goal:'The Charleston rhythm: on one and on the “and” of two.',how:'Two notes a bar: on beat one and on the swung “and” of two. Then an approach on beat four is added.',hf:'The second note is a short accent: do not cut it off early.',hp:'Down on one, up on the “and”.',tip:'Count out loud “one — and-two-AND”: the second note is the last third of beat two.',lvl:['Two bars: root and fifth','Four bars','The whole form','Approach on beat four','A dead note before the “and”'],v:en(VS.R6)},
+R7:{name:'Anticipation',goal:'The next chord on the “and” of four.',how:'The last short note of the bar is already the root of the next chord. That is how the bass pushes the form forward.',hf:'Anticipation and the next beat with different fingers.',hp:'The anticipation is an upstroke, beat one a downstroke.',tip:'The anticipated note rings across the bar line: do not hit beat one louder again.',lvl:['Two bars: root and anticipation','Four bars: root, fifth','The whole form','Arpeggio and anticipation','A dead note and an approach before the anticipation'],v:en(VS.R7)},
+R8:{name:'Jazz waltz',goal:'Walking in 3/4: three beats, a heavy one.',how:'Three notes a bar: the root, then through the chord. On the higher levels, an approach on beat three and swing eighths inside the bar.',hf:'Rest stroke on beat one, the other two softer.',hp:'Downstroke on every beat, the first one louder.',tip:'A waltz sways “ONE-two-three”: do not turn it into 4/4 with a beat missing.',lvl:['Two bars: root and fifth','Four bars','The whole form: chord tones','Approach on beat three','A swing eighth on beat two'],v:en(VS.R8)},
+R9:{name:'Bossa nova',goal:'Straight eighths: root and fifth with an anticipation.',how:'Straight eighths, no swing. The root on a dotted beat, the fifth on the “and” of two and on beat three. Then the next chord is anticipated.',hf:'Thumb or index, softly near the neck: it sounds like an upright.',hp:'Pick near the neck, the palm lightly mutes at the bridge.',tip:'Bossa does not swing: the eighths are even, the long note exactly three eighths.',lvl:['Two bars: root and fifth in half notes','Four bars: fifth on the “and” of two','The whole form: the classic figure','Anticipating the next chord','An octave in the figure'],v:en(VS.R9)},
+R10:{name:'Turnarounds',goal:'The last bars of a tune that bring you back to the top.',how:'Four chords, one per bar: a plain turnaround, one with a tritone sub, or one through a diminished chord. The walking line leads from chord to chord.',hf:'Alternate fingers both on string changes and on one string.',hp:'Downstrokes only, even.',tip:'In a tritone sub the chord root is a half step above the target: the approach comes for free.',lvl:['Two bars: roots and fifths','Four bars: arpeggios','Walking with an approach','Enclosing the target','A skip triplet with a dead note'],v:en(VS.R10)},
+R11:{name:'Rhythm changes',goal:'Two chords a bar: the root on every change.',how:'In the A section the chords change every two beats: root and approach. In the bridge, dominants two bars each, walking through the chord.',hf:'Fast changes: the plucking fingers never stop.',hp:'Downstrokes only, the same attack.',tip:'With two beats per chord the root on the change is what matters. Nothing extra.',lvl:['Roots on every beat','Root and fifth','Root and approach','A swing eighth before the approach','A triplet through the chord and an approach'],v:en(VS.R11)},
+R12:{name:'Jazz blues',goal:'Twelve bars with jazz harmony.',how:'A blues form, but with a ii–V in bars nine and ten and a turnaround at the end. Two-feel first, then quarter-note walking.',hf:'Alternate fingers, rest stroke on beat one.',hp:'Downstrokes, pick near the neck.',tip:'A jazz blues has two feels: two-feel on the first chorus, walking on the second. Get used to both.',lvl:['Four bars of two-feel','Eight bars: root and approach in half notes','The whole form walking','Enclosing the target','A dead note and an approach'],v:en(VS.R12)},
+R13:{name:'Modal vamp',goal:'One long minor chord: a line through the Dorian mode.',how:'Eight bars of minor chords. The line runs through the mode: root, ninth, third, fourth, fifth; an approach into the next bar at the end.',hf:'Index and middle, rest strokes; do not let the tempo sag on long chords.',hp:'Downstrokes only.',tip:'It is easy to get lost on a long chord: count the bars out loud.',lvl:['Root, fifth, seventh','Scale going up','Scale and approach','Fourths through the mode','Octave and eighths'],v:en(VS.R13)},
+R14:{name:'Triplets',goal:'A triplet on one beat inside a walking line.',how:'Quarter-note walking, one beat of the bar is a triplet through the chord. Then triplets on different beats.',hf:'Triplet: index, middle, index, without a jerk.',hp:'Alternate picking on the triplet: down-up-down.',tip:'The triplet fills exactly one beat: do not rush or drag into the next.',lvl:['Two bars: a triplet on beat one','Four bars','The whole form: a triplet on beat three','Two triplets a bar','Triplet, eighths and an approach'],v:en(VS.R14)},
+R15:{name:'Dead notes in walking',goal:'Percussion in the line: a dull click on the short eighth.',how:'Walking, but the short swing eighth is a dead note (x). Then dead notes on different beats.',hf:'A dead note is the same stroke, the fretting hand eases off.',hp:'A dead note is an upstroke on a muted string.',tip:'A dead note is softer than a real one but rhythmically just as sharp.',lvl:['Two bars: root and click','Four bars','The whole form','A click before the approach','Clicks on every beat'],v:en(VS.R15)}
+};
+
+const TESTS=[
+  {id:'JBT1',ru:['Уокинг по ii–V–I','ii–V–I в {F} четвертями с подходами, держать 30 секунд без сбоя.'],en:['Walking a ii–V–I','A ii–V–I in {F} in quarter notes with approaches, hold 30 seconds without a slip.'],sub:3,t:build({pr:'iiVI',k:1,lo:0,a:3},fb({4:'r:3 t:3 f:3 A:3'}),4,3)},
+  {id:'JBT2',ru:['Ритм-ченджи','Часть A ритм-ченджей в {Bb}: тоника и подход на каждый аккорд, два круга.'],en:['Rhythm changes','The A section of rhythm changes in {Bb}: root and approach on every chord, twice through.'],sub:3,t:build({pr:'rhy',k:6,lo:4,a:6},fb({2:'r:3 A:3'}),8,3)},
+  {id:'JBT3',ru:['Уокинг на выносливость','Джазовый блюз в {F} уокингом, держать 60 секунд.'],en:['Walking endurance','A jazz blues in {F} walking, hold 60 seconds.'],sub:3,t:build({pr:'blues',k:1,lo:0,a:3},fb({4:'r:3 t:3 f:3 A:3',2:'r:3 A:3'}),12,3)},
+  {id:'JBT4',ru:['Свинговые восьмые','ii–V–I в {C} свинговыми восьмыми, четыре круга подряд.'],en:['Swing eighths','A ii–V–I in {C} in swing eighths, four times in a row.'],sub:3,t:build({pr:'iiVI',k:8,lo:3,a:5},fb({4:'r:2 +2 t:2 f s:2 f t:2 A'}),4,3)},
+  {id:'JBT5',ru:['Оборот с триолями','Оборот I–VI–ii–V в {G}: триоль на первую долю, четыре раза подряд без сбоя.'],en:['Turnaround with triplets','An I–VI–ii–V turnaround in {G}: a triplet on beat one, four times in a row without a slip.'],sub:3,t:build({pr:'turn',k:3,lo:2,a:5},fb({4:'r t f t:3 f:3 A:3'}),4,3)}
+];
+const RIFF={
+  ru:['хотя бы одна пауза длиной в целую долю','тоника следующего аккорда приходит через окружение','только две нижние струны','хотя бы одна триоль на одной доле','второй раз линия отвечает сама себе: другой конец','тоника аккорда звучит на каждой первой доле','не больше шести разных нот','линия начинается с затакта: хроматический подход','половина в two-feel, половина уокингом','в линии есть мёртвая нота','одно место с двойными нотами: децима','медленно, как баллада, но линия качает'],
+  en:['at least one rest a full beat long','the next root arrives through an enclosure','only the two lowest strings','at least one triplet on a single beat','the second time through, the line answers itself: a different ending','the chord root lands on every beat one','no more than six different notes','the line starts with a pickup: a chromatic approach','half in two-feel, half walking','includes a dead note','one spot with double stops: a tenth','slow, like a ballad, but the line swings']
+};
+return {EX,EXEN,COACH:{W0:{free:60}},TESTS,RIFF};
+})();
 /*@JZB1_END@*/
 
 // ----- JZB2: джаз, бас, часть 2 -----
