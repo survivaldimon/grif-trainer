@@ -6187,7 +6187,270 @@ return {EX,EXEN,COACH,TESTS,RIFF};
 /*@FKB1_END@*/
 
 // ----- FKB2: фанк, бас, часть 2 -----
-const FKB2={EX:{},EXEN:{},COACH:{}};
+const FKB2=(()=>{
+  // Запись такта: 16 клеток-шестнадцатых через пробел. Роль ноты от тоники варианта:
+  // R тоника, a/k полутон ниже/выше, l септима снизу, 2, m, 3, 4, b (блюзовая), 5, 6, 7, M (большая септима), O октава, N нона, d/D малая/большая децима, Q квинта над октавой, Z квинта на той же струне.
+  // Префикс техники: S слэп, P поп, h хаммер, p пулл-офф. x — мёртвая нота (xR — на струне тоники; без роли — на струне предыдущей ноты, с её S/P).
+  // '-' — продление, '.' — пауза. Первый токен вида 'E10:' меняет тонику такта.
+  const S='EADG';
+  const OFF={R:[0,0],a:[0,-1],k:[0,1],l:[0,-2],'2':[0,2],m:[0,3],'3':[1,-1],'4':[1,0],b:[1,1],'5':[1,2],'6':[2,-1],'7':[2,0],M:[2,1],O:[2,2],N:[2,4],d:[3,0],D:[3,1],Q:[3,4],Z:[0,7]};
+  const rootOf=t=>[S.indexOf(t[0]),+t.slice(1)];
+  const split=c=>c.length>1&&'SPhp'.includes(c[0])?[c[0],c.slice(1)]:['',c];
+  const isN=v=>v!=='-'&&v!=='.'&&split(v)[1][0]!=='x';
+  const cell=(c,r,prev)=>{
+    let [t,x]=split(c);
+    if(x[0]==='x'){let s;const role=x.slice(1);
+      if(role)s=r[0]+OFF[role][0];else if(!prev)s=r[0];else{s=prev.s;if(!t&&(prev.t==='S'||prev.t==='P'))t=prev.t;}
+      if(t==='h'||t==='p')t='';return {h:S[s]+t+'x',s,t};}
+    const o=OFF[x];if(!o)throw new Error('FKB2: роль '+c);
+    const s=r[0]+o[0],f=r[1]+o[1];if(s<0||s>3||f<0||f>20)throw new Error('FKB2: вне грифа '+c);
+    return {h:S[s]+t+f,s,t};
+  };
+  const bar=(src,r0)=>{const c=src.trim().split(/\s+/);let r=r0;
+    if(/:$/.test(c[0]))r=rootOf(c.shift().slice(0,-1));
+    if(c.length!==16)throw new Error('FKB2: в такте '+c.length+' клеток: '+src);return {r,c};};
+  // такт → токены; sw — свинговые шестнадцатые (деление 6: долгая 2, короткая 1)
+  const out=(b,sw)=>{const ev=[];let prev=null;
+    b.c.forEach((c,i)=>{
+      if(c==='-'){if(!ev.length)ev.push({h:'.',i});return;}
+      if(c==='.'){if(ev.length&&ev[ev.length-1].h==='.')return;ev.push({h:'.',i});return;}
+      const n=cell(c,b.r,prev);prev=n;ev.push({h:n.h,i});});
+    const pos=i=>sw?Math.floor(i/2)*3+(i%2?2:0):i,end=sw?24:16;
+    return ev.map((e,j)=>{const k=(j+1<ev.length?pos(ev[j+1].i):end)-pos(e.i);return e.h+(k>1?':'+k:'');}).join(' ');};
+  // уровень 1: по ноте на пару шестнадцатых, без мёртвых нот и легато
+  const thin=b=>{const c=[];for(let i=0;i<16;i+=2){const a=b.c[i],z=b.c[i+1],n=[a,z].find(isN);
+    c.push(n?(('hp'.includes(n[0])&&n.length>1)?n.slice(1):n):(a==='.'?'.':'-'),'-');}return {r:b.r,c};};
+  const ghost=b=>({r:b.r,c:b.c.map((v,i)=>v==='.'&&b.c.slice(0,i).some(isN)?'x':v)});
+  const fill=(b,f)=>({r:b.r,c:b.c.slice(0,12).concat(f)});
+  const FILL={f:['7','5','4','a'],s:['PO','x','S5','Sa']};
+  const LV=(A,B,f)=>[[thin(A)],[A],[A,B],[A,B,A,fill(B,f)],[ghost(A),B,ghost(A),fill(B,f)]];
+  const LV_STOP=(H,B,f)=>[[H],[H,B],[H,H,H,B],[H,H,H,fill(B,f)],[H,ghost(B),H,fill(ghost(B),f)]];
+  // m: f — пальцы, s — слэп; lv — схема уровней; v: [тоника, RU, EN, такт A, такт B, филл?]
+  const D={
+    A16:{m:'s',v:[
+      ['E5','Октавы {A}: ровные восьмые','{A} octaves: straight eighths','SR - PO - SR - PO - SR - PO - SR - PO -','SR - PO - SR x PO - SR - PO x SR - PO -'],
+      ['E3','Октавы {G}: группы по три шестнадцатые','{G} octaves: groups of three sixteenths','SR - - PO - - SR - - PO - - SR - PO -','SR - - PO - - SR - SR - PO - SxR - PO -'],
+      ['A2','Октавы {B}: сдвоенные удары','{B} octaves: doubled hits','SR SR PO - SR - PO PO SR - PO - SR SR PO -','SR - PO SxR SR - PO - . SR PO - SR - PO PO'],
+      ['E7','Октавы и квинта {B}','{B} octaves and the fifth','SR - PO - S5 - PO - SR - PO - S5 - PO -','SR - PO SxR S5 - PO - SR SR PO - S5 - P7 -'],
+      ['E0','Октавы {E} от тоники без лада, ход через малую терцию','{E} octaves from the unfretted root, a move through the minor third','SR - SxR PO - SR - SxR SR - PO - SxR - PO -','SR - SxR PO - SR - SxR SR - PO - Sm - S5 -',['PO','x','Sm','S2']],
+      ['E8','Октава и септима {C}','{C} octave and seventh','SR - PO - SxR - P7 - SR - PO - SxR P7 PO -','SR SR PO - P7 - PO - SR - PO SxR PO - P7 -']]},
+    A17:{m:'f',v:[
+      ['E5','{A}9: вверх до ноны и обратно','{A}9: up to the ninth and back','R - 3 5 7 - O - N - O 7 5 - 3 -','R - x 3 5 x 7 - O x N O 7 5 3 a'],
+      ['A3','{C}m9: минорный нонаккорд','{C}m9: the minor ninth','R - - m - 5 - 7 - - N - 7 - 5 -','R . m 5 7 . N 7 5 . m R a - - -'],
+      ['E3','{G}9: спуск с ноны','{G}9: down from the ninth','N - O 7 - 5 3 - R - - . R - l -','N O 7 5 3 R - . R - 3 5 7 - O -'],
+      ['E7','{B}7#9: малая терция над октавой','{B}7#9: the minor third above the octave','R - 5 - 7 - d - 7 - 5 - 3 - R -','R 3 5 7 d - 7 5 3 - R - . R a -'],
+      ['E8','{C}maj9: большая септима','{C}maj9: the major seventh','R - 3 - 5 - M - N - M - 5 - 3 -','R 3 5 M N - M 5 3 - R - 5 - a -'],
+      ['A5','{D}7sus4: кварта вместо терции','{D}7sus4: the fourth instead of the third','R - 4 - 5 - 7 - O - 7 - 5 - 4 -','R 4 5 7 O - 7 5 4 - R - . R a -']]},
+    A18:{m:'f',v:[
+      ['E5','{A}: позиция от тоники, вверх','{A}: the position from the root, going up','R - . R m - 4 - 5 - 7 - 5 4 m -','R . R m 4 5 7 O 7 5 4 m R - . -'],
+      ['A7','{E}: спуск с октавы','{E}: down from the octave','R - m - 4 . 5 - 7 - O - 7 5 4 -','O - 7 5 4 m R - l - R - . R m -'],
+      ['E3','{G}: группы по три шестнадцатые','{G}: groups of three sixteenths','R - - R - - m - - 4 - - 5 - 7 -','O - - 7 - - 5 - - 4 - - m - R -'],
+      ['E10','{D}: высокая позиция, тройки нот','{D}: high position, three-note cells','R m 4 - R m 4 - R m 4 5 7 - 5 -','O 7 5 - O 7 5 - 4 m R - 4 m R -'],
+      ['A0','{A}: позиция у порожка','{A}: the position at the nut','R - R m - 4 5 - 7 - O - 7 - 5 -','R m R 4 m 5 4 7 5 O 7 5 4 m R -',['7','5','4','m']],
+      ['E8','{C}: скачки на октаву','{C}: octave leaps','R - O - R m - 4 - 5 O - 7 - 5 -','R O R O 7 5 4 m R - . R - m 4 5']]},
+    A19:{m:'f',v:[
+      ['E5','{A} дорийский: гамма вверх','{A} Dorian: the scale going up','R - 2 m - 4 - 5 - 6 7 - O - 7 6','O 7 6 5 4 m 2 R - . R - 5 - 6 -'],
+      ['A5','{D} дорийский: терциями','{D} Dorian: in thirds','R m 2 4 m 5 4 6 5 7 6 O - . R -','O 6 7 5 6 4 5 m 4 2 m R - . R -'],
+      ['E3','{G} дорийский: вамп с секстой','{G} Dorian: a vamp on the sixth','R - . R - 6 - 7 R - . R 6 - 5 -','R - m - 4 - 6 - 5 - 4 - m - 2 -'],
+      ['E7','{B} дорийский: с октавы вниз','{B} Dorian: down from the octave','R - R O - R 7 - 6 - 5 - 4 - m -','4 - 6 - 7 - 6 - 5 - 4 - m - 2 -'],
+      ['A7','{E} дорийский: высокая позиция','{E} Dorian: high position','R 2 m - 5 - 6 - 7 - 6 5 m 2 R -','O - 7 - 6 - 5 - 4 - m - 2 - R -'],
+      ['E10','{D} дорийский: синкопы','{D} Dorian: syncopated','R - - 2 - m - - 4 - 5 - - 6 - 7','O - - 7 - 6 - - 5 - 4 - - m - 2']]},
+    A20:{m:'f',v:[
+      ['E5','{A}7: арпеджио с секстой','{A}7: arpeggio with the sixth','R - 3 - 5 - 6 7 O - 7 6 5 - 3 -','R 2 3 4 5 6 7 O - . O 7 6 5 3 a'],
+      ['E3','{G}7: октавная накачка','{G}7: octave pump','R - O - R - 7 6 R - O - 5 - 3 -','R O R O 7 - 6 - 5 - 4 - 3 - 2 -'],
+      ['A3','{C}7: стаккато','{C}7: staccato','R . 3 . 5 . 6 . 7 . 6 . 5 . 3 .','R - 2 3 5 - 6 7 O - 7 6 5 - 3 2'],
+      ['E7','{B}7: спуск с септимы','{B}7: down from the seventh','7 - 6 - 5 - 3 - R - - . R - 3 -','7 6 5 4 3 2 R - 5 - 6 - 7 - O -'],
+      ['A5','{D}7: септима снизу','{D}7: the seventh below','R - l - R - 3 5 6 - 5 - 3 - R -','R - O - 7 - 6 - 5 4 3 - 2 - R -'],
+      ['E10','{D}7: высокая позиция','{D}7: high position','R - . R 3 - 5 - 7 - . 7 6 - 5 -','O - 7 6 5 - 3 - 2 - R - 3 5 6 7']]},
+    A21:{m:'s',v:[
+      ['E5','{A}: хаммер на тон с тоники','{A}: a whole-step hammer from the root','SR - h2 - PO - x - S4 - h5 - PO - x -','SR - h2 - PO - x S4 h5 - P7 hO - x - -'],
+      ['E3','{G}: хаммер снизу в тонику','{G}: a hammer from below into the root','Sl hR - PO - x Sl hR - PO x - S4 h5 PO -','Sl hR PO - S4 h5 PO x Sl hR - PO x - PO -'],
+      ['A5','{D}: хаммер через блюзовую ноту','{D}: hammers through the blue note','SR - PO - S4 hb h5 - PO - x - SR - x -','SR x PO x S4 hb h5 x P7 hO x - SR - PO -'],
+      ['E7','{B}: двойной удар и хаммер','{B}: a double hit and a hammer','SR SxR h2 - PO - SR - S4 - h5 - P7 - PO -','SR - h2 SxR PO - P6 h7 SR - h2 - PO - x -'],
+      ['E0','{E}: хаммеры от ненажатой струны','{E}: hammers from unfretted strings','SR - - h2 PO - SR - S4 - h5 - PO - SR -','SR h2 PO SxR S4 h5 PO SxR SR h2 PO SxR S4 h5 PO -',['PO','x','S5','S4']],
+      ['A3','{C}: хаммер в септиму на попе','{C}: a hammer into the seventh after a pop','SR - PO - P6 h7 - x SR - h2 - PO - x -','SR - S4 h5 PO - P6 h7 SR - h2 - PO P7 PO -']]},
+    A22:{m:'f',v:[
+      ['E5','{A}: тоника, квинта, секста, октава','{A}: root, fifth, sixth, octave','R - - R 5 - 6 - O - - 7 - 5 3 -','R - - 5 - 6 7 - O - 6 - 5 - 3 a'],
+      ['A3','{C}: мажорная линия с секстой','{C}: a major line with the sixth','R - 3 - 5 - 6 - O - 6 - 5 - 3 -','R - - 2 3 - - 5 - - 6 - 5 4 3 2'],
+      ['E3','{G}: предвосхищение тоники','{G}: anticipating the root','R - x R - - 5 - 6 - x 6 - 5 3 -','O - - O - - 7 - 6 - - 5 - 3 2 a'],
+      ['E7','{B}m: минорная линия','{B}m: a minor line','R - - m - 4 5 - 7 - - 5 - 4 m -','R - O - 7 - 5 - 4 - m - R - l -'],
+      ['A5','{D} и {G}: два аккорда','{D} and {G}: two chords','R - - 3 - 5 - 6 - . R - 3 5 6 -','A10: R - - 3 - 5 - 6 - - 5 - 3 - 2 -'],
+      ['E8','{C}: восьмые с затактом','{C}: eighths with pickups','R - R - 5 - 5 - 6 - 6 - 5 - 3 2','R - O - 7 - 6 - 5 - . 3 - 2 - a']]},
+    A23:{m:'f',v:[
+      ['E5','{A}: подходы снизу к тонике и квинте','{A}: approaches from below to the root and fifth','R - - . a R - - 4 - b 5 - - . a','R - 2 m 3 - 4 - b 5 - 6 7 M O -'],
+      ['E3','{G}: подход сверху к тонике','{G}: approach from above to the root','k R - - . R 4 - b 5 - . 7 - 6 -','5 - - 6 - - 7 - M O - . k R - -'],
+      ['A5','{D}: окружение тоники','{D}: enclosing the root','k a R - - . 4 b 5 - - . 7 M O -','O - 7 - 6 - 5 - b - 4 - 3 - m -'],
+      ['E8','{C}: короткие подходы между долями','{C}: short approaches between beats','R - x a R - x a R - O - 7 - 5 -','5 - x b 5 - x 4 m - 2 - k R - -'],
+      ['A7','{E}: хроматический подъём к октаве','{E}: chromatic climb to the octave','R - . a R - . 4 b 5 - . 6 7 M O','O - M 7 6 - 5 b 4 - 3 m 2 - k R'],
+      ['E10','{D}: хроматика между квинтой и квартой','{D}: chromatics between the fifth and fourth','R - 3 - 5 - . b 4 - - . 3 - m -','R - O - 7 - . M O - 7 - 6 - 5 b']]},
+    A37:{m:'f',v:[
+      ['E5','{A}m7: каждая нота на «и»','{A}m7: every note on the off-beat','. - R - . - m - . - 5 - . - 7 -','. - O - . - 7 - . - 5 - m - R -'],
+      ['E3','{G}m7: пунктир по три шестнадцатые','{G}m7: dotted, three sixteenths each','R - - R - - 5 - - 7 - - O - - -','O - - 7 - - 5 - - m - - R - a -'],
+      ['A5','{D}m7: вступление со второй шестнадцатой','{D}m7: entering on the second sixteenth','. R - - . R - - . 5 - - . 7 - -','. O - - . 7 - - . 5 - - m - R -'],
+      ['E7','{B}m7: лига в следующий такт','{B}m7: tied into the next bar','R - . R - . 5 - . 7 - . O - . a','R - . 7 - . 5 - . m - . R - - -'],
+      ['E8','{C}m7: паузы на долю','{C}m7: rests on the beat','R - - . m - - . 4 - 5 - - . 7 -','O - - . 7 - - . 5 - 4 - - . m -'],
+      ['A7','{E}m7: короткие ноты через две паузы','{E}m7: short notes, two rests apart','R . . R . . R . . R . . O - 7 -','R . . 5 . . 7 . . O . . 7 - 5 -']]},
+    L24:{m:'f',v:[
+      ['E5','{A}: тоника и октава','{A}: root and octave','R x x R x x R x R x x R x x O x','R x x R x x 5 x 7 x x 5 x x R x'],
+      ['E3','{G}: минорная фраза','{G}: a minor phrase','R x R x m x R x 4 x m x R x 7 x','O x 7 x 5 x 4 x m x R x l x R x'],
+      ['A5','{D}: нота и две глухие','{D}: one note, two muted','R - x x R - x x 5 - x x 7 - x x','O - x x 7 - x x 5 - x x 4 - m -'],
+      ['E7','{B}: ноты между долями','{B}: notes between the beats','x R x R x R x x x 5 x 5 x 7 x x','x O x O x 7 x x x 5 x 5 x m x x'],
+      ['E0','{E}: от ненажатой струны','{E}: from the unfretted string','R x x x R x x x R x R x m x 5 x','R x x x R x x x 7 x 5 x m x 2 x',['7','x','5','m']],
+      ['E8','{C}: сдвоенные ноты','{C}: doubled notes','R x R R x R x R R x R x 7 x 5 x','R x R R x R x R O x 7 x 5 x m x']]},
+    L25:{m:'f',v:[
+      ['E5','{A}: плотный рисунок','{A}: a dense pattern','R - R R - R - R R - R - R R R -','R R . R - R . R R R . R - R R .'],
+      ['E3','{G}: группы по три','{G}: groups of three','R - - R - - R - - R - - R - R -','R - - R - - R - R - - R - - R -'],
+      ['A5','{D}: нота и мёртвая','{D}: a note and a dead note','R x R x x R x R R x R x x R x R','R x x R x x R x x R x x R x R x'],
+      ['E7','{B}: тоника и октава','{B}: root and octave','R - O - R R O - R - O R - R O -','R O R O - R O - R O R - O R O -'],
+      ['E0','{E}: со слабых шестнадцатых','{E}: from the weak sixteenths','. R . R . R R . . R . R . R R R','. R R . R . R R . R R . R . R .',['R','R','R','R']],
+      ['A3','{C}: короткие и длинные','{C}: short and long','R - - R - . R - - R - . R R - R','R . R . R - R . R . R - R R R R']]},
+    L26:{m:'s',v:[
+      ['E5','{A}: тоника, глухой удар, октава','{A}: root, muted hit, octave','SR SxR PO SxR SR SxR PO SxR SR SxR PO SxR SR SxR PO SxR','SR S4 PO S4 SR S4 PO S4 S5 S4 PO S4 SR SxR PO -'],
+      ['E3','{G}: вниз на тонику, вверх на квинту','{G}: down on the root, up on the fifth','SR S5 PO S5 SR - PO S5 SR S5 PO - S5 - PO -','SR S5 P7 S5 SR S5 PO S5 S4 S5 P7 S5 SR - - -'],
+      ['A5','{D}: вверх на кварту','{D}: up on the fourth','SR S4 PO S4 SR S4 PO - SR S4 PO S4 S5 S4 PO -','SR SxR S4 SxR PO SxR SR SxR S5 S4 PO S4 SR - PO -'],
+      ['E7','{B}: тройки нот','{B}: three-note cells','SR S5 PO SR S5 PO SR S5 PO SR S5 PO SR S5 PO -','SR S5 PO SR S5 P7 SR S5 PO SR S5 P7 SR - PO -'],
+      ['E0','{E}: от ненажатой струны','{E}: from the unfretted string','SR SxR S5 SxR PO SxR S5 SxR SR SxR S5 SxR PO S5 S4 -','SR S5 S4 PO SR S5 S4 PO SR SxR S5 SxR PO - S4 -',['PO','x','S5','S4']],
+      ['A3','{C}: два удара вверх подряд','{C}: two upstrokes in a row','SR S4 S5 PO SR S4 S5 PO SR S4 S5 P7 SR S4 PO -','SR S4 S5 PO SR S4 S5 P7 SR - S5 PO SR S4 PO -']]},
+    L27:{m:'s',v:[
+      ['E5','{A}: глухие удары между октавами','{A}: muted hits between octaves','SR - SxR - PO - SxR - SR SxR SxR - PO - SxR -','SR - SxR SR - SxR PO - SR SxR - SR PO - SxR -'],
+      ['E3','{G}: глухой поп','{G}: muted pops','SR SxR PxO SxR SR SxR PO SxR SR SxR PxO SxR S5 SxR PO -','SR SxR PxO SxR S5 SxR PxO SxR P7 SxR PO SxR SR - - -'],
+      ['A5','{D}: группы по три','{D}: groups of three','SR - - SxR - - PO - SR - SxR - PO - SxR -','SR - - SxR - - P7 - SR - SxR - PO - P7 -'],
+      ['E7','{B}: слэп и глухой поп по очереди','{B}: slap and muted pop in turn','SR PxO SR PxO SR PxO PO - SR PxO SR PxO S5 - PO -','SR PxO SR PxO S5 PxO P7 - SR PxO S4 PxO S5 - PO -'],
+      ['E0','{E}: от ненажатой струны','{E}: from the unfretted string','SR - SxR SR - SxR PO SxR SR - SxR S5 - SxR PO -','SR - SxR S5 - SxR P7 SxR SR - SxR S4 - SxR PO -',['PO','x','S5','S4']],
+      ['A3','{C}: два глухих после ноты','{C}: two muted after each note','SR SxR SxR PO SxR SxR SR SxR SxR PO SxR SxR S5 SxR PO -','SR SxR SxR P7 SxR SxR SR SxR SxR PO SxR SxR S4 SxR PO -']]},
+    L28:{m:'f',v:[
+      ['E5','{A}: хаммер с тоники и с септимы','{A}: hammers from the root and the seventh','R - h2 - pR - 5 - 7 - hO - p7 - 5 -','R h2 pR - 4 h5 p4 - 7 hO p7 - 5 - 4 -'],
+      ['E3','{G}: хаммер снизу в тонику','{G}: a hammer from below into the root','l hR - - m - 4 h5 - - 7 - 5 - p4 -','R hm pR - 4 h5 - 7 hO p7 - 5 p4 - m -'],
+      ['A5','{D}: хроматический хаммер','{D}: a chromatic hammer','R h2 hm pR - - 4 h5 - - 7 hO - p7 - -','O p7 - 5 p4 - m p2 pR - - . R - l -'],
+      ['E7','{B}: трели тройками','{B}: trills in threes','R h2 pR R h2 pR R h2 pR - 5 - 7 hO p7 -','4 h5 p4 4 h5 p4 7 hO p7 - 5 - 4 - R -'],
+      ['E0','{E}: легато от ненажатой струны','{E}: legato from unfretted strings','R - h2 hm pR - - . 4 - h5 - 7 - hO -','O p7 - 5 p4 - R - h2 - hm - p2 - pR -',['O','p7','5','p4']],
+      ['E8','{C}: пулл-офф после паузы','{C}: a pull-off after a rest','R - . 4 h5 - . 7 hO - p7 5 - p4 R -','R h2 pR - 7 hO p7 - 4 h5 p4 - R - l hR']]},
+    L29:{m:'f',v:[
+      ['E5','{A} и {D}: одна фигура в двух позициях','{A} and {D}: one figure in two positions','R - 5 - O - 5 - R - 5 - O - 7 -','E10: R - 5 - O - 5 - R - 5 - O - 7 -'],
+      ['E3','{G} и {C}: арпеджио на пять ладов выше','{G} and {C}: the arpeggio five frets higher','R - 3 - 5 - O - 7 - 5 - 3 - R -','E8: R - 3 - 5 - O - 7 - 5 - 3 - R -'],
+      ['A5','{D}: та же фраза в другой позиции','{D}: the same phrase in another position','R m 4 5 7 - O - 7 5 4 m R - - -','E10: R m 4 5 7 - O - 7 5 4 m R - - -'],
+      ['E3','{G} и {A}: квинта вдоль струны','{G} and {A}: the fifth along the string','R - - Z - - R - Z - O - 7 - 5 -','E5: R - - Z - - R - Z - O - 7 - 5 -'],
+      ['E0','{E} у порожка и на октаву выше','{E} at the nut and an octave higher','R - 4 - 5 - 7 - O - 7 - 5 - 4 -','E12: R - 4 - 5 - 7 - O - 7 - 5 - 4 -'],
+      ['A3','{C} и {F}: доминанта в двух позициях','{C} and {F}: a dominant in two positions','R - 3 - 5 - 6 - 7 - 6 - 5 - 3 -','A8: R - 3 - 5 - 6 - 7 - 6 - 5 - 3 -']]},
+    L30:{m:'s',v:[
+      ['E5','{A}: малая децима','{A}: the minor tenth','SR - Pd - SR - PO - SR - Pd - PO - SR -','SR Pd PO - S5 Pd PO - SR Pd PO Pd S5 - PO -'],
+      ['E3','{G}: большая децима','{G}: the major tenth','SR - PD - S5 - PD - SR PD - SR - PD S5 -','SR PD S5 PD SR PD PO PD S5 - PD - SR - - -'],
+      ['E7','{B}: квинта над октавой','{B}: the fifth above the octave','SR - - PQ - - SR - PQ - SR - PO - P7 -','SR PQ PO - SR PQ PO - SR - PQ - PO - - -'],
+      ['E0','{E}: от ненажатой струны','{E}: from the unfretted string','SR - PO - SxR - Pd - SR - PO Pd SxR - PO -','SR Pd PO Pd SR - PO - S5 - Pd - PO - SR -',['PO','x','S5','S4']],
+      ['A5','{D}: септима через струну','{D}: the seventh, skipping a string','SR - P7 - SR - PO - SR P7 PO - SxR - PO -','SR - P7 PO S4 - P7 - SR - PO P7 S5 - PO -'],
+      ['E8','{C}: малая и большая децима','{C}: minor and major tenths','SR SxR Pd PO SR SxR PD PO SR SxR Pd PO S5 - PO -','SR SxR PD PO S5 SxR Pd PO SR - Pd - PO - SR -']]},
+    L31:{m:'f',v:[
+      ['E5','{A}: тоника, октава, квинта','{A}: root, octave, fifth','R O 5 O R O 5 O R O 7 O R O 5 O','R O 5 O R O 5 O 7 O 5 O 4 - m -'],
+      ['E3','{G}: группы по три','{G}: groups of three','R - O R - O R - O R - O 5 - 7 -','R - O R - O 7 - O 7 - O 5 - 3 -'],
+      ['A5','{D}: октава и глухая нота','{D}: octave and a dead note','R O x O R O x O 5 O x O 7 O x O','R O R O 5 O 5 O 7 O 7 O 5 - 4 -'],
+      ['E7','{B}: септима снизу','{B}: the seventh below','R O l O R O l O R O 5 O 7 O 5 O','R O l O R O 7 O 5 O 4 O m - R -'],
+      ['E10','{D}: высокая позиция','{D}: high position','R - O - R O - O R - O - 7 - 5 -','R O 7 O 5 O 4 O R - - . R - O -'],
+      ['A3','{C}: октава через глухую','{C}: octave through a dead note','R x O x R x O x 5 x O x 7 x O x','R O 7 O 5 O 3 O R - O - R - - -']]},
+    L38:{m:'f',v:[
+      ['E5','{A}: филл вниз по пентатонике','{A}: a fill down the pentatonic','R - - R - - 5 - R - - - O 7 5 4','R - - R - - 5 - m 4 m R 7 5 4 m'],
+      ['E3','{G}: филл вверх к октаве','{G}: a fill up to the octave','R - . R - . 7 - R - . - 5 6 7 O','R - . R - . 7 - O 7 6 5 3 5 3 a'],
+      ['A5','{D}: филл после мёртвой ноты','{D}: a fill after a dead note','R - x R - x R - R - - - m 4 5 7','R - x R - x R - O 7 5 4 m 4 m R'],
+      ['E7','{B}: филл с октавы','{B}: a fill from the octave','R - - - O - - - R - - - 7 O 7 5','R - - - O - - - 5 7 O 7 5 4 m a'],
+      ['E8','{C}: тоника на «и», филл','{C}: root on the off-beat, then a fill','. - R - . - R - . - R - 5 4 m R','. - R - . - R - O 7 5 4 m 4 m 2'],
+      ['A7','{E}: филл вверх по пентатонике','{E}: a fill up the pentatonic','R - R - R - R - 7 5 4 m R m 4 5','O - O - O - O - 7 O 7 5 4 m R l']]},
+    C32:{m:'f',v:[
+      ['E5','{A}: октава на третью долю','{A}: the octave on beat three','R - - R - - O - . R - 7 - 5 R -','R - - R - - O - . R - 7 5 m R -'],
+      ['E3','{G}: мёртвые ноты в кармане','{G}: dead notes in the pocket','R - x R - x 7 - O - x 7 - 5 m -','R - x R - x 7 - O 7 5 m R - l -'],
+      ['A5','{D}: полутемп','{D}: half-time','R - - - - - - R . - O - 7 - 5 -','R - - - - - - R . - 5 - 7 - O -'],
+      ['E7','{B}: короткие ноты','{B}: short notes','R R . R R . O . R R . R 7 . 5 .','R R . R R . O . 7 7 . 5 5 . m .'],
+      ['E0','{E}: от ненажатой струны','{E}: from the unfretted string','R - - - 7 - x R - - O - 7 - 5 -','R - - - 7 - x R - - m - 2 - R -',['O','7','5','4']],
+      ['E8','{C}: тоника вокруг долей','{C}: the root around the beats','R - R . - R . R - . O - . 7 - R','R - R . - R . R - . 5 - . 4 - m']]},
+    C33:{m:'f',lv:LV_STOP,v:[
+      ['E5','{A}: удары на «раз» и «три»','{A}: hits on one and three','R - . . . . . . R - . . . . . .','R - - R - - O - . R - 7 - 5 R -'],
+      ['E3','{G}: три удара по три шестнадцатые','{G}: three hits, three sixteenths apart','R . . R . . R . . . . . . . . .','R - x R - x 7 - O - x 7 - 5 m -'],
+      ['A5','{D}: удары на «и»','{D}: hits on the off-beats','. . R - . . . . . . R - . . . .','R - - - - - - R . - O - 7 - 5 -'],
+      ['E7','{B}: удары вразбивку','{B}: scattered hits','R . . . . . R . . . . . . . R -','R R . R R . O . R R . R 7 . 5 .'],
+      ['E8','{C}: удар и подхват в конце','{C}: a hit and a pickup at the end','R - O - . . . . . . . . . . 7 5','R - R . - R . R - . O - . 7 - R'],
+      ['A7','{E}: удары на последнюю шестнадцатую','{E}: hits on the last sixteenth','. . . R . . . R . . . R . . . R','R - x R - - 5 - 7 - x 7 - 5 4 -']]},
+    C34:{m:'f',sw:1,v:[
+      ['E5','{A}: свинг с мёртвыми нотами','{A}: swing with dead notes','R - x R - x R - 7 - O - 7 5 m -','R - x R - x R - O 7 5 4 m 4 m R'],
+      ['E3','{G}: свинговое стаккато','{G}: swung staccato','R . R . 5 . 7 . O . 7 . 5 . 3 .','R R . R 5 5 . 5 7 7 . 7 O - 7 -'],
+      ['A5','{D}m: группы по три','{D}m: groups of three','R - - R - - m - 4 - - 5 - 7 - -','O - - 7 - - 5 - 4 - - m - R - -'],
+      ['E7','{B}: нота и глухая','{B}: a note and a dead note','R x R x R x O x R x R x 7 x 5 x','R x R x O x 7 x 5 x 4 x m x R x'],
+      ['E8','{C}7: мажорная линия','{C}7: a major line','R - - - R - 3 5 6 - 5 - 3 - 2 -','R - 3 - 5 - 6 - 7 - 6 - 5 - 3 -'],
+      ['A3','{C}m: с короткой шестнадцатой','{C}m: from the short sixteenth','. R - R . R - R . 5 - 7 . O - 7','. R - R . 7 - 5 . 4 - m . R - -']]},
+    C35:{m:'s',v:[
+      ['E5','{A}: вызов слэпом, ответ пальцами вниз','{A}: slap call, fingered answer going down','SR - PO - SR SxR PO - SR - PO - SxR - PO -','. - - - . - - - 7 - 5 - 4 m R -'],
+      ['E3','{G}: короткий вызов, длинный ответ','{G}: a short call, a long answer','SR SxR PO SxR S5 - PO - SR - - - . - - -','. - - - . - - - O 7 5 m 4 m R -'],
+      ['A5','{D}: вызов с хаммером, ответ вверх','{D}: a call with a hammer, an answer going up','SR - S4 h5 PO - x - SR - - - . - - -','. - - - . - - - R - m - 4 - 5 -'],
+      ['E7','{B}: ответ с мёртвыми нотами','{B}: an answer with dead notes','SR PxO SR PxO S5 - PO - . - - - . - - -','. - - - R x R x 7 x 5 x R - - -'],
+      ['E0','{E}: ответ с октавы','{E}: an answer from the octave','SR - SxR PO - SR - SxR SR - PO - . - - -','. - - - . - - - 7 - O - 7 - 5 -',['7','5','2','R']],
+      ['A3','{C}: ответ шестнадцатыми','{C}: an answer in sixteenths','SR - PO - P7 - PO - SR - - - . - - -','. - - - . - - - 7 6 5 3 R - - -']]}
+  };
+  const lvBars=(id,k)=>{const e=D[id],[r,,,a,b,f]=e.v[k],R0=rootOf(r);return (e.lv||LV)(bar(a,R0),bar(b,R0),f||FILL[e.m]);};
+  const sysOf=(bars,sw)=>{const o=[];for(let i=0;i<bars.length;i+=2)o.push(bars.slice(i,i+2).map(b=>out(b,sw)).join(' | '));return o;};
+  const ETU=[['C32','A21','L24','L38'],['L25','A16','A22','L28'],['A37','L27','A18','L31'],['L26','A20','L24','A23'],['C32','L30','A19','L38'],['A22','L26','A17','C35']];
+  const LVL_RU=['Восьмые: нота на пару шестнадцатых, без мёртвых нот и легато','Такт грува','Два такта','Четыре такта, в конце филл','Мёртвые ноты на паузах'];
+  const LVL_EN=['Eighths: one note per pair of sixteenths, no dead notes or legato','One-bar groove','Two bars','Four bars ending with a fill','Dead notes in the rests'];
+  const T={
+    A16:[{name:'Слэп-октавы',goal:'Главная фигура слэпа: тоника большим пальцем, октава попом.',how:'S — удар большим пальцем, P — поп указательным или средним, x — глухой удар. Тоника внизу, октава через струну.',tip:'Большой палец отскакивает от струны, как палочка от барабана. Не дави.',hf:'Без слэпа: тоника большим или указательным пальцем, октава средним — резко, с отскоком струны.',hp:'Медиатором: тоника вниз, октава вверх, струну между ними глуши левой рукой.'},
+         {name:'Slap octaves',goal:'The core slap figure: root with the thumb, octave with a pop.',how:'S is a thumb slap, P a pop with the index or middle finger, x a muted hit. Root below, octave two strings up.',tip:'The thumb bounces off the string like a stick off a drum. Do not press.',hf:'Without slap: root with the thumb or index, octave with the middle finger, sharp, letting the string snap.',hp:'With a pick: root down, octave up, mute the string between with the fretting hand.'}],
+    A17:[{name:'Нонаккорды в фанке',goal:'Звук фанка: септаккорды с ноной, 7#9, maj9.',how:'Арпеджио от тоники до ноны и обратно шестнадцатыми. Каждый вариант — свой аккорд: 9, m9, 7#9, maj9, 7sus4.',tip:'Нона — краска сверху. Тоника на сильной доле держит грув.',hf:'Чередуй i–m строго; на нону рука сдвигается, а не тянется.',hp:'Переменный штрих; на смене струны — экономное движение.'},
+         {name:'Ninth chords in funk',goal:'The funk sound: sevenths with the ninth, 7#9, maj9.',how:'An arpeggio from the root to the ninth and back in sixteenths. Each variant is its own chord: 9, m9, 7#9, maj9, 7sus4.',tip:'The ninth is colour on top. The root on the downbeat holds the groove.',hf:'Alternate i–m strictly; shift the hand for the ninth, do not stretch.',hp:'Alternate picking; economy motion on string changes.'}],
+    A18:[{name:'Пентатоника в фанке',goal:'Минорная пентатоника шестнадцатыми: материал фанковых линий.',how:'Пять нот: тоника, малая терция, кварта, квинта, малая септима. Варианты — разные позиции и ритмические ячейки.',tip:'Линия должна качать. Короткие ноты короче, долгие — до конца.',hf:'Позиция в четыре лада, палец на лад. Пауза — палец ложится на струну.',hp:'Переменный штрих; на паузах ладонь глушит струны.'},
+         {name:'Pentatonic funk lines',goal:'The minor pentatonic in sixteenths: the material of funk lines.',how:'Five notes: root, minor third, fourth, fifth, flat seventh. Variants are different positions and rhythm cells.',tip:'The line has to groove. Short notes shorter, long ones to full length.',hf:'A four-fret position, one finger per fret. On a rest the finger lands on the string.',hp:'Alternate picking; on rests the palm mutes the strings.'}],
+    A19:[{name:'Дорийский лад',goal:'Минор с большой секстой: лад минорного фанка.',how:'Тоника, секунда, малая терция, кварта, квинта, большая секста, малая септима. Гамма, терции, вампы на сексте.',tip:'Большая секста — то, что отличает дорийский. Дай ей прозвучать.',hf:'Палец на лад, на шестой и седьмой ступени — следующая струна, без растяжки.',hp:'Терции — переменный штрих, не подстраивай его под струны.'},
+         {name:'Dorian mode',goal:'Minor with a major sixth: the mode of minor funk.',how:'Root, second, minor third, fourth, fifth, major sixth, flat seventh. Scale, thirds, vamps on the sixth.',tip:'The major sixth is what makes it Dorian. Let it sound.',hf:'One finger per fret; the sixth and seventh are on the next string, no stretch.',hp:'Thirds: strict alternate picking, do not adapt it to the strings.'}],
+    A20:[{name:'Миксолидийский грув',goal:'Линии на доминантсептаккорде: мажор с малой септимой.',how:'Тоника, терция, квинта, секста, септима, октава — в рисунках шестнадцатыми.',tip:'Секста и септима рядом: секста проходит, септима звенит.',hf:'Сдвиг руки — на долгой ноте, не на шестнадцатой.',hp:'Переменный штрих; стаккато — левая рука отпускает сразу после удара.'},
+         {name:'Mixolydian groove',goal:'Lines over a dominant seventh: major with a flat seventh.',how:'Root, third, fifth, sixth, seventh, octave in sixteenth-note patterns.',tip:'Sixth and seventh are neighbours: the sixth passes, the seventh rings.',hf:'Shift the hand on a long note, not on a sixteenth.',hp:'Alternate picking; for staccato the fretting hand releases right after the hit.'}],
+    A21:[{name:'Хаммер после слэпа',goal:'Слэп и хаммер: вторая нота звучит от левой руки.',how:'S — удар большим пальцем, h — хаммер. Бьёшь только первую ноту, вторая — пальцем левой руки на ритм. Между ними — поп октавы.',tip:'Хаммер в долю, а не «когда получится». Он такой же громкий, как удар.',hf:'Без слэпа: щипок пальцем, хаммер так же.',hp:'Медиатор — удар вниз, хаммер левой рукой; поп — штрих вверх.'},
+         {name:'Hammer after a slap',goal:'Slap and hammer-on: the second note comes from the fretting hand.',how:'S is a thumb slap, h a hammer-on. Strike only the first note; the second is the fretting finger, in time. A popped octave between.',tip:'The hammer lands on the grid, not whenever. It is as loud as the slap.',hf:'Without slap: pluck with a finger, hammer the same way.',hp:'Pick downstroke, hammer with the fretting hand; the pop becomes an upstroke.'}],
+    A22:[{name:'Мотаун-линии',goal:'Мелодичный бас 60-х в духе Джеймса Джеймерсона: секста, подходы, затакты.',how:'Тоника, квинта, секста, октава, проходящие и хроматические ноты, затакты шестнадцатыми.',tip:'Линия поёт, но не мешает вокалу. Играй мягче, чем хочется.',hf:'Обычно — один палец (указательный), как у Джеймерсона. Для скорости — i–m.',hp:'Медиатор у грифа, приглушить ребром ладони — звук старого соула.'},
+         {name:'Motown lines',goal:'The melodic sixties bass in the spirit of James Jamerson: sixths, approaches, pickups.',how:'Root, fifth, sixth, octave, passing and chromatic notes, sixteenth-note pickups.',tip:'The line sings but stays out of the singer’s way. Play softer than you want to.',hf:'Classically one finger (the index), as Jamerson did. For speed, i–m.',hp:'Pick near the neck, muted with the edge of the palm: the old soul sound.'}],
+    A23:[{name:'Хроматические подходы',goal:'Приход на ноту аккорда полутоном снизу, сверху или окружением.',how:'Подход — нота в полутоне от цели, сразу перед ней. Окружение: сверху, снизу, цель.',tip:'Подход работает, только если цель точно в долю.',hf:'Подход — свободным пальцем рядом с целью, рука не прыгает.',hp:'Подход и цель — разными направлениями штриха.'},
+         {name:'Chromatic approaches',goal:'Landing on a chord tone from a half step below, above, or by enclosure.',how:'An approach is a note a half step from the target, right before it. Enclosure: above, below, target.',tip:'An approach only works if the target lands exactly on the beat.',hf:'Play the approach with a free finger next to the target; the hand does not jump.',hp:'Approach and target on opposite pick directions.'}],
+    A37:[{name:'Синкопы',goal:'Ноты между долями: грув, который тянет вперёд.',how:'Минорный септаккорд на «и», со второй шестнадцатой, пунктиром по три. Метроном — на долю, ты — между.',tip:'Считай шестнадцатые вслух: «раз-и-и-а». Нота на «и» — не раньше.',hf:'На паузе пальцы лежат на струнах — синкопа без гула.',hp:'Рука ходит шестнадцатыми и на паузах — по воздуху; нота на нужном штрихе.'},
+         {name:'Syncopation',goal:'Notes between the beats: a groove that pulls forward.',how:'A minor seventh on the off-beats, from the second sixteenth, dotted in threes. The metronome on the beat, you between.',tip:'Count sixteenths aloud: “one-e-and-a”. The note on “and”, never early.',hf:'During rests the fingers rest on the strings: syncopation without boom.',hp:'The picking hand moves in sixteenths through the rests too, in the air; the note falls on its stroke.'}],
+    L24:[{name:'Мёртвые ноты пальцами',goal:'Глухие шестнадцатые между нотами: перкуссия фанкового баса.',how:'x — палец лежит на струне без нажима. Ритм непрерывный: нота или глухая на каждой шестнадцатой.',tip:'Мёртвая нота тише настоящей. Если громче — грув разваливается.',hf:'Правая рука не останавливается: i–m на каждую шестнадцатую.',hp:'Медиатор ходит вниз-вверх без остановки, левая рука решает, где звук.'},
+         {name:'Fingerstyle dead notes',goal:'Muted sixteenths between the notes: the percussion of funk bass.',how:'x: the finger rests on the string without pressing. Continuous rhythm: a note or a dead note on every sixteenth.',tip:'A dead note is quieter than a real one. If it is louder, the groove falls apart.',hf:'The plucking hand never stops: i–m on every sixteenth.',hp:'The pick goes down-up nonstop; the fretting hand decides where the sound is.'}],
+    L25:[{name:'Одна нота — много ритма',goal:'Весь грув на одной ноте: ритм вместо мелодии.',how:'Только тоника (и её октава) и мёртвые ноты. Варианты — разные ритмические рисунки.',tip:'Запиши себя: на одной ноте слышна каждая неровность.',hf:'Чередование i–m не ломай, даже если нота одна.',hp:'Штрих по сетке шестнадцатых: вниз на долю, вверх между.'},
+         {name:'One note, lots of rhythm',goal:'A whole groove on one note: rhythm instead of melody.',how:'Only the root (and its octave) and dead notes. Variants are different rhythm patterns.',tip:'Record yourself: on a single note every unevenness is heard.',hf:'Keep the i–m alternation, even on one note.',hp:'Pick on the sixteenth grid: down on the beat, up between.'}],
+    L26:[{name:'Двойной большой палец',goal:'Большой палец бьёт вниз и обратно вверх: два удара за одно движение.',how:'Удар S вниз по струне, на обратном ходе — вверх по следующей (как медиатором). Между ними — попы.',tip:'Движение из запястья, большой палец — как медиатор. Медленно, пока не ровно.',hf:'Без слэпа: большой палец вниз, указательный вверх — тот же рисунок.',hp:'Медиатором это обычный переменный штрих: вниз на удар, вверх на обратный ход.'},
+         {name:'Double thumbing',goal:'The thumb strikes down and back up: two hits per motion.',how:'An S downstroke on one string, then on the way back an upstroke on the next (like a pick). Pops in between.',tip:'Motion from the wrist, the thumb works like a pick. Slowly, until it is even.',hf:'Without slap: thumb down, index up, the same pattern.',hp:'With a pick this is plain alternate picking: down on the hit, up on the return.'}],
+    L27:[{name:'Слэп и глухие удары',goal:'Глухой слэп и поп между нотами: перкуссия слэпа.',how:'Sx — удар большим пальцем по заглушённой струне, Px — глухой поп. Левая рука лежит на струнах, не прижимая.',tip:'Глухой удар — щелчок без высоты. Если слышна нота — ослабь левую руку.',hf:'Без слэпа: глухие ноты пальцами, тот же ритм.',hp:'Медиатором: глухие — по заглушённым струнам, штрих не прерывается.'},
+         {name:'Slap and muted hits',goal:'Muted slaps and pops between notes: slap percussion.',how:'Sx is a thumb hit on a muted string, Px a muted pop. The fretting hand rests on the strings without pressing.',tip:'A muted hit is a click without pitch. If you hear a note, relax the fretting hand.',hf:'Without slap: fingered dead notes, same rhythm.',hp:'With a pick: dead notes on muted strings, the picking never stops.'}],
+    L28:[{name:'Легато в груве',goal:'Хаммеры и пулл-оффы внутри фанковой линии.',how:'h — хаммер, p — пулл-офф. Бьёшь первую ноту, остальные — левой рукой точно в шестнадцатую.',tip:'Легато-нота такая же громкая, как сыгранная. Проверь записью.',hf:'Хаммер — с высоты кончиком; на пулл-оффе палец срывает струну вниз.',hp:'Медиатор пропускает легато-ноты, но рука продолжает ходить.'},
+         {name:'Legato in the groove',goal:'Hammer-ons and pull-offs inside a funk line.',how:'h is a hammer-on, p a pull-off. Pluck the first note; the rest come from the fretting hand, exactly on the sixteenth.',tip:'A legato note is as loud as a plucked one. Check with a recording.',hf:'Hammer from a height with the fingertip; on a pull-off the finger snaps the string downward.',hp:'The pick skips the legato notes, but the hand keeps moving.'}],
+    L29:[{name:'Смена позиций',goal:'Та же фигура в другом месте грифа: переезд без сбоя ритма.',how:'Первый такт — в одной позиции, второй — та же фигура на другом аккорде или та же фраза ниже по струнам.',tip:'Переезд — на последней ноте такта, не на первой следующего.',hf:'Большой палец за грифом едет вместе с рукой.',hp:'Медиатор не ждёт левую руку: штрих по сетке.'},
+         {name:'Position shifts',goal:'The same figure elsewhere on the neck: shifting without losing time.',how:'Bar one in one position, bar two the same figure on another chord, or the same phrase on lower strings.',tip:'Shift on the last note of the bar, not on the first note of the next.',hf:'The thumb behind the neck travels with the hand.',hp:'The pick does not wait for the fretting hand: keep the grid.'}],
+    L30:[{name:'Поп через струны',goal:'Слэп внизу, поп через одну-две струны: децимы и октавы.',how:'Тоника слэпом, поп — октава, малая или большая децима, квинта над октавой. Струны между — заглушены.',tip:'Поп — указательным или средним, палец зацепляет струну и отпускает.',hf:'Без слэпа: большой палец на тонике, i и m на верхних — как арпеджио.',hp:'Медиатор со скачками через струны; лишние струны глушит левая рука.'},
+         {name:'Pops across strings',goal:'Slap below, pop one or two strings up: tenths and octaves.',how:'Root slapped; the pop is the octave, a minor or major tenth, the fifth above the octave. Strings between are muted.',tip:'Pop with the index or middle: hook the string and let go.',hf:'Without slap: thumb on the root, i and m on top, like an arpeggio.',hp:'Pick with string skips; the fretting hand mutes the strings you skip.'}],
+    L31:[{name:'Октавный рисунок',goal:'Тоника–октава шестнадцатыми: растяжка и точность левой руки.',how:'Тоника и октава через струну, между ними — квинта, септима или глухая нота.',tip:'Струна между тоникой и октавой молчит: глуши её пальцем.',hf:'Указательный на тонике, мизинец или безымянный на октаве. Правая — i–m непрерывно.',hp:'Тоника вниз, октава вверх; через струну — без лишнего хода руки.'},
+         {name:'Octave patterns',goal:'Root and octave in sixteenths: fretting-hand stretch and accuracy.',how:'Root and octave two strings apart, with the fifth, seventh or a dead note between.',tip:'The string between root and octave stays silent: mute it with a finger.',hf:'Index on the root, pinky or ring on the octave. Plucking hand: i–m nonstop.',hp:'Root down, octave up; skip the string without extra hand motion.'}],
+    L38:[{name:'Филлы шестнадцатыми',goal:'Грув и филл в конце такта, возврат на «раз» без сбоя.',how:'Полтакта грува, в конце — четыре или больше шестнадцатых по пентатонике к следующей тонике.',tip:'Филл кончается на сильной доле следующего такта. Слушай именно туда.',hf:'В филле не меняй чередование пальцев.',hp:'Филл — переменным штрихом, первая нота — вниз.'},
+         {name:'Sixteenth-note fills',goal:'Groove plus a fill at the end of the bar, back on one without a stumble.',how:'Half a bar of groove, then four or more sixteenths on the pentatonic toward the next root.',tip:'The fill ends on the next downbeat. Listen right there.',hf:'Do not break the finger alternation in the fill.',hp:'Fill in alternate picking, first note down.'}],
+    C32:[{name:'Грув в карман',goal:'Один такт по кругу: держать грув ровно и долго.',how:'Короткий рисунок повторяется. Варианты — разные стили грува: октава на третью долю, полутемп, стаккато.',tip:'Карман — это не скорость. Играй чуть позади метронома, но не отставай.',hf:'Мягкий щипок, глушение пальцами — грув в длине нот.',hp:'Медиатор с приглушением ладонью, атака одинаковая.'},
+         {name:'In the pocket',goal:'One bar on repeat: holding a groove steady and long.',how:'A short pattern repeats. Variants are different groove styles: octave on three, half-time, staccato.',tip:'The pocket is not speed. Sit slightly behind the click, but do not drag.',hf:'Soft pluck, finger muting: the groove is in the note lengths.',hp:'Pick with palm muting, an even attack.'}],
+    C33:[{name:'Брейки',goal:'Удары с тишиной и точный вход в грув после брейка.',how:'Такт брейка: несколько ударов, остальное — тишина. Потом такт грува.',tip:'Тишина — часть ритма. Считай каждую шестнадцатую паузы.',hf:'Глуши струну сразу после удара пальцем, которым играл.',hp:'После удара — ладонь на струны.'},
+         {name:'Breaks',goal:'Hits with silence, then an exact entry into the groove.',how:'A break bar: a few hits, the rest silence. Then a bar of groove.',tip:'Silence is part of the rhythm. Count every sixteenth of the rest.',hf:'Mute the string right after the hit with the plucking finger.',hp:'After the hit, the palm goes on the strings.'}],
+    C34:[{name:'Свинговые шестнадцатые',goal:'Шестнадцатые с качем: долгая–короткая, как в нью-орлеанском фанке.',how:'Пара шестнадцатых — две трети и треть доли (в табе триоли). Метроном на долю.',tip:'Не превращай свинг в пунктир. Короткая нота мягче долгой.',hf:'Долгая — m, короткая — i, мягко.',hp:'Долгая вниз, короткая вверх, рука качается.'},
+         {name:'Swung sixteenths',goal:'Sixteenths with a lilt: long–short, as in New Orleans funk.',how:'A pair of sixteenths is two thirds and one third of a half beat (triplets in the tab). Metronome on the beat.',tip:'Do not turn swing into a dotted rhythm. The short note is softer than the long one.',hf:'Long on m, short on i, gently.',hp:'Long down, short up; the hand swings.'}],
+    C35:[{name:'Вызов и ответ',goal:'Фраза слэпом и ответ пальцами: два тембра в одном грув.',how:'Первый такт — вызов слэпом, во втором полтакта тишины и ответ пальцами.',tip:'Ответ продолжает фразу. Спой обе части, прежде чем играть.',hf:'Без слэпа: вызов — резко, с отскоком струны; ответ — мягко.',hp:'Вызов — медиатором у бриджа, ответ — ближе к грифу.'},
+         {name:'Call and response',goal:'A slap phrase and a fingered answer: two tones in one groove.',how:'Bar one is the slap call; bar two has half a bar of silence and a fingered answer.',tip:'The answer continues the phrase. Sing both parts before playing.',hf:'Without slap: the call sharp with the string snapping, the answer soft.',hp:'Call with the pick near the bridge, answer nearer the neck.'}],
+    C36:[{name:'Фанковый этюд',goal:'Четыре фанковые фигуры подряд, пальцами и слэпом.',how:'Четыре фрагмента подряд. Сначала каждый отдельно на рабочем темпе, потом пары (1+2, 2+3, 3+4), потом целиком.',tip:'Запиши прогон. Слабое место — почти всегда стык фрагментов и смена техники.',hf:'На стыке со слэпа на пальцы рука переезжает за долю до смены.',hp:'Слэп-фрагменты медиатором: удар вниз вместо S, вверх вместо P.'},
+         {name:'Funk étude',goal:'Four funk figures in a row, fingerstyle and slap.',how:'Four fragments in a row. Each one on its own at working tempo first, then pairs (1+2, 2+3, 3+4), then the whole thing.',tip:'Record a run. The weak spot is almost always a joint and a change of technique.',hf:'At a joint from slap to fingers, move the hand a beat before the change.',hp:'Slap fragments with a pick: downstroke for S, upstroke for P.'}]
+  };
+  const EX={},EXEN={};
+  Object.keys(T).forEach(id=>{
+    const [ru,en]=T[id],n=+id.slice(1);
+    if(id==='C36'){
+      const nm=k=>ETU[k].map(x=>T[x][0].name.toLowerCase()).join(', '),ne=k=>ETU[k].map(x=>T[x][1].name.toLowerCase()).join(', ');
+      EX[id]=Object.assign({n},ru,{sub:4,lvl:LVL_RU,v:ETU.map((f,k)=>BV('Этюд '+(k+1)+': '+nm(k),[0,1,2,3,4].map(i=>f.map(x=>lvBars(x,k)[i].map(b=>out(b)).join(' | '))),undefined))});
+      EXEN[id]=Object.assign({},en,{lvl:LVL_EN,v:ETU.map((f,k)=>'Étude '+(k+1)+': '+ne(k))});
+      return;}
+    const e=D[id],stop=id==='C33';
+    const lr=stop?['Брейк','Брейк и такт грува','Три такта брейка и грув','Брейк и грув с филлом','Брейк через такт, мёртвые ноты в груве']:LVL_RU;
+    const le=stop?['The break','Break and a groove bar','Three break bars and the groove','Break and groove with a fill','Break every other bar, dead notes in the groove']:LVL_EN;
+    EX[id]=Object.assign({n},ru,{sub:e.sw?6:4,lvl:lr,v:e.v.map((v,k)=>BV(v[1],lvBars(id,k).map(bs=>e.sw?{t:sysOf(bs,1),sub:6}:sysOf(bs)),undefined))});
+    EXEN[id]=Object.assign({},en,{lvl:le,v:e.v.map(v=>v[2])});
+  });
+  return {EX,EXEN,COACH:{C36:{stages:COACH_GUITAR.C36.stages}}};
+})();
 /*@FKB2_END@*/
 
 // ----- FSA1: фингерстайл, акустика, часть 1 -----
