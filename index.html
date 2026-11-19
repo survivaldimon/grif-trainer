@@ -5101,7 +5101,8 @@ const JZG2=(()=>{
   // ---------- ритм ----------
   const stp=t=>{const m=/:(\d+)$/.exec(t);return m?+m[1]:1;};
   const pad=(a,n)=>{a=a.slice();let s=a.reduce((x,t)=>x+stp(t),0);while(s%n){a.push('.');s++;}return a;};
-  const sys=(a,n,b=2)=>{a=pad(a,n);const bars=[];let cur=[],s=0;a.forEach(t=>{cur.push(t);s+=stp(t);if(s>=n){bars.push(cur.join(' '));cur=[];s=0;}});if(cur.length)bars.push(cur.join(' '));
+  const sys=(a,n,b=2)=>{a=pad(a,n);const bars=[];let cur=[],s=0;a.forEach(t=>{if(s+stp(t)>n){while(s<n){cur.push('.');s++;}bars.push(cur.join(' '));cur=[];s=0;}cur.push(t);s+=stp(t);if(s>=n){bars.push(cur.join(' '));cur=[];s=0;}});
+    if(cur.length){while(s%n){cur.push('.');s++;}bars.push(cur.join(' '));} // нота не перелетает через тактовую черту: такт добивается паузами
     const out=[];for(let i=0;i<bars.length;i+=b)out.push(bars.slice(i,i+b).join(' | '));return out;};
   const LV=(sub,a,n,b)=>({sub,t:sys(a,n||sub*4,b)});
   const swg=a=>{a=a.length%2?a.concat(['.']):a;const r=[];for(let i=0;i<a.length;i+=2)r.push(a[i]==='.'?'.:2':a[i]+':2',a[i+1]);return r;};
@@ -5134,7 +5135,9 @@ const JZG2=(()=>{
   // drop-2: обращение inv, вторая сверху нота вниз на октаву
   const dv=(pc,ints,inv)=>{const a=[];for(let i=0;i<4;i++){let p=36+pc+ints[(inv+i)%4];while(a.length&&p<=a[a.length-1])p+=12;a.push(p);}a[2]-=12;return a.sort((x,y)=>x-y);};
   const near=(ps,strs,prev)=>{let best=null,bd=1e9;for(let k=-60;k<=60;k+=12){const fr=ps.map((p,i)=>p+k-OP[strs[i]]);if(Math.min(...fr)<1||Math.max(...fr)>17)continue;const d=Math.abs(Math.min(...fr)-prev);if(d<bd){bd=d;best=fr;}}return best;};
-  const d2set=(pc,q,set,lo)=>{let pv=lo;return [0,1,2,3].map(inv=>{const ps=dv(pc,Q[q],inv);let fr=null;for(let k=-60;k<=60;k+=12){const f=ps.map((p,i)=>p+k-OP[set[i]]);if(Math.min(...f)>=pv&&Math.max(...f)<=19){fr=f;break;}}pv=Math.min(...fr)+1;return tok(set,fr);});};
+  const d2set=(pc,q,set,lo)=>{let pv=lo;return [0,1,2,3].map(inv=>{const ps=dv(pc,Q[q],inv);let fr=null;for(let k=-60;k<=60;k+=12){const f=ps.map((p,i)=>p+k-OP[set[i]]);if(Math.min(...f)>=pv&&Math.max(...f)<=19){fr=f;break;}}
+    // запасной путь: выше pv не помещается — берём самую высокую голосовку в ладах 0…19
+    if(!fr)for(let k=60;k>=-60;k-=12){const f=ps.map((p,i)=>p+k-OP[set[i]]);if(Math.min(...f)>=0&&Math.max(...f)<=19){fr=f;break;}}pv=Math.min(...fr)+1;return tok(set,fr);});};
   const d2lead=(ch,set,lo)=>{let prev=null;return ch.map(([pc,q])=>{let best=null,bd=1e9;for(let inv=0;inv<4;inv++)for(let k=-60;k<=60;k+=12){const ps=dv(pc,Q[q],inv).map(p=>p+k),fr=ps.map((p,i)=>p-OP[set[i]]);if(Math.min(...fr)<1||Math.max(...fr)>16)continue;
       const d=prev?ps.reduce((s,p,i)=>s+Math.abs(p-prev[i]),0):Math.abs(Math.min(...fr)-lo)*3;if(d<bd){bd=d;best={ps,fr};}}prev=best.ps;return tok(set,best.fr);});};
   // уровни «аккорды по очереди»: целые, половинки, четверти туда-обратно, чарльстон
@@ -5256,7 +5259,8 @@ const JZG2=(()=>{
 
   // ===== L24: октавы =====
   const PAIRS=[['E','D',2],['A','G',2],['D','B',3],['G','e',3]];
-  const octs=(ps,f0)=>{let pf=f0;return ps.map(p=>{let b=null,bd=99;PAIRS.forEach(([s,s2,d])=>{const f=p-OP[s];if(f>=1&&f+d<=19&&Math.abs(f-pf)<bd){bd=Math.abs(f-pf);b=`${s}${f}+${s2}${f+d}`;}});pf=+b.split('+')[0].slice(1);return b;});};
+  // нота вне октавных пар переносится на октаву
+  const octs=(ps,f0)=>{let pf=f0;return ps.map(p0=>{let b=null,bd=99;for(const p of [p0,p0+12,p0-12,p0+24,p0-24]){PAIRS.forEach(([s,s2,d])=>{const f=p-OP[s];if(f>=1&&f+d<=19&&Math.abs(f-pf)<bd){bd=Math.abs(f-pf);b=`${s}${f}+${s2}${f+d}`;}});if(b)break;}pf=+b.split('+')[0].slice(1);return b;});};
   const V24=[[sc(43,ION.map(x=>x),43,60),3,['мажорная гамма {G}','{G} major scale']],[sc(45,Q.m7,45,69),5,['арпеджио {A}m7','{A}m7 arpeggio']],[sc(48,BB.dom,48,60).reverse(),5,['бибоп-спуск над {C}7','bebop descent over {C}7']],
     [sc(53,[0,3,5,6,7,10],53,65),3,['блюзовая гамма {F}','{F} blues scale']],[[11,9,10,3,1,2,6,4,5,10,8,9].map(x=>46+x),6,['энклоужеры к тонам {Bb}','enclosures around {Bb} chord tones']],[sc(50,[0,3,5,7,10],50,74),5,['минорная пентатоника {D}','{D} minor pentatonic']]];
   add('L24',T('Октавы','Мелодия октавами в духе Wes Montgomery.','Две ноты через струну: нижняя — указательным, верхняя — безымянным или мизинцем, средняя струна заглушена указательным. Бей по всем трём струнам. Пары струн меняются вместе с мелодией.','Удар — большим пальцем или медиатором через все три струны, но звучат только две. Если звенит средняя — положи указательный площе.',['Четыре ноты половинками','Вверх четвертями','Вверх и вниз','Свингом','Триолями']),
