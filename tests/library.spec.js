@@ -4,6 +4,9 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+// экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
+const toToday = page => page.evaluate(() => window.__grif.setView('today'));
+const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 const CYR = /[А-Яа-яЁё]/;
 
@@ -49,7 +52,7 @@ for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 
       const G = window.__grif;
       const shown = [...document.querySelectorAll('#lib details[data-lib]')].map(d => d.dataset.lib);
       const groups = [...document.querySelectorAll('#lib [data-libg]')].map(g => g.dataset.libg);
-      return { shown, ids: Object.keys(G.EX), groups, R: G.GROUPS.R, visible: !document.getElementById('lib').hidden, nowHidden: getComputedStyle(document.querySelector('main.grid')).display === 'none' };
+      return { shown, ids: Object.keys(G.EX), groups, R: G.GROUPS.R, visible: !document.getElementById('lib').hidden, nowHidden: document.getElementById('vSession').hidden && document.getElementById('vToday').hidden };
     });
     expect(res.visible).toBe(true);
     expect(res.nowHidden).toBe(true);
@@ -68,7 +71,7 @@ for (const inst of ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 
     expect(res.bad).toEqual([]);
     expect(res.tabErr).toEqual([]);
     expect(CYR.test(await page.title())).toBe(false);
-    expect(CYR.test(await page.locator('header').innerText())).toBe(false);
+    expect(CYR.test(await page.locator('#tabbar').innerText())).toBe(false);
     expect(errors).toEqual([]);
   });
 }
@@ -95,7 +98,7 @@ test('раздел: адрес, кнопка возврата, уровень н
   await page.click('#libBtn');
   expect(await page.evaluate(() => window.__grif.Pl.on)).toBe(false);
   await expect(page.locator('#lib')).toBeHidden();
-  await expect(page.locator('#now')).toBeVisible();
+  await expect(page.locator('#vToday')).toBeVisible();
   expect(await page.evaluate(() => location.hash)).toBe('#bass-en');
   // переход по адресу
   await page.evaluate(() => { location.hash = 'library-ru'; });

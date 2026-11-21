@@ -4,6 +4,9 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+// экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
+const toToday = page => page.evaluate(() => window.__grif.setView('today'));
+const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 
 async function openApp(page, hash = 'ru') {

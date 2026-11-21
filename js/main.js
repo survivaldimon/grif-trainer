@@ -69,13 +69,11 @@ $('timeChips').addEventListener('click',e=>{const b=e.target.closest('button[dat
 function setDay(i){if(i===st.i)return;st.i=i;rebuild();}
 $('prevDay').onclick=()=>{if(dayOk(st.i-1))setDay(st.i-1);};
 $('nextDay').onclick=()=>{if(dayOk(st.i+1))setDay(st.i+1);};
-$('weekStrip').addEventListener('click',e=>{const b=e.target.closest('button[data-day]');if(b&&dayOk(+b.dataset.day))setDay(+b.dataset.day);});
-function setSettings(on){$('settings').hidden=!on;$('setBtn').setAttribute('aria-expanded',String(on));}
-$('setBtn').onclick=()=>setSettings($('settings').hidden);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('settings').hidden){setSettings(false);$('setBtn').focus();}});
+function setSettings(on){if(on!==(VIEW==='profile'))setView(on?'profile':VIEW_BACK);}
 $('todayBtn').onclick=()=>{st.i=today;rebuild();};
-$('planList').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;goto(+li.dataset.k);if(window.innerWidth<=900)$('now').scrollIntoView({behavior:'smooth',block:'start'});});
-$('playBtn').onclick=()=>{audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}coachRun();renderClock();};
+$('planList').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;goto(+li.dataset.k);if(VIEW!=='session')setView('session');if(window.innerWidth<1100)setPlanOpen(false);});
+function togglePlay(){audio();if(st.running){st.running=false;}else{st.running=true;st.last=performance.now();wantWake();}coachRun();renderClock();}
+$('playBtn').onclick=togglePlay;
 $('nextSeg').onclick=()=>{st.done.add(st.cur);goto(st.cur+1);};
 $('prevSeg').onclick=()=>goto(st.cur-1);
 $('nowBody').addEventListener('click',e=>{
@@ -140,6 +138,7 @@ applyInst();
 renderStatic();
 setBpm(Mt.bpm);
 rebuild();
-window.__grif={exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+setView(VIEW);
+window.__grif={setView,setPlanOpen,togglePlay,exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE','GENRE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE,GENRE})[k]}));

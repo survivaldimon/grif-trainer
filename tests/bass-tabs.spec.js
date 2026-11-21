@@ -4,6 +4,9 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+// экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
+const toToday = page => page.evaluate(() => window.__grif.setView('today'));
+const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
 const FIXED_NOW = new Date('2026-10-28T12:00:00');
 
 async function openApp(page, hash = 'ru') {
@@ -134,7 +137,7 @@ test('адрес и переключатель инструмента: #bass, #b
 test('число струн и техника меняют таб и указания, не трогая таймер', async ({ page }) => {
   const errors = await openApp(page, 'bass-en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0: пул вариантов 0, у B1 «Открытая E» есть t5
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B1'));
   await page.locator('#planList li').nth(k).click();
   await page.click('#playBtn');
@@ -143,6 +146,8 @@ test('число струн и техника меняют таб и указа�
   await expect(page.locator('#nowBody .tabhd')).toContainText('EADG');
   await expect(page.locator('#nowBody')).toContainText('Fingers:');
   const before = await page.evaluate(() => ({ cur: window.__grif.st.cur, running: window.__grif.st.running }));
+  // в «Занятии» навигации нет: выходим на «Сегодня» и открываем профиль, таймер при этом идёт
+  await page.click('#exitBtn');
   await page.click('#setBtn');
   await page.click('#strChips button[data-str="5"]');
   expect(await rows()).toBe('GDAEB');
@@ -197,7 +202,7 @@ test('бас, EN: план 5 часов на 6 струнах с медиато�
   await page.click('#setBtn');
   await page.click('#strChips button[data-str="6"]');
   await page.click('#handChips button[data-hand="pick"]');
-  await page.click('#timeChips button[data-t="300"]');
+  await toToday(page); await page.click('#timeChips button[data-t="300"]'); await toSession(page);
   const CYR = /[Ѐ-ӿ]+/g, bad = new Map();
   const scan = async where => {
     const found = await page.evaluate(() => {

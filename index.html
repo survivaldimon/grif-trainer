@@ -35,7 +35,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Sofia+Sans+Extra+Condensed:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="css/app.css">
 
 </head>
@@ -45,124 +45,164 @@
 <p>Free daily workout for electric guitar, acoustic and bass: technical death metal, blues, jazz, funk and fingerstyle. One plan per day for everyone, sessions from 15 minutes to 5 hours, a coach that runs sets and rest, a metronome and tabs with playback. RiffGym needs JavaScript.</p>
 <p lang="ru">Бесплатная ежедневная тренировка на электрогитаре, акустике и бас-гитаре: дэт-метал, блюз, джаз, фанк и фингерстайл. Тренер, метроном и табы. Для работы нужен JavaScript.</p>
 </div></noscript>
-<div class="wrap">
-  <header class="hd">
-    <div class="brand">
-      <div class="logo" id="logo">Riff<b>Gym</b></div>
-      <div class="tag" data-i="tag"></div>
-    </div>
-    <div class="hdr">
-      <button class="btn lib-btn" id="libBtn" aria-pressed="false"></button>
-      <button class="btn set-btn" id="setBtn" aria-expanded="false" aria-controls="settings"><span class="gear" aria-hidden="true">⚙</span><span id="setSum"></span></button>
-    </div>
-  </header>
+<div class="app">
+  <!-- Навигация: снизу на телефоне, слева на широком экране -->
+  <nav class="tabbar" id="tabbar" aria-label="Navigation">
+    <div class="logo" id="logo">Riff<b>Gym</b></div>
+    <button class="tab" id="tabToday" data-view="today"></button>
+    <button class="tab" id="libBtn" data-view="lib" aria-pressed="false"></button>
+    <button class="tab" id="tabProgress" data-view="progress"></button>
+    <button class="tab" id="setBtn" data-view="profile" aria-expanded="false" aria-controls="settings"></button>
+  </nav>
 
-  <section class="panel settings" id="settings" hidden>
-    <div class="setrow"><span class="lbl" data-i="langLabel"></span>
-      <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+  <main class="views">
+  <!-- Сегодня: что за день, время, «Начать», план -->
+  <section class="view today" id="vToday">
+    <header class="vhd">
+      <div class="daynav">
+        <button id="prevDay" class="rb nb"></button>
+        <div id="dateLabel" class="over"></div>
+        <button id="nextDay" class="rb nb"></button>
+        <button id="todayBtn" class="chip" data-i="today"></button>
+      </div>
+      <h1 class="lt" id="todayTitle"></h1>
+      <p class="tag" data-i="tag"></p>
+    </header>
+    <div class="tgrid">
+      <div class="tcol">
+        <section class="card cyc" id="cycleCard"></section>
+        <div id="notice" hidden class="notice"></div>
+        <section class="card wo">
+          <div class="over" id="woOver"></div>
+          <h2 class="wo-h" id="woTitle"></h2>
+          <p class="meta" id="meta"></p>
+          <div class="seg" id="timeChips" role="group"></div>
+          <div class="pbar" id="dayBar"></div>
+          <div class="pmeta" id="dayMeta"></div>
+          <button class="btn-pri" id="startBtn"></button>
+        </section>
+      </div>
+      <div class="tcol">
+        <h3 class="sh" id="planHd"></h3>
+        <div class="gl" id="dayPlan"></div>
+        <div class="riff card" id="riffCard"></div>
+      </div>
     </div>
-    <div class="setrow"><span class="lbl" data-i="tabzLabel"></span>
-      <div class="lang" id="tabzSw" role="group"><button data-tabz="0.75">75%</button><button data-tabz="1">100%</button><button data-tabz="1.25">125%</button><button data-tabz="1.5">150%</button></div></div>
-    <div class="setrow"><span class="lbl" data-i="themeLabel"></span>
-      <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
-    </div>
-    <div class="setrow"><span class="lbl" data-i="genreLabel"></span>
-      <select id="genreSel" class="tsel"></select>
-    </div>
-    <div class="setrow"><span class="lbl" data-i="instLabel"></span>
-      <div class="lang" id="instSw" role="group"><button data-inst="guitar"></button><button data-inst="acoustic"></button><button data-inst="bass"></button></div>
-    </div>
-    <div class="setrow" id="instBar"><span class="lbl" id="instLbl"></span>
-      <div class="tchips" id="strChips"></div>
-    </div>
-    <div class="setrow"><span class="lbl" data-i="tuneLabel"></span>
-      <div class="tchips" id="tuneChips"><select id="tuneKey" class="tsel"></select></div>
-      <div class="tchips" id="dropChips"></div>
-      <div class="tchips"><button id="tuneBtn" type="button"></button></div>
-    </div>
+  </section>
+
+  <!-- Занятие: полноэкранный режим текущего упражнения -->
+  <section class="view session" id="vSession" hidden>
+    <section class="now" id="now" aria-live="polite">
+      <header class="sbar">
+        <button class="rb nb" id="exitBtn"></button>
+        <div class="stl">
+          <div class="nowhd"><span class="kind" id="nowKind"></span><span id="nowPos"></span><span class="total" id="totalLeft"></span></div>
+          <h2 class="title" id="nowTitle"></h2>
+          <div class="bar"><i id="bar"></i></div>
+        </div>
+        <button class="pill nb" id="planBtn" aria-expanded="false" aria-controls="planDrawer"></button>
+      </header>
+      <div class="smain">
+        <div id="nowBody"></div>
+        <aside class="sside">
+          <div class="card clockcard">
+            <div class="clock" id="clock">00:00</div>
+            <div class="ctrls">
+              <button class="rb nb" id="prevSeg"></button>
+              <button class="btn-pri" id="playBtn"></button>
+              <button class="rb nb" id="nextSeg"></button>
+            </div>
+          </div>
+          <div class="coach" id="coach" hidden></div>
+        </aside>
+      </div>
+      <div class="metro">
+        <div class="mrow">
+          <div class="mbpm">
+            <button class="nb" data-d="-4">−4</button><button class="nb" data-d="-1">−1</button>
+            <input id="bpm" type="number" min="30" max="320" inputmode="numeric" aria-label="bpm">
+            <button class="nb" data-d="1">+1</button><button class="nb" data-d="4">+4</button>
+            <span class="u">bpm</span>
+          </div>
+          <div class="dots" id="dots"></div>
+          <span class="mstate" id="mState"></span>
+          <div class="mact">
+            <button class="btn nb" id="mToggle"></button>
+            <button class="btn nb" id="mTap" data-i="tap"></button>
+          </div>
+        </div>
+        <details class="madv" id="mAdv">
+          <summary><span data-i="metro"></span></summary>
+          <input id="bpmRange" type="range" min="30" max="320" aria-label="bpm">
+          <div class="mopts">
+            <label><span data-i="meter"></span><select id="mMeter"></select></label>
+            <label><span data-i="subdiv"></span><select id="mSub"></select></label>
+            <label><span data-i="bursts"></span><select id="mBurst"></select></label>
+            <label class="chk"><input type="checkbox" id="mLadder"> <span data-i="ladder"></span></label>
+          </div>
+        </details>
+      </div>
+    </section>
+    <aside class="drawer" id="planDrawer" hidden>
+      <div class="planhd"><h3 data-i="plan"></h3><button class="btn nb" id="shareBtn" data-i="copy"></button><button class="rb nb" id="planClose"></button></div>
+      <ol class="plist" id="planList"></ol>
+      <div id="shareBox" hidden></div>
+    </aside>
+  </section>
+
+  <section class="view lib" id="lib" hidden></section>
+
+  <!-- Прогресс: статистика для вошедших (этап 6) -->
+  <section class="view progress" id="vProgress" hidden>
+    <header class="vhd"><h1 class="lt" id="progTitle"></h1></header>
+    <div class="card empty" id="progBody"></div>
+  </section>
+
+  <!-- Профиль: инструмент и приложение -->
+  <section class="view profile settings" id="settings" hidden>
+    <header class="vhd"><h1 class="lt" id="profTitle"></h1></header>
     <div class="setrow" id="accRow" hidden><span class="lbl" id="accLbl"></span>
       <div class="acc" id="accBox"></div>
     </div>
-    <div class="setrow" id="bassBar" hidden><span class="lbl" data-i="handLabel"></span>
-      <span class="tchips" id="handChips"></span>
+    <h3 class="sh" id="shInst"></h3>
+    <div class="gl form">
+      <div class="setrow"><span class="lbl" data-i="genreLabel"></span>
+        <select id="genreSel" class="tsel"></select>
+      </div>
+      <div class="setrow"><span class="lbl" data-i="instLabel"></span>
+        <div class="lang" id="instSw" role="group"><button data-inst="guitar"></button><button data-inst="acoustic"></button><button data-inst="bass"></button></div>
+      </div>
+      <div class="setrow" id="instBar"><span class="lbl" id="instLbl"></span>
+        <div class="tchips" id="strChips"></div>
+      </div>
+      <div class="setrow"><span class="lbl" data-i="tuneLabel"></span>
+        <div class="tchips" id="tuneChips"><select id="tuneKey" class="tsel"></select></div>
+        <div class="tchips" id="dropChips"></div>
+        <div class="tchips"><button id="tuneBtn" type="button" class="nb"></button></div>
+      </div>
+      <div class="setrow" id="bassBar" hidden><span class="lbl" data-i="handLabel"></span>
+        <span class="tchips" id="handChips"></span>
+      </div>
     </div>
+    <h3 class="sh" id="shApp"></h3>
+    <div class="gl form">
+      <div class="setrow"><span class="lbl" data-i="langLabel"></span>
+        <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+      </div>
+      <div class="setrow"><span class="lbl" data-i="themeLabel"></span>
+        <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
+      </div>
+    </div>
+    <section class="about">
+      <details class="gl"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
+      <details class="gl safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
+    </section>
+    <footer class="foot"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@riffgym.app">support@riffgym.app</a></footer>
   </section>
-
-  <div class="side">
-    <div class="daynav">
-      <button id="prevDay">‹</button>
-      <div id="dateLabel"></div>
-      <button id="nextDay">›</button>
-      <button id="todayBtn" data-i="today"></button>
-    </div>
-    <div class="strip days" id="weekStrip" role="group"></div>
-    <p class="meta" id="meta"></p>
-    <div id="notice" hidden class="notice"></div>
-    <section class="timebar">
-      <span class="lbl" data-i="timeLabel"></span>
-      <div class="tchips" id="timeChips"></div>
-    </section>
-  </div>
-
-  <main class="grid">
-    <section class="panel now" id="now" aria-live="polite">
-      <div class="nowhd"><span class="kind" id="nowKind"></span><span id="nowPos"></span></div>
-      <h2 class="title" id="nowTitle"></h2>
-      <div class="clockrow">
-        <div class="clock" id="clock">00:00</div>
-        <div class="bar"><i id="bar"></i></div>
-      </div>
-      <div class="ctrls">
-        <button class="btn" id="prevSeg" data-i="back"></button>
-        <button class="btn primary" id="playBtn"></button>
-        <button class="btn" id="nextSeg" data-i="next"></button>
-        <span class="total" id="totalLeft"></span>
-      </div>
-      <div class="coach" id="coach" hidden></div>
-      <div id="nowBody"></div>
-
-      <div class="metro">
-        <div class="mtop"><span class="lbl" data-i="metro"></span><span class="mstate" id="mState"></span></div>
-        <div class="mbpm">
-          <button data-d="-4">−4</button><button data-d="-1">−1</button>
-          <input id="bpm" type="number" min="30" max="320" inputmode="numeric" aria-label="bpm">
-          <button data-d="1">+1</button><button data-d="4">+4</button>
-          <span class="u">bpm</span>
-        </div>
-        <input id="bpmRange" type="range" min="30" max="320" aria-label="bpm">
-        <div class="dots" id="dots"></div>
-        <div class="mopts">
-          <label><span data-i="meter"></span><select id="mMeter"></select></label>
-          <label><span data-i="subdiv"></span><select id="mSub"></select></label>
-          <label><span data-i="bursts"></span><select id="mBurst"></select></label>
-          <label class="chk"><input type="checkbox" id="mLadder"> <span data-i="ladder"></span></label>
-        </div>
-        <div class="mact">
-          <button class="btn primary" id="mToggle"></button>
-          <button class="btn" id="mTap" data-i="tap"></button>
-        </div>
-      </div>
-    </section>
-
-    <section class="plan">
-      <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-        <div class="planhd"><h3 data-i="plan"></h3><button class="btn" id="shareBtn" data-i="copy"></button></div>
-        <ol class="plist" id="planList"></ol>
-        <div id="shareBox" hidden></div>
-      </div>
-      <div class="riff" id="riffCard"></div>
-    </section>
   </main>
-
-  <section class="lib" id="lib" hidden></section>
-
-  <section class="about">
-    <details class="panel"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
-    <details class="panel safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
-  </section>
-  <footer class="foot"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@riffgym.app">support@riffgym.app</a></footer>
 </div>
 
+<script src="js/icons.js"></script>
 <script src="js/core.js"></script>
 <script src="js/ex-guitar.js"></script>
 <script src="js/ex-bass.js"></script>
@@ -170,6 +210,7 @@
 <script src="js/blues.js"></script>
 <script src="js/genres.js"></script>
 <script src="js/library.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 
 <!-- Аккаунт (необязательный): вход через Supabase и синхронизация настроек grif.* между устройствами.

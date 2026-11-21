@@ -231,7 +231,7 @@ function applyTheme(){
 const TABZ=[0.75,1,1.25,1.5];
 let TABZOOM=(x=>TABZ.includes(x)?x:1)(lsGet('tabz',1));
 function applyTabz(){document.documentElement.style.setProperty('--tabz',String(TABZOOM));
-  document.querySelectorAll('#tabzSw button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.tabz===TABZOOM)));
+  document.querySelectorAll('button[data-tz]').forEach(b=>{const k=TABZ.indexOf(TABZOOM)+(+b.dataset.tz);b.disabled=k<0||k>=TABZ.length;});
   document.querySelectorAll('.tabsc').forEach(layTabs);}
 function setTabz(x){x=+x;if(!TABZ.includes(x))return;TABZOOM=x;lsSet('tabz',x);applyTabz();}
 function setTheme(x){if(!THEMES.includes(x)||x===THEME)return;THEME=x;lsSet('theme',x);applyTheme();renderStatic();}
@@ -254,7 +254,6 @@ function renderStatic(){
   $('bassBar').hidden=INST!=='bass';
   $('instLbl').textContent=L('Струны','Strings');
   $('setBtn').setAttribute('aria-label',t('settings'));
-  $('setSum').textContent=GNAME(GENRE)+' · '+INAME(INST)+' · '+NSTR()+L(' стр.',' str.')+' · '+tuneShort()+' · '+LANG.toUpperCase();
   $('strChips').innerHTML=GB([6,7,8],[4,5,6]).map(n=>'<button data-str="'+n+'" aria-pressed="'+(n===NSTR())+'">'+n+L(n===4?' струны':' струн',' strings')+'</button>').join('');
   const tn=TUNE[INST];
   $('tuneKey').setAttribute('aria-label',L('Строй','Tuning'));
@@ -270,6 +269,7 @@ function renderStatic(){
   $('mBurst').innerHTML=[[0,L('выкл','off')],[1,L('1 доля / 1 пауза','1 beat on / 1 off')],[2,'2 / 2'],[4,'4 / 4']].map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
   $('mSub').value=Mt.sw?'sw':String(Mt.sub);$('mBurst').value=String(Mt.burst);
   $('mToggle').textContent=Mt.on?t('mOff'):t('mOn');
+  renderViews();
 }
 // Доступны только сегодня и 7 дней назад: будущие тренировки и старые не показываем.
 const DAYS_BACK=7;
@@ -284,15 +284,12 @@ function renderHeader(){
     [L('Фокус','Focus'),GN(d.focus)+(d.isTest?L(' + тесты',' + tests'):'')],
     [L('Лад цикла','Cycle scale'),matName(d.material)]
   ];
-  $('meta').innerHTML=parts.map(c=>esc(c[0])+' <b>'+esc(c[1])+'</b>').join(' · ');
+  parts.push([L('Рифф дня','Riff of the day'),riffText(st.plan.riff).meter]);
+  $('meta').innerHTML=parts.slice(2).map(c=>'<span>'+esc(c[0])+'<b>'+esc(c[1])+'</b></span>').join('');
   const n=$('notice');
   if(d.pre){n.hidden=false;n.textContent=L('Первый цикл стартует в понедельник, 2 ноября. До старта идёт вводная неделя: в воскресенье, 1 ноября, — тестовый день. Сними исходные замеры, чтобы потом видеть прогресс.','The first cycle starts on Monday, November 2. Until then it is an intro week, and Sunday, November 1 is a test day. Take baseline measurements so you can see your progress later.');}
   else n.hidden=true;
   $('timeChips').innerHTML=TIMES.map(T=>'<button data-t="'+T+'" aria-pressed="'+(T===st.T)+'">'+timeLabel(T)+'</button>').join('');
-  const tt=L('Тесты','Tests');let h='';
-  for(let i=today-DAYS_BACK;i<=today;i++){const dd=dayInfo(i);const cls=['cell'];if(i===st.i)cls.push('cur');if(i===today)cls.push('today');if(dd.isTest)cls.push('t');
-    h+='<button class="'+cls.join(' ')+'" data-day="'+i+'" aria-pressed="'+(i===st.i)+'"><div class="d">'+(i===today?t('today'):DOWN[LANG][dd.dow]+' '+dd.date.getDate())+'</div><div class="v">'+(dd.isTest?tt:GSHORTS[LANG][dd.focus])+'</div></button>';}
-  $('weekStrip').innerHTML=h;
 }
 function renderPlan(){
   const {segs,d}=st.plan;
@@ -303,13 +300,14 @@ function renderPlan(){
   const r=riffText(st.plan.riff);
   const inPlan=st.plan.segs.some(s=>s.mid==='riff');
   $('riffCard').innerHTML='<h3>'+L('Рифф дня','Riff of the day')+'</h3><dl><dt>'+L('Размер','Meter')+'</dt><dd>'+esc(r.meter)+'</dd><dt>'+L('Лад','Scale')+'</dt><dd>'+esc(r.material)+'</dd><dt>'+L('Техника','Technique')+'</dt><dd>'+esc(r.tech)+'</dd><dt>'+L('Условие','Rule')+'</dt><dd>'+esc(r.rule)+'</dd></dl><p class="legend" style="margin:0">'+L('Одинаковый для всех в этот день.','The same for everyone today.')+(inPlan?'':L(' В плане на это время его нет — сочини на досуге.',' It is not in the plan at this length: write it in your spare time.'))+'</p>';
+  renderToday();
 }
 function stepsHtml(title,steps){return '<div class="sect"><h4>'+esc(title)+'</h4><ol>'+steps.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div>';}
 // заголовок строя таба: «стандартный строй», «B drop · ADGCFBE»; у баса и 7/8 струн — ещё ноты струн
 function tuneName(tu){const T=TUN(tu);if(T.lab)return T.lab+(T.off?' · '+T.name:'');return (T.std?L('стандартный строй','standard tuning'):T.key+' '+(T.drop?'drop':L('стандарт','standard')))+(T.bass||T.strs.length!==6||!T.std?' '+T.name:'')+(T.dk?L(' · на тон ниже',' · a tone lower'):'');}
 function tabHtml(label,systems,sub,meter,tu){
   const key=JSON.stringify([systems,sub||1,meter||'4/4',tu||'guitar']),on=Pl.on&&Pl.key===key;
-  return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span>'+tuneName(tu)+'</span></div>'+
+  return '<div class="tabbox" data-tab="'+esc(key)+'"><div class="tabhd"><span>'+esc(label||'')+'</span><span class="tabtu">'+tuneName(tu)+'</span><span class="tz"><button class="nb" data-tz="-1" aria-label="'+L('Мельче','Smaller')+'"'+(TABZ.indexOf(TABZOOM)<=0?' disabled':'')+'>'+IC('zoom-out')+'</button><button class="nb" data-tz="1" aria-label="'+L('Крупнее','Larger')+'"'+(TABZ.indexOf(TABZOOM)>=TABZ.length-1?' disabled':'')+'>'+IC('zoom-in')+'</button></span></div>'+
     '<div class="tabsc">'+renderTab(systems,sub,meter,tu)+'</div>'+
     '<div class="tabft"><button class="btn tplay" data-play aria-pressed="'+on+'">'+plLabel(on)+'</button><label class="tloop"><input type="checkbox" data-loop'+(Pl.loop?' checked':'')+'> '+L('по кругу','loop')+'</label><span class="legend">'+L('темп метронома','metronome tempo')+'</span></div></div>';
 }
@@ -365,11 +363,13 @@ function renderClock(){
   const s=st.plan.segs[st.cur];
   $('clock').textContent=fmt(st.remain);
   $('bar').style.width=(100*(1-st.remain/(s.min*60)))+'%';
-  $('playBtn').textContent=st.running?t('pause'):(st.remain<s.min*60?t('resume'):t('start'));
+  $('playBtn').innerHTML=IC(st.running?'pause':'play')+'<span>'+(st.running?t('pause'):(st.remain<s.min*60?t('resume'):t('start')))+'</span>';
+  $('playBtn').classList.toggle('on',st.running);
   const left=st.remain+st.plan.segs.slice(st.cur+1).reduce((a,x)=>a+x.min*60,0);
   $('totalLeft').textContent=t('totalLeft')+' '+fmt(left);
+  if(VIEW==='today')renderToday();
 }
-function markPlan(){[...$('planList').children].forEach((li,k)=>{li.classList.toggle('cur',k===st.cur);li.classList.toggle('done',st.done.has(k));});}
+function markPlan(){[...$('planList').children].forEach((li,k)=>{li.classList.toggle('cur',k===st.cur);li.classList.toggle('done',st.done.has(k));});renderToday();}
 
 /* ================= таймер ================= */
 let wake=null;

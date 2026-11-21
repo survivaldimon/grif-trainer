@@ -48,8 +48,6 @@ function libExHtml(id){
 function renderLib(){
   document.body.classList.toggle('lib-on',LIB.on);
   $('lib').hidden=!LIB.on;
-  $('libBtn').textContent=LIB.on?L('← К тренировке','← Back to workout'):L('Все упражнения','All exercises');
-  $('libBtn').setAttribute('aria-pressed',String(LIB.on));
   if(!LIB.on){$('lib').innerHTML='';return;}
   const gs=libGroups(),n=gs.reduce((a,g)=>a+g.list.length,0);
   if(LIB.g!=='all'&&!gs.some(g=>g.g===LIB.g))LIB.g='all';
@@ -78,8 +76,7 @@ function libFilter(){
   $('libEmpty').hidden=!!shown;
 }
 function libRerender(id){const el=document.querySelector('#lib details[data-lib="'+id+'"]');if(el)el.outerHTML=libExHtml(id);}
-function setLib(on){on=!!on;if(on===LIB.on)return;plStop();LIB.on=on;writeHash();renderLib();window.scrollTo(0,0);}
-$('libBtn').onclick=()=>setLib(!LIB.on);
+function setLib(on){on=!!on;if(on===LIB.on)return;plStop();setView(on?'lib':VIEW_BACK);}
 $('lib').addEventListener('toggle',e=>{
   const el=e.target;if(!el.matches||!el.matches('details[data-lib]'))return;const id=el.dataset.lib;
   if(el.open===LIB.open.has(id))return;

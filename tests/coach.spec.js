@@ -4,6 +4,9 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 
 const URL_BASE = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+// экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
+const toToday = page => page.evaluate(() => window.__grif.setView('today'));
+const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
 const FIXED_NOW = new Date('2026-10-28T12:00:00'); // dayIndex = −5
 const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
@@ -120,7 +123,7 @@ test(`${inst}: тренер: указания упражнений и недел
 test('тренер: метроном включается на подходе и выключается на отдыхе, bpm не меняется', async ({ page }) => {
   const errors = await openApp(page, 'en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   await page.locator('#planList li').nth(1).click(); // база B1
   const bpm = await page.inputValue('#bpm');
   await page.click('#playBtn');
@@ -146,7 +149,7 @@ for (const inst of INSTS)
 test(`${inst}: готовность и отсчёт: пример перед 1-м подходом, таймер стоит, отсчёт = такт размера в bpm`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4')); // база с уровнями
   await page.locator('#planList li').nth(k).click();
   await page.click('#playBtn');
@@ -202,7 +205,7 @@ test(`${inst}: готовность и отсчёт: пример перед 1-�
 test('отсчёт в x/8: число долей = числитель размера, доля = пульс метронома', async ({ page }) => {
   const errors = await openApp(page, 'en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   await page.locator('#planList li').nth(1).click();
   await page.click('#playBtn');
   await expect(page.locator('.cost')).toHaveClass(/t-set/);
@@ -224,7 +227,7 @@ for (const inst of ['guitar', 'bass'])
 test(`${inst}: B1: секстоли и 32-е на половине темпа — пример нового ритма, bpm×0,5 на подходе и возврат на отдыхе`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
   await page.evaluate(() => window.__grif.setDay(0));
-  await page.click('#timeChips button[data-t="300"]');
+  await toToday(page); await page.click('#timeChips button[data-t="300"]'); await toSession(page);
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B1'));
   await page.locator('#planList li').nth(k).click();
   await page.fill('#bpm', '120'); await page.press('#bpm', 'Enter');
@@ -262,7 +265,7 @@ test(`${inst}: B1: секстоли и 32-е на половине темпа �
 test('уровень: переключение на подходе не сбивает таймер и тренера, таб и указания обновляются', async ({ page }) => {
   const errors = await openApp(page, 'en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   const ID = 'B4'; // база с генератором: уровни меняют рисунок
   const k = await page.evaluate(id => window.__grif.st.plan.segs.findIndex(s => s.id === id), ID);
   await page.locator('#planList li').nth(k).click();
@@ -300,7 +303,7 @@ test('уровень: переключение на подходе не сбив
 test('бас: уровень хранится с префиксом bass. и не смешивается с гитарой', async ({ page }) => {
   const errors = await openApp(page, 'bass-en');
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.id === 'B4'));
   await page.locator('#planList li').nth(k).click();
   await page.click('.lvlb button[data-lvl="3"]');
@@ -313,7 +316,7 @@ for (const inst of INSTS)
 test(`${inst}: вариант: ручной выбор на подходе не сбивает таймер и тренера, план и вариант дня не меняются`, async ({ page }) => {
   const errors = await openApp(page, H(inst, 'en'));
   await page.evaluate(() => window.__grif.setDay(0)); // день 0
-  await page.click('#timeChips button[data-t="60"]');
+  await toToday(page); await page.click('#timeChips button[data-t="60"]'); await toSession(page);
   const k = await page.evaluate(() => window.__grif.st.plan.segs.findIndex(s => s.kind === 'focus'));
   await page.locator('#planList li').nth(k).click();
   const plan0 = await page.locator('#planList').innerText();
@@ -368,7 +371,7 @@ test(`${inst}: EN: ведение прокликано по всем интер�
   let cur = -5;
   for (const [day, T] of days) {
     if (cur !== day) { await page.evaluate(d => window.__grif.setDay(d), day); cur = day; }
-    await page.click(`#timeChips button[data-t="${T}"]`);
+    await toToday(page); await page.click(`#timeChips button[data-t="${T}"]`); await toSession(page);
     await page.click('#playBtn');
     const n = await page.locator('#planList li').count();
     for (let guard = 0; guard < 2000; guard++) {

@@ -6,6 +6,9 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
+// экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
+const toToday = page => page.evaluate(() => window.__grif.setView('today'));
+const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
 const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz', 'sync'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
@@ -232,6 +235,7 @@ test('ритм: разбор длительностей и деления', asyn
 
 test('плеер: кнопка запускает и останавливает, подсветка идёт', async ({ page }) => {
   const errors = await openApp(page, 'ru');
+  await toSession(page);
   await page.click('#planList li:nth-child(2)');
   const btn = page.locator('#nowBody button[data-play]').first();
   await btn.click();
@@ -278,7 +282,7 @@ test(`${inst}: EN: данные без кириллицы`, async ({ page }) => 
 }
 
 test('EN: план 5 часов прокликан по дням цикла без кириллицы', async ({ page }) => {
-  test.setTimeout(300000);
+  test.setTimeout(480000); // 35 дней × до 30 кликов по шторке плана
   const errors = await openApp(page, 'en');
   const CYR = /[Ѐ-ӿ]+/g;
   const scan = async where => {
@@ -292,7 +296,7 @@ test('EN: план 5 часов прокликан по дням цикла бе
     (found.match(CYR) || []).forEach(w => { if (!bad.has(w)) bad.set(w, where); });
   };
   const bad = new Map(); // слово → где встретилось впервые
-  await page.click('#timeChips button[data-t="300"]');
+  await toToday(page); await page.click('#timeChips button[data-t="300"]'); await toSession(page);
   // с вводной недели (−5) до первого дня 2-го цикла (29): все фокусы, все фазы, день тестов
   for (let day = -5; day <= 29; day++) {
     const items = page.locator('#planList li');
@@ -312,7 +316,7 @@ test('EN: план 5 часов прокликан по дням цикла бе
 
 test('RU: страница грузится без ошибок JS', async ({ page }) => {
   const errors = await openApp(page, 'ru');
-  await page.click('#timeChips button[data-t="300"]');
+  await toToday(page); await page.click('#timeChips button[data-t="300"]'); await toSession(page);
   const items = page.locator('#planList li');
   const n = await items.count();
   for (let k = 0; k < n; k++) await items.nth(k).click();
@@ -321,13 +325,13 @@ test('RU: страница грузится без ошибок JS', async ({ pa
 
 test('дни: доступны только сегодня и 7 дней назад', async ({ page }) => {
   const errors = await openApp(page, 'ru');
-  const days = await page.evaluate(() => [...document.querySelectorAll('#weekStrip button[data-day]')].map(b => +b.dataset.day));
-  expect(days).toEqual([-12, -11, -10, -9, -8, -7, -6, -5]); // 2026-10-28 = −5
+  // 2026-10-28 = −5; стрелки у даты листают 7 прошлых дней
   await expect(page.locator('#nextDay')).toBeDisabled();
+  await expect(page.locator('#todayBtn')).toBeHidden();
   for (let k = 0; k < 7; k++) await page.click('#prevDay');
   expect(await page.evaluate(() => window.__grif.st.i)).toBe(-12);
   await expect(page.locator('#prevDay')).toBeDisabled();
-  await page.click('#weekStrip button[data-day="-8"]');
+  for (let k = 0; k < 4; k++) await page.click('#nextDay');
   expect(await page.evaluate(() => window.__grif.st.i)).toBe(-8);
   await page.click('#todayBtn');
   expect(await page.evaluate(() => window.__grif.st.i)).toBe(-5);
@@ -342,9 +346,12 @@ test('дни: доступны только сегодня и 7 дней наз�
 
 test('масштаб табов: 4 размера, запоминается в grif.tabz', async ({ page }) => {
   await openApp(page);
-  await page.click('#setBtn');
-  await page.click('#tabzSw button[data-tabz="1.5"]');
-  await expect(page.locator('#tabzSw button[data-tabz="1.5"]')).toHaveAttribute('aria-pressed', 'true');
+  // кнопки масштаба — в заголовке таба: 100% → 125% → 150%, дальше крупнее нельзя
+  await toSession(page);
+  await page.evaluate(() => { const G = window.__grif; const k = G.st.plan.segs.findIndex(s => s.id && s.kind !== 'warm'); document.querySelectorAll('#planList li')[k].click(); });
+  await page.click('#nowBody [data-tz="1"]');
+  await page.click('#nowBody [data-tz="1"]');
+  await expect(page.locator('#nowBody [data-tz="1"]')).toBeDisabled();
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tabz').trim())).toBe('1.5');
   expect(await page.evaluate(() => localStorage.getItem('grif.tabz'))).toBe('1.5');
   await page.reload();
