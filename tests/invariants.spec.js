@@ -6,7 +6,7 @@ const { pathToFileURL } = require('url');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
 const URL_BASE = pathToFileURL(INDEX).href;
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz', 'sync'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;

@@ -3,15 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RiffGym</title>
-<meta name="description" content="RiffGym — ежедневная тренировка на гитаре, акустике и басу: техничный дэт-метал и блюз. Одна программа для всех, подстройка под время от 15 минут до 5 часов.">
-<meta property="og:title" content="RiffGym">
-<meta property="og:url" content="https://riffgym.app/">
+<title>RiffGym — daily guitar & bass practice routine: metal, blues, jazz, funk</title>
+<meta name="description" content="Free daily practice routine for electric guitar, acoustic and bass: technical death metal, blues, jazz, funk and fingerstyle. A built-in coach, metronome and tabs, sessions from 15 minutes to 5 hours.">
+<meta name="keywords" content="guitar practice routine, bass practice, guitar exercises, death metal guitar, blues guitar, jazz guitar, funk bass, slap bass, fingerstyle, metronome, guitar tabs, тренировка на гитаре, упражнения для гитары, бас-гитара">
+<meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://riffgym.app/">
-<meta property="og:description" content="Daily guitar and bass workout: technical death metal and blues · Ежедневная тренировка на гитаре и басу: дэт-метал и блюз">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="RiffGym">
+<meta property="og:title" content="RiffGym — daily guitar & bass workout">
+<meta property="og:description" content="Daily guitar, acoustic and bass practice: death metal, blues, jazz, funk, fingerstyle · Ежедневная тренировка на гитаре и басу">
+<meta property="og:url" content="https://riffgym.app/">
+<meta property="og:image" content="https://riffgym.app/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="RiffGym — daily guitar and bass workout">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="RiffGym — daily guitar & bass workout">
+<meta name="twitter:description" content="Daily guitar, acoustic and bass practice: death metal, blues, jazz, funk, fingerstyle.">
+<meta name="twitter:image" content="https://riffgym.app/img/og.png">
 <meta name="theme-color" content="#0e1115">
+<meta name="application-name" content="RiffGym">
+<meta name="apple-mobile-web-app-title" content="RiffGym">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"RiffGym","url":"https://riffgym.app/","image":"https://riffgym.app/img/og.png","applicationCategory":"EducationalApplication","applicationSubCategory":"Music practice","operatingSystem":"Any (web browser)","inLanguage":["en","ru"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free daily practice routine for electric guitar, acoustic and bass: technical death metal, blues, jazz, funk and fingerstyle, with a coach, metronome and tabs.","featureList":["Daily practice plan from 15 minutes to 5 hours","Coach with sets and rest","Metronome with odd meters, bursts and swing","Tabs with playback","Guitar 6/7/8 strings and bass 4/5/6 strings, custom and open tunings","Library of exercises with difficulty levels"]}</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230e1115'/%3E%3Cg stroke='%2386c3e6' stroke-width='3'%3E%3Cpath d='M22 10v44M42 10v44'/%3E%3C/g%3E%3Cg stroke='%23e8e4da' stroke-width='2'%3E%3Cpath d='M6 16h52M6 23h52M6 30h52M6 37h52M6 44h52M6 51h52'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml" sizes="any">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -68,6 +88,8 @@ button{cursor:pointer}
 .settings{display:flex;flex-direction:column;gap:12px}
 .setrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .setrow>.lbl{min-width:110px}
+.foot{margin:16px 0 8px;text-align:center;color:var(--muted);font-size:.85em}.foot a{color:inherit}
+.acc{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.acc-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.acc-form input{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);min-width:200px}.acc-st{color:var(--muted);font-size:.9em}.acc-me{font-weight:600}
 .daynav{display:flex;align-items:center;gap:6px}
 .daynav button{background:var(--surface);border:1px solid var(--line);border-radius:6px;height:36px;min-width:36px;padding:0 10px}
 .daynav button:hover:not(:disabled){border-color:var(--muted)}
@@ -310,6 +332,11 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
 
 </head>
 <body>
+<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px;font-family:system-ui,sans-serif;line-height:1.5">
+<h1>RiffGym — daily guitar &amp; bass practice routine</h1>
+<p>Free daily workout for electric guitar, acoustic and bass: technical death metal, blues, jazz, funk and fingerstyle. One plan per day for everyone, sessions from 15 minutes to 5 hours, a coach that runs sets and rest, a metronome and tabs with playback. RiffGym needs JavaScript.</p>
+<p lang="ru">Бесплатная ежедневная тренировка на электрогитаре, акустике и бас-гитаре: дэт-метал, блюз, джаз, фанк и фингерстайл. Тренер, метроном и табы. Для работы нужен JavaScript.</p>
+</div></noscript>
 <div class="wrap">
   <header class="hd">
     <div class="brand">
@@ -344,6 +371,9 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
       <div class="tchips" id="tuneChips"><select id="tuneKey" class="tsel"></select></div>
       <div class="tchips" id="dropChips"></div>
       <div class="tchips"><button id="tuneBtn" type="button"></button></div>
+    </div>
+    <div class="setrow" id="accRow" hidden><span class="lbl" id="accLbl"></span>
+      <div class="acc" id="accBox"></div>
     </div>
     <div class="setrow" id="bassBar" hidden><span class="lbl" data-i="handLabel"></span>
       <span class="tchips" id="handChips"></span>
@@ -422,6 +452,7 @@ textarea.share{width:100%;min-height:160px;background:var(--surface-2);border:1p
     <details class="panel"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
     <details class="panel safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
   </section>
+  <footer class="foot"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@riffgym.app">support@riffgym.app</a></footer>
 </div>
 
 <script>
@@ -440,7 +471,10 @@ const esc=s=>String(noteTxt(String(s))).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const pickIdx=(r,n)=>Math.floor(r()*n);
 function lsGet(k,d){try{const v=localStorage.getItem('grif.'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
-function lsSet(k,v){try{localStorage.setItem('grif.'+k,JSON.stringify(v));}catch(e){}}
+function lsSet(k,v,q){try{localStorage.setItem('grif.'+k,JSON.stringify(v));if(!q&&k!=='sync'){localStorage.setItem('grif.sync',JSON.stringify(Date.now()));}}catch(e){}if(!q&&k!=='sync')window.dispatchEvent(new Event('grif:ls'));}
+// Синхронизация с аккаунтом (Supabase, блок <script> «Аккаунт» в конце файла): только эти ключи, grif.sync — время последнего изменения
+const SYNC_KEYS=['time','lang','bpm','bpmEx','tests','lvl','inst','genre','strings','hand','gstrings','tuning','theme','bpmClean','tabz'];
+window.__grifStore={keys:SYNC_KEYS,at:()=>lsGet('sync',0),all:()=>{const o={};SYNC_KEYS.forEach(k=>{const v=lsGet(k,undefined);if(v!==undefined)o[k]=v;});return o;},put:(o,at)=>{SYNC_KEYS.forEach(k=>{if(o&&k in o)lsSet(k,o[k],1);});lsSet('sync',at,1);}};
 function dayIndexOf(d){return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-ANCHOR)/DAY);}
 function dateOfIndex(i){const u=new Date(ANCHOR+i*DAY);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate());}
 function splitInt(total,weights){
@@ -2240,7 +2274,7 @@ applyTheme();
 const tuneShort=()=>{const t=TUNE[INST];return NOTES[mod(4+t.o,12)]+(t.d?' drop':'');};
 function renderStatic(){
   document.documentElement.lang=LANG;
-  document.title='RiffGym'+(GENRE!=='metal'?' · '+GNAME(GENRE).toLowerCase():'')+(INST!=='guitar'?' · '+INAME(INST).toLowerCase():'');
+  document.title='RiffGym'+(LANG==='ru'?' — тренировка на гитаре и басу':' — guitar & bass practice')+(GENRE!=='metal'?' · '+GNAME(GENRE).toLowerCase():'')+(INST!=='guitar'?' · '+INAME(INST).toLowerCase():'');
   $('logo').innerHTML='Riff<b>Gym</b>';
   document.querySelectorAll('[data-i]').forEach(el=>{el.textContent=t(el.dataset.i);});
   $('prevDay').setAttribute('aria-label',t('prevDay'));$('nextDay').setAttribute('aria-label',t('nextDay'));
@@ -2439,7 +2473,7 @@ function renderDots(){const gs=groupStarts();$('dots').innerHTML=Array.from({len
 function metroStart(at){const c=audio();if(!c){toast(L('Звук недоступен в этом браузере','Sound is not available in this browser'));return;}Mt.on=true;Mt.pulse=0;Mt.subi=0;Mt.bar=0;Mt.bc=0;Mt.q=[];Mt.next=at!=null?at:c.currentTime+0.08;schedule();Mt.timer=setInterval(schedule,25);$('mToggle').textContent=t('mOff');requestAnimationFrame(draw);wantWake();}
 function metroStop(){Mt.on=false;clearInterval(Mt.timer);Mt.timer=null;$('mToggle').textContent=t('mOn');$('mState').textContent='';$('mState').className='mstate';[...$('dots').children].forEach(el=>el.classList.remove('on','r'));}
 function curExKey(){const s=st.plan&&st.plan.segs[st.cur];return s&&s.id?exKey(s.id):null;}
-// В будущем платная функция (сейчас доступна всем): память темпа по упражнению.
+// Память темпа по упражнению (бесплатная функция, решение автора от 2026-11-20).
 // grif.bpmEx — рабочий темп {exKey: bpm}, сохраняется при любой смене bpm на упражнении и подставляется при его старте;
 // grif.bpmClean — последний чистый темп {exKey: {bpm, date}}, записывается кнопкой в панели «Сейчас».
 function setBpm(v){
@@ -8874,6 +8908,76 @@ window.__grif={exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenr
 })();
 </script>
 
+<!-- Аккаунт (необязательный): вход через Supabase и синхронизация настроек grif.* между устройствами.
+     Без url/key ничего не грузится и строка в настройках скрыта. Ключ — публичный anon/publishable, не секретный. Схема БД — docs/supabase.sql. -->
+<script>window.RIFFGYM_SUPABASE={url:'https://ixispdikcquoinknyoxh.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4aXNwZGlrY3F1b2lua255b3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNzMzNzMsImV4cCI6MjExMDc0OTM3M30.mGdonlevPjLwwB3Fgr_pcLRvA5Vu1AihMNCj-fQLQ4w'};</script>
+<script>
+(function(){
+'use strict';
+const CFG=window.RIFFGYM_SUPABASE||{},S=window.__grifStore,row=document.getElementById('accRow'),box=document.getElementById('accBox');
+if(!CFG.url||!CFG.key||!S||!row||location.protocol==='file:')return; // file:// — тесты и локальный просмотр без сети
+row.hidden=false;
+const ru=()=>document.documentElement.lang==='ru',T=(r,e)=>ru()?r:e;
+const escH=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let sb=null,user=null,state='',timer=null,form=false;
+function render(){
+  document.getElementById('accLbl').textContent=T('Аккаунт','Account');
+  if(!sb){box.innerHTML='<span class="acc-st">'+T('Загрузка…','Loading…')+'</span>';return;}
+  if(user){box.innerHTML='<span class="acc-me">'+escH(user.email||'')+'</span><span class="acc-st">'+escH(state)+'</span><button class="btn" id="accOut" type="button">'+T('Выйти','Sign out')+'</button>';return;}
+  if(!form){box.innerHTML='<button class="btn" id="accIn" type="button">'+T('Войти','Sign in')+'</button><span class="acc-st">'+T('Синхронизация настроек между устройствами','Sync settings across devices')+'</span>';return;}
+  box.innerHTML='<form id="accForm" class="acc-form"><input type="email" id="accEmail" required autocomplete="email" placeholder="'+T('Эл. почта','Email')+'">'+
+    '<button class="btn primary" type="submit">'+T('Прислать ссылку','Email me a link')+'</button>'+
+    '<button class="btn" id="accGoogle" type="button">Google</button><button class="btn" id="accCancel" type="button">'+T('Отмена','Cancel')+'</button></form>'+
+    '<span class="acc-st">'+escH(state)+'</span>';
+}
+const back=()=>location.origin+location.pathname;
+box.addEventListener('click',async e=>{
+  const id=e.target.id;
+  if(id==='accIn'){form=true;state='';render();const i=document.getElementById('accEmail');i&&i.focus();}
+  else if(id==='accCancel'){form=false;state='';render();}
+  else if(id==='accGoogle'){const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:back()}});if(r.error){state=r.error.message;render();}}
+  else if(id==='accOut'){await sb.auth.signOut();user=null;form=false;state='';render();}
+});
+box.addEventListener('submit',async e=>{
+  e.preventDefault();const em=document.getElementById('accEmail').value.trim();if(!em)return;
+  state=T('Отправляем…','Sending…');render();
+  const r=await sb.auth.signInWithOtp({email:em,options:{emailRedirectTo:back()}});
+  state=r.error?r.error.message:T('Ссылка для входа отправлена на ','Sign-in link sent to ')+em;render();
+});
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+// синхронизация: одна строка на пользователя, побеждает более позднее изменение
+async function push(){
+  if(!user)return;
+  const r=await sb.from('user_settings').upsert({user_id:user.id,data:S.all(),updated_at:S.at()||Date.now()});
+  state=r.error?T('Ошибка синхронизации','Sync error'):T('Синхронизировано','Synced');render();
+}
+async function pull(){
+  const r=await sb.from('user_settings').select('data,updated_at').eq('user_id',user.id).maybeSingle();
+  if(r.error){state=T('Ошибка синхронизации','Sync error');render();return;}
+  const rem=r.data;
+  if(rem&&+rem.updated_at>S.at()){
+    if(JSON.stringify(rem.data)!==JSON.stringify(S.all())){S.put(rem.data,+rem.updated_at);location.reload();return;}
+    S.put({},+rem.updated_at);
+  }
+  if(!rem||+rem.updated_at<S.at())await push();else{state=T('Синхронизировано','Synced');render();}
+}
+window.addEventListener('grif:ls',()=>{if(!user)return;clearTimeout(timer);timer=setTimeout(push,2000);});
+render();
+const sc=document.createElement('script');
+sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+sc.onload=()=>{
+  sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}});
+  sb.auth.onAuthStateChange((ev,ses)=>{
+    const was=user&&user.id;user=ses?ses.user:null;
+    if(new URLSearchParams(location.search).has('code'))history.replaceState(null,'',location.pathname+location.hash);
+    if(user&&user.id!==was){form=false;pull();}
+    render();
+  });
+};
+sc.onerror=()=>{row.hidden=true;};
+document.head.appendChild(sc);
+})();
+</script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "052c83d4b776443989139d4b1e96414e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
