@@ -36,7 +36,7 @@
 
 ## Запуск
 
-Это один файл `index.html` без сборки и без сервера. Его можно просто открыть в браузере.
+Это статический сайт без сборки и без сервера: `index.html`, стили в `css/`, код в `js/`. Его можно просто открыть в браузере.
 
 Публикация на GitHub Pages: **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)`**.
 
@@ -90,7 +90,7 @@ A daily electric guitar workout for technical death metal, built like a gym prog
 
 ## Running it
 
-A single `index.html` with no build step and no server. Open it in any browser.
+A static site with no build step and no server: `index.html`, styles in `css/`, code in `js/`. Open it in any browser.
 
 GitHub Pages: **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)`**.
 

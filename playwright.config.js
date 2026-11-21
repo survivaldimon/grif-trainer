@@ -1,4 +1,4 @@
-// Тесты гоняют index.html напрямую через file://, без сервера.
+// Тесты гоняют index.html (с css/ и js/) напрямую через file://, без сервера.
 const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({

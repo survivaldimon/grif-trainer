@@ -23,8 +23,15 @@ async function openApp(page, lang) {
   return errors;
 }
 
+// исходники приложения: index.html и скрипты js/*.js в порядке подключения
+const SRC = () => {
+  const html = fs.readFileSync(INDEX, 'utf8');
+  const js = [...html.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => fs.readFileSync(path.join(__dirname, '..', m[1]), 'utf8'));
+  return [html, ...js].join('\n');
+};
+
 test('localStorage только через lsGet/lsSet и только разрешённые ключи', () => {
-  const src = fs.readFileSync(INDEX, 'utf8');
+  const src = SRC();
   const lines = src.split(/\r?\n/).filter(l => l.includes('localStorage'));
   expect(lines.length).toBe(2);
   lines.forEach(l => expect(l).toMatch(/^function ls(Get|Set)\(k.*try\{.*\}catch/));
