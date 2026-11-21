@@ -1,0 +1,15 @@
+{
+  "name": "RiffGym — daily guitar & bass workout",
+  "short_name": "RiffGym",
+  "description": "Daily guitar, acoustic and bass practice: death metal, blues, jazz, funk, fingerstyle.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e1115",
+  "theme_color": "#0e1115",
+  "icons": [
+    { "src": "img/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
