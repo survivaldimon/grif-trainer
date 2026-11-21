@@ -11,6 +11,8 @@ const FIXED_NOW = new Date('2026-10-28T12:00:00');
 const CYR = /[А-Яа-яЁё]/;
 
 async function openApp(page, hash) {
+  // время уже выбрано: онбординг первого входа не перекрывает экран (его проверяет onboarding.spec.js)
+  await page.addInitScript(() => { try { if (localStorage.getItem('grif.time') == null) localStorage.setItem('grif.time', '60'); } catch (e) {} });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());

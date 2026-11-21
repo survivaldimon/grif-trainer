@@ -112,6 +112,56 @@ function renderViews(){
 /* ================= масштаб таба в окне таба ================= */
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-tz]');if(!b)return;const k=TABZ.indexOf(TABZOOM)+(+b.dataset.tz);if(k>=0&&k<TABZ.length)setTabz(TABZ[k]);});
 
+/* ================= онбординг ================= */
+// Первый вход: ни жанр, ни инструмент, ни время ещё не сохранены и в адресе нет жанра, инструмента или library.
+// Выбор только записывает настройки; план дня от него не зависит.
+const ONB_SKIP=['metal','blues','jazz','funk','fingerstyle','guitar','bass','acoustic','library'];
+const onbNeeded=()=>lsGet('genre',null)==null&&lsGet('inst',null)==null&&lsGet('time',null)==null&&!hashWords().some(w=>ONB_SKIP.includes(w));
+const ONB={on:false,step:0,inst:'guitar',genre:'metal',T:60};
+const ONB_INST=[['guitar','guitar',()=>L('Электрогитара','Electric guitar'),()=>L('6, 7 или 8 струн','6, 7 or 8 strings'),'#ff9500'],
+  ['acoustic','music',()=>L('Акустика','Acoustic guitar'),()=>L('Блюз, джаз, фингерстайл','Blues, jazz, fingerstyle'),'#34c759'],
+  ['bass','audio-waveform',()=>L('Бас-гитара','Bass guitar'),()=>L('4, 5 или 6 струн','4, 5 or 6 strings'),'#007aff']];
+const ONB_GENRE={metal:['zap','#ff3b30','Скорость, точность, чистая игра на перегрузе','Speed, precision, clean playing under gain'],
+  blues:['guitar','#007aff','Бенды, вибрато, фразировка, шаффл','Bends, vibrato, phrasing, shuffle'],
+  jazz:['piano','#ff9500','Аккорды, арпеджио, свинг','Chords, arpeggios, swing'],
+  funk:['audio-waveform','#af52de','Ритм, глушение, шестнадцатые, слэп на басу','Rhythm, muting, sixteenths, slap on bass'],
+  fingerstyle:['hand','#34c759','Независимость пальцев: бас и мелодия вместе','Finger independence: bass and melody together']};
+function openOnb(){ONB.on=true;ONB.step=0;ONB.inst=INST;ONB.genre=GENRE;ONB.T=st.T;$('onb').hidden=false;document.body.classList.add('onb-open');renderOnb();}
+function closeOnb(){ONB.on=false;$('onb').hidden=true;document.body.classList.remove('onb-open');}
+function onbOpt(kind,val,ic,col,title,sub,on){return '<button class="opt'+(on?' on':'')+'" data-onb="'+kind+'" data-v="'+val+'" aria-pressed="'+on+'"><span class="ic big" style="--c:'+col+'">'+IC(ic)+'</span><span class="ot"><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span><span class="radio"></span></button>';}
+function renderOnb(){
+  if(!ONB.on)return;
+  const s=ONB.step;let h,lead,body;
+  if(s===0){h=L('На чём вы играете?','What do you play?');lead=L('Инструмент можно поменять в любой момент в профиле.','You can change the instrument any time in your profile.');
+    body=ONB_INST.map(([k,ic,t,sub,col])=>onbOpt('inst',k,ic,col,t(),sub(),k===ONB.inst)).join('');}
+  else if(s===1){h=L('Что будем играть?','What will you play?');lead=L('План дня общий для всех, кто выбрал этот жанр. Поменять можно в профиле.','The daily plan is the same for everyone in this genre. Change it in your profile.');
+    if(!GENRES[ONB.genre].includes(ONB.inst))ONB.genre=GENRE_IDS.find(g=>GENRES[g].includes(ONB.inst));
+    body=GENRE_IDS.filter(g=>GENRES[g].includes(ONB.inst)).map(g=>{const x=ONB_GENRE[g];return onbOpt('genre',g,x[0],x[1],GNAME(g),L(x[2],x[3])+' · '+GENRES[g].map(INAME).join(', ').toLowerCase(),g===ONB.genre);}).join('');}
+  else{h=L('Сколько времени на занятие?','How long do you practice?');lead=L('Время можно менять каждый день на экране «Сегодня». Тренер делит его на разминку, базу, фокус и остальное.','You can change it every day on the Today screen. The coach splits it into warm-up, base, focus and the rest.');
+    body='<div class="onb-times">'+TIMES.map(T=>'<button class="nb" data-onb="time" data-v="'+T+'" aria-pressed="'+(T===ONB.T)+'">'+esc(timeLabel(T))+'</button>').join('')+'</div>';}
+  $('onb').innerHTML='<div class="onb-in"><div class="onb-top"><div class="lang" role="group" aria-label="Language"><button data-onblang="ru" aria-pressed="'+(LANG==='ru')+'">RU</button><button data-onblang="en" aria-pressed="'+(LANG==='en')+'">EN</button></div>'+
+    '<div class="onb-dots">'+[0,1,2].map(k=>'<i class="'+(k<=s?'on':'')+'"></i>').join('')+'</div><button class="onb-skip" id="onbSkip">'+L('Пропустить','Skip')+'</button></div>'+
+    '<h2 id="onbH">'+esc(h)+'</h2><p class="onb-lead">'+esc(lead)+'</p><div class="onb-list">'+body+'</div>'+
+    '<div class="onb-foot">'+(s?'<button class="btn nb" id="onbBack">'+L('Назад','Back')+'</button>':'')+'<button class="btn-pri" id="onbNext">'+(s<2?L('Дальше','Next'):L('Начать','Start'))+'</button></div></div>';
+}
+function finishOnb(skip){
+  if(!skip){
+    if(ONB.inst!==INST)setInst(ONB.inst);
+    if(ONB.genre!==GENRE)setGenre(ONB.genre);
+    st.T=ONB.T;
+  }
+  lsSet('inst',INST);lsSet('genre',GENRE);lsSet('time',st.T);lsSet('lang',LANG);
+  closeOnb();rebuild();setView('today');
+}
+$('onb').addEventListener('click',e=>{
+  const o=e.target.closest('[data-onb]');
+  if(o){const v=o.dataset.v;if(o.dataset.onb==='inst')ONB.inst=v;else if(o.dataset.onb==='genre')ONB.genre=v;else ONB.T=+v;renderOnb();return;}
+  const lb=e.target.closest('[data-onblang]');if(lb){setLang(lb.dataset.onblang);renderOnb();return;}
+  if(e.target.closest('#onbSkip')){finishOnb(true);return;}
+  if(e.target.closest('#onbBack')){ONB.step=Math.max(0,ONB.step-1);renderOnb();return;}
+  if(e.target.closest('#onbNext')){if(ONB.step<2){ONB.step++;renderOnb();}else finishOnb(false);}
+});
+
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
   if(!$('planDrawer').hidden){setPlanOpen(false);$('planBtn').focus();return;}
   if(VIEW==='profile'){setView(VIEW_BACK);$('setBtn').focus();}});

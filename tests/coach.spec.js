@@ -12,6 +12,8 @@ const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;
 
 async function openApp(page, lang) {
+  // время уже выбрано: онбординг первого входа не перекрывает экран (его проверяет onboarding.spec.js)
+  await page.addInitScript(() => { try { if (localStorage.getItem('grif.time') == null) localStorage.setItem('grif.time', '60'); } catch (e) {} });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
