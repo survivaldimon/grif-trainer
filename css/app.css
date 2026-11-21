@@ -350,6 +350,16 @@ textarea.share{width:100%;min-height:160px;background:var(--card);border:0;borde
   .tgrid{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
   .toast{bottom:24px}
 }
+/* телефон: таймер подхода рядом с названием, чтобы таб был виден без прокрутки */
+@media (max-width:999px){
+  h2.title{font-size:20px;margin-bottom:4px}
+  .clockcard{padding:8px 12px}
+  .clockcard .btn-pri{min-height:44px;min-width:112px}
+  .coach{padding:10px 12px;gap:8px}
+  .coclock{font-size:46px;width:auto;order:0}
+  .cost{align-items:center}
+  .conext{font-size:12px}
+}
 @media (min-width:1100px){
   /* план открыт сбоку и сдвигает занятие, а не закрывает его */
   body.plan-open .now{margin-right:min(420px,100%)}
