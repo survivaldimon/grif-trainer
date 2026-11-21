@@ -24,9 +24,17 @@ function libSel(id){
   const ex=EX[id],x=LIB.sel[id]||{},n=lvlCount(id);
   return {lv:n?clamp(x.lv||getLvl(id),1,n):0,k:(ex.gen||!ex.v)?null:(x.k!=null?x.k:dayVar({id},st.plan.d))};
 }
+// Обложка упражнения: цвет и значок группы (W, B, R, A, L, C), градиент с рельефом
+const LIB_ART={W:['flame','#ff9f0a','#c2410c'],B:['dumbbell','#0a84ff','#1e40af'],R:['drum','#ff375f','#8a1538'],A:['trending-up','#30b0c7','#0e5e75'],L:['hand','#34c759','#0b6b4f'],C:['layers','#af52de','#5b1f8a'],X:['music','#8e8e93','#48484a']};
+const libGroupOf=id=>{for(const g of LIB_ORDER.map(x=>x[0]))if((GROUPS[g]||[]).includes(id)||id.replace(/\d+$/,'')===g)return g;return 'X';};
+function libArt(g,cls){const a=LIB_ART[g]||LIB_ART.X;return '<span class="art'+(cls?' '+cls:'')+'" style="--c1:'+a[1]+';--c2:'+a[2]+'">'+IC(a[0])+'</span>';}
+// «3 упражнения», «5 упражнений», «1 exercise»
+const nEx=n=>n+' '+(LANG==='en'?(n===1?'exercise':'exercises'):(n%10===1&&n%100!==11?'упражнение':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'упражнения':'упражнений'));
+// метки: упражнение есть в плане дня; записан чистый темп
+function libTags(id){const t=[];if(st.plan.segs.some(s=>s.id===id))t.push('<span class="tag2 on">'+L('Сегодня','Today')+'</span>');const c=lsGet('bpmClean',{})[exKey(id)];if(c)t.push('<span class="tag2">'+L('Чистый ','Clean ')+c.bpm+'</span>');return t.join('');}
 function libExHtml(id){
   const ex=EX[id],d=st.plan.d,{lv,k}=libSel(id),open=LIB.open.has(id);
-  let h='<details class="lib-ex" data-lib="'+id+'"'+(open?' open':'')+'><summary><span class="lib-id" title="'+id+'">'+exNum(id)+'</span><span><b>'+esc(X(id,'name'))+'</b><br><span class="lib-goal">'+esc(X(id,'goal'))+'</span></span></summary>';
+  let h='<details class="lib-ex" data-lib="'+id+'"'+(open?' open':'')+'><summary>'+libArt(libGroupOf(id))+'<span class="lib-tx"><b><span class="lib-id" title="'+id+'">'+exNum(id)+'</span> '+esc(X(id,'name'))+'</b><span class="lib-goal">'+esc(X(id,'goal'))+'</span><span class="lib-tags">'+libTags(id)+'</span></span><button class="lib-play nb" data-libplay="'+id+'" aria-label="'+L('Слушать пример','Play the example')+'">'+IC('play')+'</button></summary>';
   if(!open)return h+'</details>';
   h+='<div class="lib-body"><div class="sect"><h4>'+L('Как играть','How to play')+'</h4><p>'+esc(X(id,'how'))+'</p></div>';
   // бас: оба указания правой руки, выбранная техника — первой
@@ -43,6 +51,8 @@ function libExHtml(id){
     h+='<div class="lvl"><span class="lbl">'+L('Уровень','Level')+'</span><div class="lvlb" role="group" aria-label="'+L('Уровень сложности','Difficulty level')+'">'+b+'</div><span class="lvld">'+esc(X(id,'lvl')[lv-1])+'</span></div>';}
   const r=resolveEx(k!=null?{id,pick:k}:{id},d,lv||undefined);
   if(r&&r.v){if(r.v.note)h+='<p class="note">'+esc(r.v.note)+'</p>';if(r.v.t)h+=tabHtml(r.v.l,r.v.t,r.sub,r.meter,r.tu);}
+  const cl=lsGet('bpmClean',{})[exKey(id)];
+  h+='<p class="lib-clean">'+IC('timer')+'<span>'+(cl?L('Чистый темп: ','Clean tempo: ')+'<b>'+cl.bpm+' bpm</b> · '+esc(cl.date):L('Чистый темп ещё не записан: в занятии нажми «Записать как чистый».','No clean tempo yet: press “Save as clean” during a session.'))+'</span></p>';
   return h+'</div></details>';
 }
 function renderLib(){
@@ -52,9 +62,11 @@ function renderLib(){
   const gs=libGroups(),n=gs.reduce((a,g)=>a+g.list.length,0);
   if(LIB.g!=='all'&&!gs.some(g=>g.g===LIB.g))LIB.g='all';
   const fb=(g,name,k)=>'<button data-libf="'+g+'" aria-pressed="'+(LIB.g===g)+'">'+esc(name)+'<span class="n">'+k+'</span></button>';
-  $('lib').innerHTML='<div class="lib-hd"><h2>'+L('Все упражнения','All exercises')+GB('',L(' · бас',' · bass'))+'</h2><span class="lbl" id="libN"></span></div>'+
+  const d=st.plan.d,fg=d.focus,fl=gs.find(g=>g.g===fg);
+  const feat=fl?'<button class="feat" data-libf="'+fg+'">'+libArt(fg,'wide')+'<span class="feat-in"><small>'+esc(L('Сегодня в фокусе','Today’s focus')+(d.pre?'':' · '+L('вариант недели ','variant of the week ')+(d.pool+1)))+'</small><b>'+esc(GN(fg)+': '+nEx(fl.list.length))+'</b></span></button>':'';
+  $('lib').innerHTML='<div class="lib-hd"><div><div class="over">'+esc(GNAME(GENRE)+' · '+INAME(INST))+'</div><h2>'+L('Упражнения','Exercises')+'</h2></div><span class="lbl" id="libN"></span></div>'+
     '<div class="lib-tools"><input type="search" class="lib-q" id="libQ" placeholder="'+L('Поиск: название, цель, номер (B1, тремоло…)','Search: name, goal, number (B1, tremolo…)')+'" aria-label="'+L('Поиск упражнений','Search exercises')+'">'+
-    '<div class="tchips lib-f" role="group" aria-label="'+L('Группы','Groups')+'">'+fb('all',L('Все','All'),n)+gs.map(g=>fb(g.g,g.name,g.list.length)).join('')+'</div></div>'+
+    '<div class="tchips lib-f" role="group" aria-label="'+L('Группы','Groups')+'">'+fb('all',L('Все','All'),n)+gs.map(g=>fb(g.g,g.name,g.list.length)).join('')+'</div></div>'+feat+
     gs.map(g=>'<div class="lib-grp" data-libg="'+g.g+'"><h3>'+esc(g.name)+'</h3><div class="lib-cards">'+g.list.map(libExHtml).join('')+'</div></div>').join('')+
     '<p class="lib-empty" id="libEmpty" hidden>'+L('Ничего не нашлось.','Nothing found.')+'</p>'+legendHtml();
   $('libQ').value=LIB.q;
@@ -84,6 +96,11 @@ $('lib').addEventListener('toggle',e=>{
   libRerender(id);
 },true);
 $('lib').addEventListener('click',e=>{
+  const lp=e.target.closest('button[data-libplay]');
+  if(lp){e.preventDefault();const id=lp.dataset.libplay;const box0=document.querySelector('#lib details[data-lib="'+id+'"] .tabbox');
+    if(box0&&Pl.on&&Pl.box===box0){plStop();return;}
+    if(!LIB.open.has(id)){LIB.open.add(id);libRerender(id);}
+    const box=document.querySelector('#lib details[data-lib="'+id+'"] .tabbox');if(box)plStart(box);return;}
   const pb=e.target.closest('button[data-play]');if(pb){const box=pb.closest('.tabbox');if(Pl.on&&Pl.box===box)plStop();else plStart(box);return;}
   const el=e.target.closest('details[data-lib]'),lb=e.target.closest('button[data-liblvl]'),vb=e.target.closest('button[data-libvar]');
   if(!el||(!lb&&!vb))return;const id=el.dataset.lib,x=LIB.sel[id]=LIB.sel[id]||{};
