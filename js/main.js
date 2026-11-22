@@ -80,9 +80,9 @@ $('prevSeg').onclick=()=>goto(st.cur-1);
 $('nowBody').addEventListener('click',e=>{
   const sv=e.target.closest('button[data-save]');
   if(sv){const id=sv.dataset.save;const inp=$('ti-'+id);const v=Math.round(+inp.value);if(!v||v<20||v>400){toast(L('Введи темп в bpm, например 140','Enter a tempo in bpm, e.g. 140'));return;}
-    const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:dateOfIndex(st.i).toISOString().slice(0,10)});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
+    const h=lsGet('tests',{});(h[id]=h[id]||[]).push({bpm:v,date:isoDay(dateOfIndex(st.i))});lsSet('tests',h);toast(L('Записано: ','Saved: ')+v+' bpm');renderNow();return;}
   const sb=e.target.closest('button[data-sub]');if(sb){setSub(sb.dataset.sub);setMeter('4/4');toast(L('Метроном настроен','Metronome set'));return;}
-  if(e.target.closest('button[data-clean]')){const k=curExKey();if(k){const m=lsGet('bpmClean',{});m[k]={bpm:Mt.bpm,date:dateOfIndex(st.i).toISOString().slice(0,10)};lsSet('bpmClean',m);renderTempoMem();toast(L('Чистый темп: ','Clean tempo: ')+Mt.bpm+' bpm');}return;}
+  if(e.target.closest('button[data-clean]')){const k=curExKey();if(k){const m=lsGet('bpmClean',{});m[k]={bpm:Mt.bpm,date:isoDay(dateOfIndex(st.i))};lsSet('bpmClean',m);PR.clean[st.cur]=Math.round(Mt.bpm);renderTempoMem();toast(L('Чистый темп: ','Clean tempo: ')+Mt.bpm+' bpm');}return;}
   const lb=e.target.closest('button[data-lvl]');if(lb)changeLvl(+lb.dataset.lvl);
   const vb=e.target.closest('button[data-var]');if(vb)changeVar(+vb.dataset.var);
 });
@@ -141,6 +141,6 @@ setBpm(Mt.bpm);
 rebuild();
 setView(VIEW);
 if(onbNeeded())openOnb();
-window.__grif={PR,prTick,prFlush,prQueue,openSummary,openOnb,onbNeeded,ONB,setView,setPlanOpen,togglePlay,exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={PR,prTick,prFlush,prQueue,PG,pgRows,pgDays,pgRadar,pgPlan,renderProgress,openSummary,openOnb,onbNeeded,ONB,setView,setPlanOpen,togglePlay,exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE','GENRE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE,GENRE})[k]}));

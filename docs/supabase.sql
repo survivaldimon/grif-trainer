@@ -28,9 +28,13 @@ create table if not exists public.practice_log (
   planned_sec int  not null,
   played_sec  int  not null check (played_sec >= 0),
   bpm         smallint,
+  plan_min    smallint,                      -- время плана дня (T), этап 6
+  clean_bpm   smallint check (clean_bpm between 20 and 400), -- чистый темп, записанный на этом сегменте
   created_at  timestamptz not null default now(),
   unique (user_id, client_id)
 );
+-- этап 6 (2026-11-22): колонки для экрана «Прогресс» в уже созданной таблице
+alter table public.practice_log add column if not exists plan_min smallint, add column if not exists clean_bpm smallint check (clean_bpm between 20 and 400);
 create index if not exists practice_log_user_day on public.practice_log (user_id, day);
 alter table public.practice_log enable row level security;
 drop policy if exists "own log: select" on public.practice_log;

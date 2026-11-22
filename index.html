@@ -155,8 +155,8 @@
 
   <!-- Прогресс: статистика для вошедших (этап 6) -->
   <section class="view progress" id="vProgress" hidden>
-    <header class="vhd"><h1 class="lt" id="progTitle"></h1></header>
-    <div class="card empty" id="progBody"></div>
+    <header class="vhd"><div class="over" id="progOver"></div><h1 class="lt" id="progTitle"></h1></header>
+    <div class="pg" id="progBody"></div>
   </section>
 
   <!-- Итог занятия: время, упражнения, чистый темп, самочувствие -->
@@ -219,6 +219,7 @@
 <script src="js/library.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/practice.js"></script>
+<script src="js/progress.js"></script>
 <script src="js/main.js"></script>
 
 <!-- Аккаунт (необязательный): вход через Supabase и синхронизация настроек grif.* между устройствами.
@@ -249,7 +250,7 @@ box.addEventListener('click',async e=>{
   if(id==='accIn'){form=true;state='';render();const i=document.getElementById('accEmail');i&&i.focus();}
   else if(id==='accCancel'){form=false;state='';render();}
   else if(id==='accGoogle'){const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:back()}});if(r.error){state=r.error.message;render();}}
-  else if(id==='accOut'){await sb.auth.signOut();user=null;S.user=null;form=false;state='';render();}
+  else if(id==='accOut'){await sb.auth.signOut();user=null;S.user=null;form=false;state='';render();window.dispatchEvent(new Event('grif:user'));}
 });
 box.addEventListener('submit',async e=>{
   e.preventDefault();const em=document.getElementById('accEmail').value.trim();if(!em)return;
@@ -289,6 +290,15 @@ async function sendLog(){
   const cur=S.logq()||{};S.setLogq({log:(cur.log||[]).filter(x=>!ok.has(x.client_id)),ses:(cur.ses||[]).filter(x=>!ok.has(x.client_id))});
   sending=false;
 }
+// экран «Прогресс»: журнал с даты from (YYYY-MM-DD), постранично по 1000 строк
+S.fetchLog=async from=>{
+  if(!user)return null;let out=[];
+  for(let i=0;i<20000;i+=1000){
+    const r=await sb.from('practice_log').select('client_id,day,day_index,genre,inst,kind,ex_id,grp,planned_sec,played_sec,bpm,plan_min,clean_bpm').gte('day',from).order('day').order('id').range(i,i+999);
+    if(r.error)throw r.error;out=out.concat(r.data||[]);if(!r.data||r.data.length<1000)break;
+  }
+  return out;
+};
 window.addEventListener('grif:log',()=>{clearTimeout(lt);lt=setTimeout(sendLog,1500);});
 window.addEventListener('online',()=>{sendLog();});
 render();
@@ -300,6 +310,7 @@ sc.onload=()=>{
     const was=user&&user.id;user=ses?ses.user:null;S.user=user?user.id:null;
     if(new URLSearchParams(location.search).has('code'))history.replaceState(null,'',location.pathname+location.hash);
     if(user&&user.id!==was){form=false;pull();sendLog();}
+    if((user&&user.id)!==was)window.dispatchEvent(new Event('grif:user'));
     render();
   });
 };

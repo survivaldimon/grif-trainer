@@ -21,6 +21,7 @@ function setView(v){
   if(v==='session')requestAnimationFrame(()=>document.querySelectorAll('#nowBody .tabsc').forEach(layTabs));
   if(v==='today')renderToday();
   if(v==='summary')renderSummary();
+  if(v==='progress')renderProgress();
 }
 // вкладки «Упражнения» и «Профиль» повторным нажатием возвращают туда, откуда пришли
 function navTo(v){if(v===VIEW&&(v==='lib'||v==='profile'))setView(VIEW_BACK);else setView(v);}
@@ -90,12 +91,6 @@ function setPlanOpen(on){$('planDrawer').hidden=!on;$('planBtn').setAttribute('a
 $('planBtn').onclick=()=>setPlanOpen($('planDrawer').hidden);
 $('planClose').onclick=()=>setPlanOpen(false);
 $('exitBtn').onclick=()=>setView('today');
-
-/* ================= «Прогресс» ================= */
-function renderProgress(){
-  $('progTitle').textContent=L('Прогресс','Progress');
-  $('progBody').innerHTML='<span class="ic k-focus big">'+IC('chart-column')+'</span><h3>'+L('Статистика занятий','Practice stats')+'</h3><p>'+L('Минуты по дням цикла, выполнение плана по навыкам и рост чистого темпа появятся здесь для вошедших в аккаунт.','Minutes per day of the cycle, plan completion by skill and clean-tempo growth will appear here once you sign in.')+'</p>';
-}
 
 /* ================= подписи экранов ================= */
 function renderViews(){

@@ -18,6 +18,9 @@ function lsSet(k,v,q){try{localStorage.setItem('grif.'+k,JSON.stringify(v));if(!
 const SYNC_KEYS=['time','lang','bpm','bpmEx','tests','lvl','inst','genre','strings','hand','gstrings','tuning','theme','bpmClean','tabz'];
 window.__grifStore={user:null,logq:()=>lsGet('logq',null),setLogq:q=>lsSet('logq',q,1),keys:SYNC_KEYS,at:()=>lsGet('sync',0),all:()=>{const o={};SYNC_KEYS.forEach(k=>{const v=lsGet(k,undefined);if(v!==undefined)o[k]=v;});return o;},put:(o,at)=>{SYNC_KEYS.forEach(k=>{if(o&&k in o)lsSet(k,o[k],1);});lsSet('sync',at,1);}};
 function dayIndexOf(d){return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-ANCHOR)/DAY);}
+// дата YYYY-MM-DD по локальному календарю (toISOString сдвигал день назад восточнее Гринвича)
+const isoDay=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+const dayIdxOfIso=s=>Math.round((Date.parse(s+'T00:00:00Z')-ANCHOR)/DAY);
 function dateOfIndex(i){const u=new Date(ANCHOR+i*DAY);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate());}
 function splitInt(total,weights){
   const s=weights.reduce((a,b)=>a+b,0)||1;

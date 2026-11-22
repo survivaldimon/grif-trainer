@@ -5,28 +5,32 @@
 // Секунды считаются по часам, пока идёт таймер (не во время «Готов» и отсчёта): пропуск подхода кнопкой не засчитывается.
 // Сегмент дольше 15 с — одна запись в очереди grif.logq; отправляет её блок «Аккаунт» (событие grif:log).
 const PR_MIN=15;
-const PR={sec:{},from:{}};
+const PR={sec:{},from:{},clean:{}};
 const prUser=()=>(window.__grifStore&&window.__grifStore.user)||null;
-const prDay=d=>{const x=d.date;return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+const prDay=d=>isoDay(d.date);
 const prId=()=>{try{if(crypto.randomUUID)return crypto.randomUUID();}catch(e){}return Date.now().toString(36)+Math.random().toString(36).slice(2,10);};
 function prQueue(){const q=lsGet('logq',null);return q&&Array.isArray(q.log)&&Array.isArray(q.ses)?q:{log:[],ses:[]};}
 function prSave(q){lsSet('logq',q,1);try{window.dispatchEvent(new Event('grif:log'));}catch(e){}}
 // вызывает цикл таймера: dt — секунды с прошлого тика, только пока таймер идёт
 function prTick(dt){if(!st.running||!(dt>0))return;const k=st.cur;PR.sec[k]=(PR.sec[k]||0)+Math.min(dt,2);}
 const prPlayed=()=>Object.values(PR.sec).reduce((a,x)=>a+x,0);
-// уходим с сегмента: записываем сыгранное и обнуляем
+// запись журнала по сегменту k (её же «Прогресс» берёт для ещё не записанного сегмента)
+function prRow(k,sec,u){
+  const s=st.plan.segs[k],d=st.plan.d,ex=s.id&&EX[s.id]?s.id:null;
+  return {_u:u,client_id:prId(),day:prDay(d),day_index:d.i,genre:GENRE,inst:INST,kind:s.kind,ex_id:ex,grp:ex?libGroupOf(ex):null,
+    lvl:ex&&lvlCount(ex)?getLvl(ex):null,variant:ex&&!EX[ex].gen&&EX[ex].v?varIdx(s,d):null,planned_sec:s.min*60,played_sec:Math.round(sec),bpm:Math.round(Mt.bpm),
+    plan_min:st.plan.T,clean_bpm:ex&&PR.clean[k]?PR.clean[k]:null};
+}
+// уходим с сегмента: записываем сыгранное и обнуляем. Записанный чистый темп сохраняется, даже если сыграно меньше 15 с.
 function prFlush(k){
-  const sec=PR.sec[k]||0;delete PR.sec[k];
+  const sec=PR.sec[k]||0,cl=PR.clean[k];delete PR.sec[k];
   const s=st.plan&&st.plan.segs[k],u=prUser();
-  if(!s||s.kind==='pause'||sec<PR_MIN||!u)return;
+  if(!s||s.kind==='pause'||!u||(sec<PR_MIN&&!cl)){delete PR.clean[k];return;}
   PR.from[k]=(PR.from[k]||0)+sec;
-  const d=st.plan.d,ex=s.id&&EX[s.id]?s.id:null;
-  const q=prQueue();
-  q.log.push({_u:u,client_id:prId(),day:prDay(d),day_index:d.i,genre:GENRE,inst:INST,kind:s.kind,ex_id:ex,grp:ex?libGroupOf(ex):null,
-    lvl:ex&&lvlCount(ex)?getLvl(ex):null,variant:ex&&!EX[ex].gen&&EX[ex].v?varIdx(s,d):null,planned_sec:s.min*60,played_sec:Math.round(sec),bpm:Math.round(Mt.bpm)});
+  const q=prQueue();q.log.push(prRow(k,sec,u));delete PR.clean[k];
   prSave(q);
 }
-function prFlushAll(){Object.keys(PR.sec).forEach(k=>prFlush(+k));}
+function prFlushAll(){[...new Set([...Object.keys(PR.sec),...Object.keys(PR.clean)])].forEach(k=>prFlush(+k));}
 window.addEventListener('pagehide',prFlushAll);
 
 /* ================= итог занятия ================= */
@@ -35,7 +39,7 @@ const SUM={feel:0};
 const prTotal=()=>Object.values(PR.from).reduce((a,x)=>a+x,0)+prPlayed();
 function prExCount(){const ks=new Set([...Object.keys(PR.from),...Object.keys(PR.sec)].filter(k=>((PR.from[k]||0)+(PR.sec[k]||0))>=PR_MIN));return [...ks].filter(k=>{const s=st.plan.segs[+k];return s&&s.id&&EX[s.id];}).length;}
 // упражнения, у которых сегодня записан чистый темп
-function prCleanToday(){const dstr=dateOfIndex(st.i).toISOString().slice(0,10),m=lsGet('bpmClean',{});return Object.keys(EX).filter(id=>m[exKey(id)]&&m[exKey(id)].date===dstr).map(id=>({id,bpm:m[exKey(id)].bpm}));}
+function prCleanToday(){const dstr=isoDay(dateOfIndex(st.i)),m=lsGet('bpmClean',{});return Object.keys(EX).filter(id=>m[exKey(id)]&&m[exKey(id)].date===dstr).map(id=>({id,bpm:m[exKey(id)].bpm}));}
 function openSummary(){
   if(st.running){st.running=false;coachRun();}
   prFlushAll();SUM.feel=0;
