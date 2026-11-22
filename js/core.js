@@ -16,7 +16,7 @@ function lsGet(k,d){try{const v=localStorage.getItem('grif.'+k);return v==null?d
 function lsSet(k,v,q){try{localStorage.setItem('grif.'+k,JSON.stringify(v));if(!q&&k!=='sync'){localStorage.setItem('grif.sync',JSON.stringify(Date.now()));}}catch(e){}if(!q&&k!=='sync')window.dispatchEvent(new Event('grif:ls'));}
 // Синхронизация с аккаунтом (Supabase, блок <script> «Аккаунт» в конце файла): только эти ключи, grif.sync — время последнего изменения
 const SYNC_KEYS=['time','lang','bpm','bpmEx','tests','lvl','inst','genre','strings','hand','gstrings','tuning','theme','bpmClean','tabz'];
-window.__grifStore={keys:SYNC_KEYS,at:()=>lsGet('sync',0),all:()=>{const o={};SYNC_KEYS.forEach(k=>{const v=lsGet(k,undefined);if(v!==undefined)o[k]=v;});return o;},put:(o,at)=>{SYNC_KEYS.forEach(k=>{if(o&&k in o)lsSet(k,o[k],1);});lsSet('sync',at,1);}};
+window.__grifStore={user:null,logq:()=>lsGet('logq',null),setLogq:q=>lsSet('logq',q,1),keys:SYNC_KEYS,at:()=>lsGet('sync',0),all:()=>{const o={};SYNC_KEYS.forEach(k=>{const v=lsGet(k,undefined);if(v!==undefined)o[k]=v;});return o;},put:(o,at)=>{SYNC_KEYS.forEach(k=>{if(o&&k in o)lsSet(k,o[k],1);});lsSet('sync',at,1);}};
 function dayIndexOf(d){return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-ANCHOR)/DAY);}
 function dateOfIndex(i){const u=new Date(ANCHOR+i*DAY);return new Date(u.getUTCFullYear(),u.getUTCMonth(),u.getUTCDate());}
 function splitInt(total,weights){

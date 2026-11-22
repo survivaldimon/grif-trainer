@@ -9,7 +9,7 @@ const URL_BASE = pathToFileURL(INDEX).href;
 // экраны (редизайн): выбор времени — на «Сегодня»; таймер, план и таб — в «Занятии» с открытым планом
 const toToday = page => page.evaluate(() => window.__grif.setView('today'));
 const toSession = page => page.evaluate(() => { window.__grif.setView('session'); window.__grif.setPlanOpen(true); });
-const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz', 'sync'];
+const LS_KEYS = ['time', 'lang', 'bpm', 'bpmEx', 'tests', 'lvl', 'inst', 'genre', 'strings', 'hand', 'gstrings', 'tuning', 'theme', 'bpmClean', 'tabz', 'sync', 'logq'];
 // бас открывается адресом #bass-…; данные (EX, GROUPS…) в __grif — активного инструмента
 const INSTS = ['guitar', 'bass', 'blues-guitar', 'acoustic', 'blues-bass', 'jazz-guitar', 'jazz-acoustic', 'jazz-bass', 'funk-guitar', 'funk-bass', 'fingerstyle'];
 const H = (inst, lang) => (inst === 'guitar' ? 'metal-' : inst === 'bass' ? 'metal-bass-' : inst + '-') + lang;

@@ -376,6 +376,7 @@ let wake=null;
 function wantWake(){try{if(navigator.wakeLock&&!wake)navigator.wakeLock.request('screen').then(w=>{wake=w;w.addEventListener('release',()=>wake=null);}).catch(()=>{});}catch(e){}}
 function goto(k,keepRun){
   const segs=st.plan.segs;k=clamp(k,0,segs.length-1);
+  if(k!==st.cur)prFlush(st.cur);
   st.cur=k;st.remain=segs[k].min*60;
   if(!keepRun)st.running=false;
   st.last=performance.now();
@@ -386,11 +387,11 @@ setInterval(()=>{
   if(!st.running)return;
   const now=performance.now();
   if(co.hold&&coActive()){st.last=now;coachTick();return;} // тренер ждёт «Готов» или отсчёт: минуты не идут
-  st.remain-=(now-st.last)/1000;st.last=now;
+  const dt=(now-st.last)/1000;st.remain-=dt;st.last=now;prTick(dt);
   if(st.remain<=0){
     chime();st.done.add(st.cur);
     if(st.cur<st.plan.segs.length-1){goto(st.cur+1,true);}
-    else{st.remain=0;st.running=false;coachRun();renderClock();markPlan();toast(L('Тренировка дня закончена','Today’s workout is done'));return;}
+    else{st.remain=0;st.running=false;coachRun();renderClock();markPlan();toast(L('Тренировка дня закончена','Today’s workout is done'));openSummary();return;}
   }
   renderClock();
   coachTick();

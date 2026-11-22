@@ -2,7 +2,7 @@
 'use strict';
 /* ================= экраны ================= */
 // Экран — один из блоков в .views; видимость через hidden. «Занятие» — полноэкранный режим без навигации.
-const VIEWS={today:'vToday',session:'vSession',lib:'lib',progress:'vProgress',profile:'settings'};
+const VIEWS={today:'vToday',session:'vSession',lib:'lib',progress:'vProgress',profile:'settings',summary:'vSummary'};
 let VIEW=LIB.on?'lib':'today',VIEW_BACK='today';
 function setView(v){
   if(!VIEWS[v])v='today';
@@ -20,6 +20,7 @@ function setView(v){
   if(prev!==v)window.scrollTo(0,0);
   if(v==='session')requestAnimationFrame(()=>document.querySelectorAll('#nowBody .tabsc').forEach(layTabs));
   if(v==='today')renderToday();
+  if(v==='summary')renderSummary();
 }
 // вкладки «Упражнения» и «Профиль» повторным нажатием возвращают туда, откуда пришли
 function navTo(v){if(v===VIEW&&(v==='lib'||v==='profile'))setView(VIEW_BACK);else setView(v);}
@@ -107,6 +108,7 @@ function renderViews(){
   lab('exitBtn','x','Выйти из занятия','Leave the session');lab('planClose','x','Закрыть план','Close the plan');
   lab('prevSeg','skip-back','Назад','Back');lab('nextSeg','skip-forward','Дальше','Next');
   $('planBtn').innerHTML=IC('list')+'<span>'+L('План','Plan')+'</span>';
+  $('finishBtn').innerHTML=IC('circle-check')+'<span>'+L('Завершить занятие','Finish the session')+'</span>';
 }
 
 /* ================= масштаб таба в окне таба ================= */

@@ -356,6 +356,32 @@ textarea.share{width:100%;min-height:160px;background:var(--card);border:0;borde
 .lib-clean b{color:var(--fg)}
 .lib-clean .ic-svg{width:18px;height:18px;color:var(--timer)}
 
+/* ---- итог занятия ---- */
+.summary{max-width:560px}
+.done-h{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:6px}
+.done-h .ok{--c:var(--k-focus);width:60px;height:60px;border-radius:50%;display:grid;place-items:center;color:var(--onTint);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 72%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 86%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 6px 14px -6px var(--c)}
+.done-h .ok .ic-svg{width:30px;height:30px}
+.done-h p{margin:0}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.g3 .card{padding:10px 12px}
+.g3 small{display:block;font-size:12px;color:var(--sec);font-weight:500}
+.g3 b{font:600 26px/1.1 var(--fr);letter-spacing:-.02em}
+.g3 b small{display:inline;font-size:13px;font-weight:600;color:var(--fg)}
+.sum-h{font-weight:600;margin-bottom:8px}
+.rec{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:15px}
+.rec+.rec{border-top:.5px solid var(--sep)}
+.rec b{font-variant-numeric:tabular-nums}
+.feel{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.feel button{height:44px;border-radius:12px;font:600 17px var(--fr)}
+.feel button[aria-pressed="true"]{background:linear-gradient(180deg,color-mix(in srgb,var(--fg) 78%,var(--bg)),var(--fg));color:var(--bg)}
+.feelab{display:flex;justify-content:space-between;font-size:12px;color:var(--sec);margin:6px 0 10px}
+#sumNote{width:100%;border:0;border-radius:10px;background:var(--fill);padding:10px 12px;font:inherit;resize:vertical}
+.sum-in{display:flex;align-items:center;gap:12px}.sum-in p{flex:1;margin:0;font-size:14px;color:var(--sec)}
+.sum-in>.ic-svg{color:var(--nav)}
+#sumSave{width:100%}
+.drawer .fin{margin-top:auto;flex:none}
+
 /* ---- онбординг ---- */
 .onb{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 body.onb-open{overflow:hidden}

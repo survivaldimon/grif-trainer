@@ -147,6 +147,7 @@
       <div class="planhd"><h3 data-i="plan"></h3><button class="btn nb" id="shareBtn" data-i="copy"></button><button class="rb nb" id="planClose"></button></div>
       <ol class="plist" id="planList"></ol>
       <div id="shareBox" hidden></div>
+      <button class="btn-pri fin" id="finishBtn"></button>
     </aside>
   </section>
 
@@ -157,6 +158,9 @@
     <header class="vhd"><h1 class="lt" id="progTitle"></h1></header>
     <div class="card empty" id="progBody"></div>
   </section>
+
+  <!-- Итог занятия: время, упражнения, чистый темп, самочувствие -->
+  <section class="view summary" id="vSummary" hidden></section>
 
   <!-- Профиль: инструмент и приложение -->
   <section class="view profile settings" id="settings" hidden>
@@ -214,6 +218,7 @@
 <script src="js/genres.js"></script>
 <script src="js/library.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/practice.js"></script>
 <script src="js/main.js"></script>
 
 <!-- Аккаунт (необязательный): вход через Supabase и синхронизация настроек grif.* между устройствами.
@@ -244,7 +249,7 @@ box.addEventListener('click',async e=>{
   if(id==='accIn'){form=true;state='';render();const i=document.getElementById('accEmail');i&&i.focus();}
   else if(id==='accCancel'){form=false;state='';render();}
   else if(id==='accGoogle'){const r=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:back()}});if(r.error){state=r.error.message;render();}}
-  else if(id==='accOut'){await sb.auth.signOut();user=null;form=false;state='';render();}
+  else if(id==='accOut'){await sb.auth.signOut();user=null;S.user=null;form=false;state='';render();}
 });
 box.addEventListener('submit',async e=>{
   e.preventDefault();const em=document.getElementById('accEmail').value.trim();if(!em)return;
@@ -270,15 +275,31 @@ async function pull(){
   if(!rem||+rem.updated_at<S.at())await push();else{state=T('Синхронизировано','Synced');render();}
 }
 window.addEventListener('grif:ls',()=>{if(!user)return;clearTimeout(timer);timer=setTimeout(push,2000);});
+// учёт занятий: очередь grif.logq уходит в practice_log и practice_sessions; client_id не даёт записать дважды
+let lt=null,sending=false;
+async function sendLog(){
+  if(!user||sending||!S.logq)return;const q=S.logq();if(!q)return;
+  const mine=a=>(Array.isArray(a)?a:[]).filter(x=>x&&x._u===user.id),strip=a=>a.map(x=>{const r=Object.assign({},x);delete r._u;return r;});
+  const a=mine(q.log),b=mine(q.ses);if(!a.length&&!b.length)return;
+  sending=true;const ok=new Set();
+  try{
+    if(a.length){const r=await sb.from('practice_log').upsert(strip(a),{onConflict:'user_id,client_id',ignoreDuplicates:true});if(!r.error)a.forEach(x=>ok.add(x.client_id));}
+    if(b.length){const r=await sb.from('practice_sessions').upsert(strip(b),{onConflict:'user_id,client_id',ignoreDuplicates:true});if(!r.error)b.forEach(x=>ok.add(x.client_id));}
+  }catch(e){}
+  const cur=S.logq()||{};S.setLogq({log:(cur.log||[]).filter(x=>!ok.has(x.client_id)),ses:(cur.ses||[]).filter(x=>!ok.has(x.client_id))});
+  sending=false;
+}
+window.addEventListener('grif:log',()=>{clearTimeout(lt);lt=setTimeout(sendLog,1500);});
+window.addEventListener('online',()=>{sendLog();});
 render();
 const sc=document.createElement('script');
 sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
 sc.onload=()=>{
   sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true}});
   sb.auth.onAuthStateChange((ev,ses)=>{
-    const was=user&&user.id;user=ses?ses.user:null;
+    const was=user&&user.id;user=ses?ses.user:null;S.user=user?user.id:null;
     if(new URLSearchParams(location.search).has('code'))history.replaceState(null,'',location.pathname+location.hash);
-    if(user&&user.id!==was){form=false;pull();}
+    if(user&&user.id!==was){form=false;pull();sendLog();}
     render();
   });
 };

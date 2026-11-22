@@ -381,13 +381,14 @@ test(`${inst}: EN: ведение прокликано по всем интер�
       await scan(`day ${day}, T=${T}, item ${k}`);
       const done = await page.evaluate(() => document.querySelectorAll('#planList li.done').length);
       if (done >= n) break;
-      if (await page.locator('#coSkipBlk').count() && guard % 2) await page.click('#coSkipBlk');
-      else if (await page.locator('#coSkip').count()) await page.click('#coSkip');
-      else await page.click('#nextSeg');
+      if (await page.locator('#vSummary').isVisible()) break; // конец тренировки открывает итог
+      // нажатие без ожидания видимости: конец тренировки может открыть итог между проверкой и кликом
+      await page.evaluate(g => { const b = (g % 2 && document.getElementById('coSkipBlk')) || document.getElementById('coSkip') || document.getElementById('nextSeg'); b.click(); }, guard);
     }
     expect(await page.locator('#planList li.done').count(), `day ${day}: дошли до конца`).toBe(n);
     if (await page.locator('#playBtn').textContent() === 'Pause') await page.click('#playBtn');
   }
+  await toSession(page); // после конца тренировки открыт итог
   await page.locator('#planList li').nth(1).click(); // сегмент с ведением
   await page.click('#coToggle');
   await scan('coaching off');
