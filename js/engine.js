@@ -295,7 +295,8 @@ function renderPlan(){
   const {segs,d}=st.plan;
   $('planList').innerHTML=segs.map((s,k)=>{
     const cls=[s.kind==='pause'?'pause':''];if(k===st.cur)cls.push('cur');if(st.done.has(k))cls.push('done');
-    return '<li class="'+cls.join(' ')+'" data-k="'+k+'" style="--kc:var(--k-'+s.kind+')"><span class="tm">'+fmtStart(s.start)+'–'+fmtStart(s.start+s.min)+'</span><span class="nm"><span class="kind" style="--kc:var(--k-'+s.kind+')">'+KIND(s.kind)+(s.focus?' · '+GN(d.focus):'')+'</span><b>'+esc(segTitle(s,d))+'</b></span><span class="mn">'+s.min+'′</span></li>';
+    const g=s.kind==='focus'?d.focus:(s.kind==='maint'&&s.id&&EX[s.id]?libGroupOf(s.id):'');
+    return '<li class="'+cls.join(' ')+'" data-k="'+k+'" style="--kc:var(--k-'+s.kind+')">'+kindIc(s.kind,0,g)+'<span class="nm"><span class="kind" style="--kc:var(--k-'+s.kind+')">'+KIND(s.kind)+(s.focus?' · '+GN(d.focus):'')+'</span><b>'+esc(segTitle(s,d))+'</b><span class="tm">'+fmtStart(s.start)+'–'+fmtStart(s.start+s.min)+'</span></span><span class="mn">'+s.min+'′</span></li>';
   }).join('');
   const r=riffText(st.plan.riff);
   const inPlan=st.plan.segs.some(s=>s.mid==='riff');

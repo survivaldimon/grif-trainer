@@ -76,24 +76,29 @@ test('«Сегодня»: карточка цикла, план по видам 
   expect(errors).toEqual([]);
 });
 
-test('шторка плана: «План» открывает, Esc закрывает; на телефоне выбор сегмента закрывает шторку, на широком — нет', async ({ page }) => {
+test('план в «Занятии»: на телефоне — шторка («План» открывает, выбор сегмента и Esc закрывают), на компьютере — всегда слева', async ({ page }) => {
   const errors = await openApp(page, 'ru');
-  for (const [w, closes] of [[375, true], [1280, false]]) {
-    await page.setViewportSize({ width: w, height: 800 });
-    await page.evaluate(() => window.__grif.setView('session'));
-    await page.click('#planBtn');
-    await expect(page.locator('#planDrawer')).toBeVisible();
-    expect(await page.evaluate(() => document.body.classList.contains('plan-open'))).toBe(true);
-    await page.locator('#planList li').nth(2).click();
-    expect(await page.evaluate(() => window.__grif.st.cur)).toBe(2);
-    if (closes) await expect(page.locator('#planDrawer'), `${w}`).toBeHidden();
-    else {
-      await expect(page.locator('#planDrawer'), `${w}`).toBeVisible();
-      await page.keyboard.press('Escape');
-      await expect(page.locator('#planDrawer')).toBeHidden();
-      await expect(page.locator('#planBtn')).toHaveAttribute('aria-expanded', 'false');
-    }
-  }
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.evaluate(() => window.__grif.setView('session'));
+  await page.click('#planBtn');
+  await expect(page.locator('#planDrawer')).toBeVisible();
+  expect(await page.evaluate(() => document.body.classList.contains('plan-open'))).toBe(true);
+  await page.locator('#planList li').nth(2).click();
+  expect(await page.evaluate(() => window.__grif.st.cur)).toBe(2);
+  await expect(page.locator('#planDrawer')).toBeHidden();
+  await page.click('#planBtn');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#planDrawer')).toBeHidden();
+  await expect(page.locator('#planBtn')).toHaveAttribute('aria-expanded', 'false');
+  // компьютер: колонка плана слева от занятия, кнопки «План» нет
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page.locator('#planDrawer')).toBeVisible();
+  await expect(page.locator('#planBtn')).toBeHidden();
+  const box = await page.locator('#planDrawer').boundingBox(), now = await page.locator('#now').boundingBox();
+  expect(box.x + box.width).toBeLessThanOrEqual(now.x + 1);
+  await page.locator('#planList li').nth(4).click();
+  expect(await page.evaluate(() => window.__grif.st.cur)).toBe(4);
+  await expect(page.locator('#planDrawer')).toBeVisible();
   expect(errors).toEqual([]);
 });
 

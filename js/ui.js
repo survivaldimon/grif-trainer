@@ -78,10 +78,17 @@ function renderToday(){
   else{const dic=mod(d.i,28),left=27-dic;
     $('cycleCard').innerHTML=bd(PH(d.week).name)+bd(L('День ','Day ')+(dic+1)+L(' из 28 · Цикл ',' of 28 · Cycle ')+(d.cycle+1))+bd(d.isTest?L('Сегодня тесты','Tests today'):L('Тесты через ','Tests in ')+left+L(' дн.',' d'));}
   $('woOver').textContent=L('Тренировка дня','Workout of the day');
+  // карточка цикла (на компьютере, справа): 4 фазы, отметка дня, что делать на этой неделе
+  if(d.pre)$('cycleSide').innerHTML='<div class="cyc-top"><b>'+L('Вводная неделя','Intro week')+'</b></div><p class="mut">'+L('Первый цикл стартует 2 ноября. Сними исходные замеры, чтобы видеть прогресс.','The first cycle starts on November 2. Take baseline measurements to see your progress.')+'</p>';
+  else{const frac=(d.dow+1)/7,nt=d.i+27-mod(d.i,28);
+    let ph='';for(let w=0;w<4;w++){const cls=w<d.week?'done':w===d.week?'cur':'';ph+='<div><i class="'+cls+'"'+(w===d.week?' style="--f:'+(frac*100).toFixed(1)+'%"':'')+'></i><span'+(w===d.week?' class="on"':'')+'>'+esc(PH(w).name)+'</span></div>';}
+    $('cycleSide').innerHTML='<div class="cyc-top"><b>'+L('Цикл ','Cycle ')+(d.cycle+1)+'</b><span class="mut">'+esc(d.isTest?L('тесты сегодня','tests today'):L('тесты: ','tests: ')+dateText(dateOfIndex(nt)))+'</span></div><div class="ph4">'+ph+'</div><p class="mut">'+esc(PH(d.week).steps[0])+'</p>';}
   $('woTitle').textContent=L('Фокус: ','Focus: ')+GN(d.focus).toLowerCase()+(d.isTest?L(' + тесты',' + tests'):'');
   // полоса дня: блоки по видам, ширина — минуты, заливка — пройденное
-  const done=dayProgress();
-  $('dayBar').innerHTML=dayGroups().filter(x=>x.kind!=='pause').map(x=>{const dn=x.segs.reduce((a,k)=>a+segDone(k),0);return '<i style="flex:'+x.min+'"><b class="k-'+x.kind+'" style="width:'+(100*dn/(x.min*60)).toFixed(1)+'%"></b></i>';}).join('');
+  const done=dayProgress(),started0=done>0;
+  // на компьютере полоса — дорожка из обложек с подписями (ширина — минуты), на телефоне — тонкая полоса
+  $('dayBar').innerHTML=dayGroups().filter(x=>x.kind!=='pause').map(x=>{const dn=x.segs.reduce((a,k)=>a+segDone(k),0),cur=x.segs.includes(st.cur)&&(started0||st.running);
+    return '<i class="ic k-'+x.kind+(x.kind==='focus'?' g-'+d.focus:'')+(cur?' cur':'')+'" style="flex:'+x.min+'" title="'+esc(groupTitle(x))+'"><b class="k-'+x.kind+'" style="width:'+(100*dn/(x.min*60)).toFixed(1)+'%"></b><span>'+esc((x.min>=8?groupTitle(x)+' · ':'')+x.min+'′')+'</span></i>';}).join('');
   const started=done>0||st.running;
   $('dayMeta').innerHTML='<span><b>'+Math.floor(done/60)+'</b>'+L(' из ',' of ')+T+L(' мин',' min')+'</span><span>'+(started?esc(KIND(segs[st.cur].kind))+' · '+(st.cur+1)+L(' из ',' of ')+segs.length:esc(segs.length+L(' блоков',' blocks')))+'</span>';
   const leftMin=Math.ceil((T*60-done)/60);
