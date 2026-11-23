@@ -90,6 +90,7 @@ body[data-view="session"] .tabbar{display:none}
 /* ---- «Сегодня» (стиль A) ---- */
 .thd .tag{display:none}
 .dlab{font-size:13px;color:var(--sec);font-weight:500}
+.mlogo{margin-left:auto;font-size:18px}
 .signb{position:relative;display:flex;align-items:center;gap:12px;min-height:96px;padding:14px 16px;border-radius:20px;overflow:hidden;color:#fff;text-decoration:none;
   background:linear-gradient(90deg,rgba(9,9,11,.9),rgba(9,9,11,.62) 60%,rgba(9,9,11,.12)),var(--art) 50% 30%/cover}
 .signb .st{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -505,6 +506,7 @@ body.onb-open{overflow:hidden}
 @media (min-width:900px){
   .tabbar{top:0;right:auto;bottom:0;width:220px;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:calc(20px + env(safe-area-inset-top,0px)) 12px 20px max(12px,env(safe-area-inset-left,0px));border-top:0;border-right:.5px solid var(--sep)}
   .tabbar .logo{display:block;padding:0 10px 14px}
+  .mlogo{display:none}
   .tab{flex-direction:row;gap:10px;font-size:15px;padding:4px;border-radius:12px}
   .tab .ti{width:36px;height:32px;border-radius:10px}
   .tab:hover{background:var(--fill)}
@@ -534,5 +536,34 @@ body.onb-open{overflow:hidden}
   .smain{grid-template-columns:minmax(0,1fr) 320px;gap:18px;padding-top:8px}
   .sside{order:0;position:sticky;top:96px;align-self:start}
   #nowBody>.tabbox .tabsc{zoom:calc(var(--tabz,1) * 1.25)}
+}
+/* ---- компьютер: шире, крупнее, библиотека плиткой ---- */
+@media (min-width:1000px){
+  .metro{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 14px}
+  .metro>.mrow{flex:1 1 420px;flex-wrap:nowrap}
+  .metro>.ctrls{flex:1 1 460px}
+  .metro>.madv{flex-basis:100%}
+  .mbpm{flex:1 1 auto}
+  .smain{max-width:1500px;margin-inline:auto;width:100%;grid-template-columns:minmax(0,1fr) 360px}
+  #nowBody>.tabbox .tabsc{zoom:calc(var(--tabz,1) * 1.5)}
+  .lib-cards{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+  .lib-ex:not([open])>summary{grid-template-columns:minmax(0,1fr) 34px;grid-template-rows:auto auto;padding:0 0 12px;gap:10px 8px}
+  .lib-ex:not([open])>summary>.art{grid-column:1/-1;width:100%;height:auto;aspect-ratio:16/10;border-radius:14px 14px 0 0}
+  .lib-ex:not([open])>summary>.art .ic-svg{width:30px;height:30px}
+  .lib-ex:not([open])>summary>.lib-tx{padding-left:12px}
+  .lib-ex:not([open])>summary>.lib-play{margin-right:10px}
+  .lib-ex:not([open]) .lib-goal{-webkit-line-clamp:2}
+  .feat{height:120px}
+}
+@media (min-width:1400px){
+  .view:not(.session){max-width:1360px}
+  .tgrid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px}
+  .hero{min-height:380px;padding:22px 26px 26px}
+  .hero .wo-h{font-size:48px}
+  .hero-in{gap:8px}
+  .signb{min-height:110px;padding:18px 22px}
+  .gl .it{padding:12px 14px}
+  #nowBody>.tabbox .tabsc{zoom:calc(var(--tabz,1) * 1.8)}
+  .clock{font-size:64px}.coclock{font-size:80px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
