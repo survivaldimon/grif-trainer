@@ -85,18 +85,12 @@ function pgColsSvg(D,c){
   return '<svg class="pg-cols" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(L('Минуты по дням цикла','Minutes per day of the cycle'))+'">'+s+'</svg>';
 }
 // паутина: внешний контур — 100% плана, пунктир — прошлый цикл, оранжевым — ниже 80%
+// навыки: полоса — доля плана в дни занятий (шкала до 115%), белая риска — 100%, тонкая — прошлый цикл; ниже 80% — оранжевым
+const PG_BC={B:'--k-base',R:'--k-music',A:'--k-combo',L:'--k-focus',C:'--rest',M:'--k-warm'};
 function pgRadarSvg(now,prev){
-  const cx=160,cy=92,R=62,M=1.15,n=PG_AX.length;
-  const pt=(v,i)=>{const a=-Math.PI/2+i*2*Math.PI/n,k=Math.min(v||0,M)/M;return [cx+Math.cos(a)*R*k,cy+Math.sin(a)*R*k];};
-  const poly=vs=>vs.map((v,i)=>pt(v,i).map(z=>z.toFixed(1)).join(',')).join(' ');
-  let s='';
-  [.5,1].forEach(r=>{s+='<polygon points="'+poly(PG_AX.map(()=>r))+'" fill="none" stroke="'+(r===1?'var(--sec)':'var(--sep)')+'" stroke-width="'+(r===1?1.2:1)+'"/>';});
-  PG_AX.forEach((_,i)=>{const p=pt(M,i);s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="var(--sep)"/>';});
-  if(prev)s+='<polygon class="pg-prev" points="'+poly(prev.v)+'" fill="none" stroke="var(--sec)" stroke-width="1.4" stroke-dasharray="3 3"/>';
-  s+='<polygon class="pg-now" points="'+poly(now.v)+'" fill="var(--k-focus)" fill-opacity=".2" stroke="var(--k-focus)" stroke-width="2.4" stroke-linejoin="round"/>';
-  PG_AX.forEach((g,i)=>{const p=pt(M*1.2,i),v=now.v[i],a=Math.abs(p[0]-cx)<4?'middle':p[0]>cx?'start':'end',low=v!=null&&v<.8;
-    s+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+(i===0?-2:i===3?10:4)).toFixed(1)+'" text-anchor="'+a+'" font-size="11.5" font-weight="500" fill="var(--sec)" '+FONT+'>'+esc(pgAxName(g))+' <tspan font-weight="700" fill="'+(low?'var(--timer)':'var(--fg)')+'">'+(v==null?'—':Math.round(v*100)+'%')+'</tspan></text>';});
-  return '<svg class="pg-radar" viewBox="0 0 320 184" role="img" aria-label="'+esc(L('Выполнение плана по навыкам','Plan completion by skill'))+'">'+s+'</svg>';
+  const M=1.15,w=v=>(Math.min(v||0,M)/M*100).toFixed(1)+'%';
+  return '<div class="pg-bars">'+PG_AX.map((g,i)=>{const v=now.v[i],pv=prev&&prev.v[i],low=v!=null&&v<.8;
+    return '<div class="pg-bar"><span class="nm">'+esc(pgAxName(g))+'</span><span class="tr"><i style="width:'+w(v)+';background:'+(low?'var(--timer)':'var('+PG_BC[g]+')')+'"></i>'+(pv!=null?'<em class="pv" style="left:'+w(pv)+'"></em>':'')+'<em class="full" style="left:'+w(1)+'"></em></span><b'+(low?' class="low"':'')+'>'+(v==null?'—':Math.round(v*100)+'%')+'</b></div>';}).join('')+'</div>';
 }
 // маленький график темпа
 function pgSpark(pts){
@@ -132,7 +126,7 @@ function pgStatusHtml(D,grown){
   const cells=ids.map(i=>{const x=D[i],cl=x&&x.sec>=PG_DAY?'on':x&&x.sec>0?'part':'';return '<span class="'+cl+(i===today?' td':'')+'" title="'+esc(dateText(dateOfIndex(i))+(x?' · '+Math.round(x.sec/60)+L(' мин',' min'):''))+'"><i></i>'+wd[mod(dateOfIndex(i).getDay()-1,7)]+'</span>';}).join('');
   const line=grown?L('Чистый темп вырос в ','Clean tempo went up in ')+(LANG==='en'?nEx(grown):grown+' '+(grown%10===1&&grown%100!==11?'упражнении':'упражнениях'))+'.':'';
   const num=(v,u,lab)=>'<div><b>'+v+'<small>'+u+'</small></b><span>'+lab+'</span></div>';
-  return '<div class="card pg-st st-'+k+'" id="pgStatus" data-st="'+k+'"><div class="ct"><span class="mut">'+L('Статус за 7 дней','Status, last 7 days')+'</span></div><div class="lab2">'+esc(L(t[0],t[1]))+'</div>'+
+  return '<div class="card pg-st g-L st-'+k+'" id="pgStatus" data-st="'+k+'"><div class="ct"><span class="mut">'+L('Статус за 7 дней','Status, last 7 days')+'</span></div><div class="lab2">'+esc(L(t[0],t[1]))+'</div>'+
     '<div class="pg-nums">'+num(days,L(' из 7',' of 7'),L('дней от 10 мин','days of 10+ min'))+num(Math.round(pct*100),'%',L('от плана','of plan'))+num(Math.round(played/60),L(' мин',' min'),L('сыграно','played'))+'</div>'+
     (line?'<p class="pg-line">'+esc(line)+'</p>':'')+'<div class="wk7">'+cells+'</div><p class="mut pg-tip">'+esc(L(t[2],t[3]))+'</p></div>';
 }
@@ -162,7 +156,7 @@ function renderProgress(){
     '<div class="pg-grid">'+pgStatusHtml(D,pgGrown(cl))+
     '<div class="card" id="pgCols"><div class="ct"><span>'+L('Минуты по дням · цикл ','Minutes per day · cycle ')+(d.cycle+1)+'</span><span class="mut">'+esc(hm(tot))+'</span></div>'+pgColsSvg(D,d.cycle)+'</div>'+
     '<div class="card" id="pgRadar"><div class="ct"><span>'+L('Навыки · выполнение плана','Skills · plan completion')+'</span></div>'+
-      (now?pgRadarSvg(now,prev)+'<div class="pg-leg mut"><span>'+L('контур — 100% плана в дни занятий','outline: 100% of plan on practice days')+'</span>'+(prev?'<span class="dash">'+L('прошлый цикл','last cycle')+'</span>':'')+'</div>'
+      (now?pgRadarSvg(now,prev)+'<div class="pg-leg mut"><span>'+L('риска — 100% плана в дни занятий','mark: 100% of plan on practice days')+'</span>'+(prev?'<span class="dash">'+L('прошлый цикл','last cycle')+'</span>':'')+'</div>'
         :'<p class="mut pg-empty">'+esc(L('Появится после первого дня от 10 минут в этом цикле.','Appears after your first day of 10+ minutes this cycle.'))+'</p>')+'</div>'+
     '<div class="card" id="pgClean"><div class="ct"><span>'+L('Чистый темп','Clean tempo')+'</span><span class="mut">'+esc(GNAME(GENRE)+' · '+INAME(INST).toLowerCase())+'</span></div>'+
       (cl.length?list.map(x=>{const p=x.pts,last=p[p.length-1];return '<div class="rec pg-ex" data-ex="'+esc(x.id)+'"><span class="t">'+esc(numTitle(x.id))+'<small>'+esc(dateText(dateOfIndex(last.i)))+'</small></span>'+pgSpark(p)+'<b>'+last.bpm+'<small> bpm</small>'+(p.length>1?pgDelta(last.bpm,p[0].bpm):'')+'</b></div>';}).join('')+

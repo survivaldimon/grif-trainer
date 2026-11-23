@@ -36,8 +36,18 @@ function renderNav(){
 $('tabbar').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(b)navTo(b.dataset.view);});
 
 /* ================= «Сегодня» ================= */
-const KIND_IC={warm:'flame',base:'dumbbell',focus:'target',maint:'refresh-cw',combo:'layers',music:'guitar',pause:'coffee',test:'clipboard-check'};
-const kindIc=(k,big)=>'<span class="ic k-'+k+(big?' big':'')+'">'+IC(KIND_IC[k]||'music')+'</span>';
+// значок вида: обложка (img/art) и знак с музыкальной темой; у фокуса — знак и обложка группы дня
+const KIND_IC={warm:'audio-waveform',base:'guitar',focus:'target',maint:'repeat',combo:'layers',music:'music',pause:'coffee',test:'clipboard-check'};
+const GROUP_IC={R:'drum',A:'trending-up',L:'hand',C:'layers'};
+const kindIc=(k,big,g)=>'<span class="ic k-'+k+(g?' g-'+g:'')+(big?' big':'')+'">'+IC(g&&GROUP_IC[g]||KIND_IC[k]||'music')+'</span>';
+// «Войдите, чтобы сохранять занятия»: только если вход доступен (строка аккаунта в профиле видна) и пользователь не вошёл
+function renderSignBanner(){
+  const b=$('signBanner'),row=$('accRow'),u=window.__grifStore&&window.__grifStore.user;
+  b.hidden=!(row&&!row.hidden)||!!u;if(b.hidden)return;
+  b.innerHTML='<span class="st"><small>'+IC('music')+esc(L('Ваш прогресс','Your progress'))+'</small><b>'+esc(L('Войдите, чтобы сохранять занятия','Sign in to save your progress'))+'</b><span>'+esc(L('Минуты, навыки и чистый темп — на всех устройствах','Minutes, skills and clean tempo on all your devices'))+'</span></span><span class="go">'+IC('log-in')+esc(L('Войти','Sign in'))+'</span>';
+}
+$('signBanner').addEventListener('click',e=>{e.preventDefault();setView('profile');const i=document.getElementById('accIn');if(i)i.click();});
+['grif:user','grif:acc'].forEach(ev=>window.addEventListener(ev,()=>{if(VIEW==='today')renderSignBanner();}));
 // прогресс дня: пройденные сегменты целиком, текущий — по таймеру
 function segDone(k){const s=st.plan.segs[k];if(st.done.has(k))return s.min*60;if(k===st.cur)return s.min*60-st.remain;return 0;}
 function dayProgress(){const segs=st.plan.segs;let done=0;segs.forEach((s,k)=>{done+=segDone(k);});return done;}
@@ -60,15 +70,14 @@ function renderToday(){
   if(!st.plan)return;
   const d=st.plan.d,segs=st.plan.segs,T=st.plan.T;
   $('todayTitle').textContent=st.i===today?L('Сегодня','Today'):(LANG==='en'?['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']:['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'])[mod(d.date.getDay()-1,7)];
-  // цикл: 4 фазы, отметка — где мы сейчас
-  const cc=$('cycleCard');
-  if(d.pre)cc.innerHTML='<div class="cyc-top"><b>'+L('Вводная неделя','Intro week')+'</b></div><p class="mut">'+L('Первый цикл стартует 2 ноября. Сними исходные замеры, чтобы видеть прогресс.','The first cycle starts on November 2. Take baseline measurements to see your progress.')+'</p>';
-  else{
-    const dic=mod(d.i,28),left=27-dic,frac=(d.dow+1)/7;
-    let ph='';for(let w=0;w<4;w++){const cls=w<d.week?'done':w===d.week?'cur':'';ph+='<div><i class="'+cls+'"'+(w===d.week?' style="--f:'+(frac*100).toFixed(1)+'%"':'')+'></i><span'+(w===d.week?' class="on"':'')+'>'+esc(PH(w).name)+'</span></div>';}
-    cc.innerHTML='<div class="cyc-top"><b>'+L('День ','Day ')+(dic+1)+L(' из 28',' of 28')+'</b><span class="mut">'+L('Цикл ','Cycle ')+(d.cycle+1)+'</span></div><div class="ph4">'+ph+'</div><p class="mut">'+esc(PH(d.week).steps[0])+' '+(d.isTest?L('Сегодня — тесты цикла.','Today: cycle tests.'):L('Тесты цикла через ','Cycle tests in ')+left+L(' дн.',' d'))+'</p>';
-  }
-  $('woOver').textContent=L('Тренировка дня','Workout of the day')+(d.pre?'':' · '+PH(d.week).name);
+  renderSignBanner();
+  // обложка дня — группа фокуса; метки: фаза, день цикла, цикл, тесты
+  $('woCard').className='hero wo g-'+(d.pre?'H':d.focus);
+  const bd=t=>'<span>'+esc(t)+'</span>';
+  if(d.pre)$('cycleCard').innerHTML=bd(L('Вводная неделя','Intro week'))+bd(L('Цикл стартует 2 ноября','The cycle starts on November 2'));
+  else{const dic=mod(d.i,28),left=27-dic;
+    $('cycleCard').innerHTML=bd(PH(d.week).name)+bd(L('День ','Day ')+(dic+1)+L(' из 28 · Цикл ',' of 28 · Cycle ')+(d.cycle+1))+bd(d.isTest?L('Сегодня тесты','Tests today'):L('Тесты через ','Tests in ')+left+L(' дн.',' d'));}
+  $('woOver').textContent=L('Тренировка дня','Workout of the day');
   $('woTitle').textContent=L('Фокус: ','Focus: ')+GN(d.focus).toLowerCase()+(d.isTest?L(' + тесты',' + tests'):'');
   // полоса дня: блоки по видам, ширина — минуты, заливка — пройденное
   const done=dayProgress();
@@ -80,7 +89,7 @@ function renderToday(){
   // план: группы со значком вида
   $('planHd').textContent=L('План дня','Today’s plan');
   $('dayPlan').innerHTML=dayGroups().map(x=>{const all=x.segs.every(k=>st.done.has(k));
-    return '<button class="it'+(all?' done':'')+'" data-grp="'+x.segs[0]+'">'+kindIc(x.kind)+'<span class="t">'+esc(groupTitle(x))+'<small>'+esc(groupSub(x))+'</small></span><span class="v">'+(all?'':x.min+L(' мин',' min'))+'</span>'+(all?'<span class="chk">'+IC('circle-check')+'</span>':'<span class="chev">'+IC('chevron-right')+'</span>')+'</button>';}).join('');
+    return '<button class="it'+(all?' done':'')+'" data-grp="'+x.segs[0]+'">'+kindIc(x.kind,0,x.kind==='focus'?d.focus:'')+'<span class="t">'+esc(groupTitle(x))+'<small>'+esc(groupSub(x))+'</small></span><span class="v">'+(all?'':x.min+L(' мин',' min'))+'</span>'+(all?'<span class="chk">'+IC('circle-check')+'</span>':'<span class="chev">'+IC('chevron-right')+'</span>')+'</button>';}).join('');
 }
 // «Начать»: экран занятия и сразу таймер
 $('startBtn').onclick=()=>{setView('session');if(!st.running)togglePlay();};
@@ -96,6 +105,7 @@ $('exitBtn').onclick=()=>setView('today');
 function renderViews(){
   renderNav();renderProgress();
   $('profTitle').textContent=L('Профиль','Profile');
+  $('mToggle').dataset.l=L('Метроном','Metronome');
   $('shInst').textContent=L('Мой инструмент','My instrument');
   $('shApp').textContent=L('Приложение','App');
   const lab=(id,ic,ru,en)=>{const b=$(id);b.innerHTML=IC(ic);b.setAttribute('aria-label',L(ru,en));b.title=L(ru,en);};

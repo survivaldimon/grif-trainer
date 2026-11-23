@@ -36,7 +36,7 @@
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/app.css">
 
 </head>
@@ -59,10 +59,10 @@
   <main class="views">
   <!-- Сегодня: что за день, время, «Начать», план -->
   <section class="view today" id="vToday">
-    <header class="vhd">
+    <header class="vhd thd">
       <div class="daynav">
         <button id="prevDay" class="rb nb"></button>
-        <div id="dateLabel" class="over"></div>
+        <div id="dateLabel" class="dlab"></div>
         <button id="nextDay" class="rb nb"></button>
         <button id="todayBtn" class="chip" data-i="today"></button>
       </div>
@@ -71,17 +71,22 @@
     </header>
     <div class="tgrid">
       <div class="tcol">
-        <section class="card cyc" id="cycleCard"></section>
+        <a class="signb g-H" id="signBanner" href="#" hidden></a>
+        <section class="hero wo" id="woCard">
+          <div class="badges" id="cycleCard"></div>
+          <div class="hero-in">
+            <div class="over" id="woOver"></div>
+            <h2 class="wo-h" id="woTitle"></h2>
+            <p class="meta" id="meta"></p>
+            <button class="btn-pri" id="startBtn"></button>
+          </div>
+        </section>
         <div id="notice" hidden class="notice"></div>
-        <section class="card wo">
-          <div class="over" id="woOver"></div>
-          <h2 class="wo-h" id="woTitle"></h2>
-          <p class="meta" id="meta"></p>
-          <div class="seg" id="timeChips" role="group"></div>
+        <div class="seg tseg" id="timeChips" role="group"></div>
+        <div class="dayprog">
           <div class="pbar" id="dayBar"></div>
           <div class="pmeta" id="dayMeta"></div>
-          <button class="btn-pri" id="startBtn"></button>
-        </section>
+        </div>
       </div>
       <div class="tcol">
         <h3 class="sh" id="planHd"></h3>
@@ -108,11 +113,6 @@
         <aside class="sside">
           <div class="card clockcard">
             <div class="clock" id="clock">00:00</div>
-            <div class="ctrls">
-              <button class="rb nb" id="prevSeg"></button>
-              <button class="btn-pri" id="playBtn"></button>
-              <button class="rb nb" id="nextSeg"></button>
-            </div>
           </div>
           <div class="coach" id="coach" hidden></div>
         </aside>
@@ -125,15 +125,16 @@
             <button class="nb" data-d="1">+1</button><button class="nb" data-d="4">+4</button>
             <span class="u">bpm</span>
           </div>
-          <div class="dots" id="dots"></div>
-          <span class="mstate" id="mState"></span>
-          <div class="mact">
-            <button class="btn nb" id="mToggle"></button>
-            <button class="btn nb" id="mTap" data-i="tap"></button>
-          </div>
+          <button class="btn nb" id="mTap" data-i="tap"></button>
+        </div>
+        <div class="ctrls">
+          <button class="btn nb mtog" id="mToggle"></button>
+          <button class="rb nb" id="prevSeg"></button>
+          <button class="btn-pri" id="playBtn"></button>
+          <button class="rb nb" id="nextSeg"></button>
         </div>
         <details class="madv" id="mAdv">
-          <summary><span data-i="metro"></span></summary>
+          <summary><span data-i="metro"></span><span class="dots" id="dots"></span><span class="mstate" id="mState"></span></summary>
           <input id="bpmRange" type="range" min="30" max="320" aria-label="bpm">
           <div class="mopts">
             <label><span data-i="meter"></span><select id="mMeter"></select></label>
@@ -231,7 +232,7 @@
 'use strict';
 const CFG=window.RIFFGYM_SUPABASE||{},S=window.__grifStore,row=document.getElementById('accRow'),box=document.getElementById('accBox');
 if(!CFG.url||!CFG.key||!S||!row||location.protocol==='file:')return; // file:// — тесты и локальный просмотр без сети
-row.hidden=false;
+row.hidden=false;window.dispatchEvent(new Event('grif:acc'));
 const ru=()=>document.documentElement.lang==='ru',T=(r,e)=>ru()?r:e;
 const escH=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let sb=null,user=null,state='',timer=null,form=false;

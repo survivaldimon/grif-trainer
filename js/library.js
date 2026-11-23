@@ -24,10 +24,10 @@ function libSel(id){
   const ex=EX[id],x=LIB.sel[id]||{},n=lvlCount(id);
   return {lv:n?clamp(x.lv||getLvl(id),1,n):0,k:(ex.gen||!ex.v)?null:(x.k!=null?x.k:dayVar({id},st.plan.d))};
 }
-// Обложка упражнения: цвет и значок группы (W, B, R, A, L, C), градиент с рельефом
-const LIB_ART={W:['flame','#ff9f0a','#c2410c'],B:['dumbbell','#0a84ff','#1e40af'],R:['drum','#ff375f','#8a1538'],A:['trending-up','#30b0c7','#0e5e75'],L:['hand','#34c759','#0b6b4f'],C:['layers','#af52de','#5b1f8a'],X:['music','#8e8e93','#48484a']};
+// Обложка группы: картинка img/art (класс .g-*) и знак с музыкальной темой; цвет — пока картинка не загрузилась
+const LIB_ART={W:['audio-waveform','#c2410c'],B:['guitar','#1e40af'],R:['drum','#8a1538'],A:['trending-up','#0e5e75'],L:['hand','#0b6b4f'],C:['layers','#5b1f8a'],X:['music','#8a1d5c']};
 const libGroupOf=id=>{for(const g of LIB_ORDER.map(x=>x[0]))if((GROUPS[g]||[]).includes(id)||id.replace(/\d+$/,'')===g)return g;return 'X';};
-function libArt(g,cls){const a=LIB_ART[g]||LIB_ART.X;return '<span class="art'+(cls?' '+cls:'')+'" style="--c1:'+a[1]+';--c2:'+a[2]+'">'+IC(a[0])+'</span>';}
+function libArt(g,cls){const k=LIB_ART[g]?g:'X',a=LIB_ART[k];return '<span class="art g-'+k+(cls?' '+cls:'')+'" style="--c1:'+a[1]+'">'+IC(a[0])+'</span>';}
 // «3 упражнения», «5 упражнений», «1 exercise»
 const nEx=n=>n+' '+(LANG==='en'?(n===1?'exercise':'exercises'):(n%10===1&&n%100!==11?'упражнение':[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?'упражнения':'упражнений'));
 // метки: упражнение есть в плане дня; записан чистый темп
