@@ -360,11 +360,15 @@ test('масштаб табов: 4 размера, запоминается в g
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tabz').trim())).toBe('1.5');
 });
 
-test('тема: авто, светлая, тёмная — запоминается в grif.theme', async ({ page }) => {
+test('тема: по умолчанию тёмная; авто, светлая, тёмная — запоминается в grif.theme', async ({ page }) => {
   const errors = await openApp(page, 'en');
   const attr = () => page.evaluate(() => document.documentElement.getAttribute('data-theme'));
-  expect(await attr()).toBeNull();
+  expect(await attr()).toBe('dark');
+  await expect(page.locator('#themeSw button[data-theme-set="dark"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => localStorage.getItem('grif.theme'))).toBeNull();
   await page.click('#setBtn');
+  await page.click('#themeSw button[data-theme-set="light"]');
+  expect(await attr()).toBe('light');
   await page.click('#themeSw button[data-theme-set="dark"]');
   expect(await attr()).toBe('dark');
   await expect(page.locator('#themeSw button[data-theme-set="dark"]')).toHaveAttribute('aria-pressed', 'true');

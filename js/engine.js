@@ -220,9 +220,9 @@ function fmtStart(min){const h=Math.floor(min/60),m=min%60;return h+':'+String(m
 function timeLabel(T){if(T<60)return T+L(' мин',' min');const h=Math.floor(T/60),m=T%60;return h+L(' ч',' h')+(m?' '+m:'');}
 
 /* ================= рендер ================= */
-// Тема: auto — по системе, light/dark — выбор пользователя (grif.theme)
+// Тема: по умолчанию тёмная (решение автора от 2026-11-23); auto — по системе, light/dark — выбор пользователя (grif.theme)
 const THEMES=['auto','light','dark'];
-let THEME=(x=>THEMES.includes(x)?x:'auto')(lsGet('theme','auto'));
+let THEME=(x=>THEMES.includes(x)?x:'dark')(lsGet('theme','dark'));
 function applyTheme(){
   const r=document.documentElement;if(THEME==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',THEME);
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(r).getPropertyValue('--bg').trim()||'#0e1115';
