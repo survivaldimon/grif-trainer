@@ -120,6 +120,8 @@ test('адрес и переключатель инструмента: #bass, #b
   await page.click('#setBtn');
   await page.click('.lang button[data-lang="ru"]');
   expect(await page.evaluate(() => location.hash)).toBe('#bass-ru');
+  // инструмент — в шторке «Мой инструмент» (чипы на обложке дня)
+  await toToday(page); await page.click('#instChips [data-ichip="inst"]');
   // гитара: адрес без bass, полоса баса скрыта, план строится из гитарных упражнений
   await page.click('#instSw button[data-inst="guitar"]');
   st = await page.evaluate(() => ({ inst: window.__grif.INST, hash: location.hash, bar: !document.getElementById('bassBar').hidden, ls: localStorage.getItem('grif.inst'), ex: window.__grif.EX === window.__grif.EX_GUITAR }));
@@ -150,7 +152,7 @@ test('число струн и техника меняют таб и указа�
   const before = await page.evaluate(() => ({ cur: window.__grif.st.cur, running: window.__grif.st.running }));
   // в «Занятии» навигации нет: выходим на «Сегодня» и открываем профиль, таймер при этом идёт
   await page.click('#exitBtn');
-  await page.click('#setBtn');
+  await page.click('#instChips [data-ichip="inst"]');
   await page.click('#strChips button[data-str="5"]');
   expect(await rows()).toBe('GDAEB');
   await expect(page.locator('#nowBody .tabhd')).toContainText('BEADG');
@@ -201,7 +203,7 @@ test('блюз-бас: версии на низкую B', async ({ page }) => {
 test('бас, EN: план 5 часов на 6 струнах с медиатором прокликан без кириллицы', async ({ page }) => {
   test.setTimeout(300000);
   const errors = await openApp(page, 'bass-en');
-  await page.click('#setBtn');
+  await page.click('#instChips [data-ichip="inst"]');
   await page.click('#strChips button[data-str="6"]');
   await page.click('#handChips button[data-hand="pick"]');
   await toToday(page); await page.click('#timeChips button[data-t="300"]'); await toSession(page);

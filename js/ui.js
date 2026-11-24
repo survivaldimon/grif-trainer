@@ -21,6 +21,7 @@ function setView(v){
   if(v==='session')requestAnimationFrame(()=>document.querySelectorAll('#nowBody .tabsc').forEach(layTabs));
   if(v==='today')renderToday();
   if(v==='summary')renderSummary();
+  closeInst();
   if(v==='progress')renderProgress();
 }
 // вкладки «Упражнения» и «Профиль» повторным нажатием возвращают туда, откуда пришли
@@ -73,6 +74,7 @@ function renderToday(){
   renderSignBanner();
   // обложка дня — группа фокуса; метки: фаза, день цикла, цикл, тесты
   $('woCard').className='hero wo g-'+(d.pre?'H':d.focus);
+  renderInstChips();
   const bd=t=>'<span>'+esc(t)+'</span>';
   if(d.pre)$('cycleCard').innerHTML=bd(L('Вводная неделя','Intro week'))+bd(L('Цикл стартует 2 ноября','The cycle starts on November 2'));
   else{const dic=mod(d.i,28),left=27-dic;
@@ -102,6 +104,27 @@ function renderToday(){
 $('startBtn').onclick=()=>{setView('session');if(!st.running)togglePlay();};
 $('dayPlan').addEventListener('click',e=>{const b=e.target.closest('button[data-grp]');if(!b)return;const k=+b.dataset.grp;if(k!==st.cur)goto(k);setView('session');});
 
+/* ================= «Мой инструмент» ================= */
+// Настройки инструмента — в шторке #instSheet (переключатели те же, что были в профиле: genreSel, instSw, strChips, tuneKey, dropChips, tuneBtn, handChips).
+// Открывают её чипы на обложке дня (жанр, инструмент и струны, строй) и строка в профиле; кнопка-камертон на обложке сразу играет «Настроиться».
+const tuneChip=()=>tuneShort()+(TUNE[INST].d?'':' '+L('стандарт','standard'));
+const instSummary=()=>GNAME(GENRE)+' · '+INAME(INST).toLowerCase()+' · '+NSTR()+L(' стр.',' str.')+' · '+tuneChip();
+function renderInstChips(){
+  const c=(k,t)=>'<button class="ichip" type="button" data-ichip="'+k+'">'+esc(t)+IC('chevron-down')+'</button>';
+  $('instChips').innerHTML=c('genre',GNAME(GENRE))+c('inst',INAME(INST)+' · '+NSTR())+c('tune',tuneChip())+'<button class="ichip tf" type="button" data-ichip="tuneup" aria-label="'+esc(L('Настроиться','Tune up'))+'" title="'+esc(L('Настроиться','Tune up'))+'">'+IC('audio-waveform')+'</button>';
+  $('instRow').innerHTML='<span class="ic g-B">'+IC('guitar')+'</span><span class="t">'+esc(L('Мой инструмент','My instrument'))+'<small>'+esc(instSummary())+'</small></span><span class="chev">'+IC('chevron-right')+'</span>';
+}
+const ISH_FOCUS={genre:'genreSel',inst:'instSw',tune:'tuneKey'};
+function openInst(focus){
+  $('instSheet').hidden=false;document.body.classList.add('isheet-open');
+  const el=$(ISH_FOCUS[focus]||'genreSel');if(el){const f=el.matches('select')?el:el.querySelector('[aria-pressed="true"]')||el.querySelector('button');if(f)f.focus();}
+}
+function closeInst(){if($('instSheet').hidden)return;$('instSheet').hidden=true;document.body.classList.remove('isheet-open');renderInstChips();}
+$('instChips').addEventListener('click',e=>{const b=e.target.closest('[data-ichip]');if(!b)return;if(b.dataset.ichip==='tuneup')$('tuneBtn').click();else openInst(b.dataset.ichip);});
+$('instRow').onclick=()=>openInst();
+$('instSheet').addEventListener('click',e=>{if(e.target.closest('[data-isclose]'))closeInst();else setTimeout(renderInstChips,0);});
+$('instSheet').addEventListener('change',()=>setTimeout(renderInstChips,0));
+
 /* ================= «Занятие» ================= */
 function setPlanOpen(on){$('planDrawer').hidden=!on;$('planBtn').setAttribute('aria-expanded',String(on));document.body.classList.toggle('plan-open',on);}
 $('planBtn').onclick=()=>setPlanOpen($('planDrawer').hidden);
@@ -113,7 +136,7 @@ function renderViews(){
   renderNav();renderProgress();
   $('profTitle').textContent=L('Профиль','Profile');
   $('mToggle').dataset.l=L('Метроном','Metronome');
-  $('shInst').textContent=L('Мой инструмент','My instrument');
+  $('shInst').textContent=L('Мой инструмент','My instrument');$('shInstP').textContent=L('Инструмент','Instrument');$('instDone').textContent=L('Готово','Done');renderInstChips();
   $('shApp').textContent=L('Приложение','App');
   const lab=(id,ic,ru,en)=>{const b=$(id);b.innerHTML=IC(ic);b.setAttribute('aria-label',L(ru,en));b.title=L(ru,en);};
   lab('prevDay','chevron-left','Предыдущий день','Previous day');lab('nextDay','chevron-right','Следующий день','Next day');
@@ -142,13 +165,15 @@ const ONB_GENRE={metal:['zap','#ff3b30','Скорость, точность, ч�
   fingerstyle:['hand','#34c759','Независимость пальцев: бас и мелодия вместе','Finger independence: bass and melody together']};
 function openOnb(){ONB.on=true;ONB.step=0;ONB.inst=INST;ONB.genre=GENRE;ONB.T=st.T;$('onb').hidden=false;document.body.classList.add('onb-open');renderOnb();}
 function closeOnb(){ONB.on=false;$('onb').hidden=true;document.body.classList.remove('onb-open');}
-function onbOpt(kind,val,ic,col,title,sub,on){return '<button class="opt'+(on?' on':'')+'" data-onb="'+kind+'" data-v="'+val+'" aria-pressed="'+on+'"><span class="ic big" style="--c:'+col+'">'+IC(ic)+'</span><span class="ot"><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span><span class="radio"></span></button>';}
+// обложки онбординга (img/art): у каждого инструмента и жанра своя
+const ONB_ART={guitar:'g-R',acoustic:'g-W',bass:'g-C',metal:'k-test',blues:'g-B',jazz:'g-W',funk:'g-C',fingerstyle:'g-L'};
+function onbOpt(kind,val,ic,col,title,sub,on){return '<button class="opt'+(on?' on':'')+'" data-onb="'+kind+'" data-v="'+val+'" aria-pressed="'+on+'"><span class="ic big '+(ONB_ART[val]||'')+'" style="--c:'+col+'">'+IC(ic)+'</span><span class="ot"><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span><span class="radio"></span></button>';}
 function renderOnb(){
   if(!ONB.on)return;
   const s=ONB.step;let h,lead,body;
-  if(s===0){h=L('На чём вы играете?','What do you play?');lead=L('Инструмент можно поменять в любой момент в профиле.','You can change the instrument any time in your profile.');
+  if(s===0){h=L('На чём вы играете?','What do you play?');lead=L('Инструмент можно поменять в любой момент на экране «Сегодня».','You can change the instrument any time on the Today screen.');
     body=ONB_INST.map(([k,ic,t,sub,col])=>onbOpt('inst',k,ic,col,t(),sub(),k===ONB.inst)).join('');}
-  else if(s===1){h=L('Что будем играть?','What will you play?');lead=L('План дня общий для всех, кто выбрал этот жанр. Поменять можно в профиле.','The daily plan is the same for everyone in this genre. Change it in your profile.');
+  else if(s===1){h=L('Что будем играть?','What will you play?');lead=L('План дня общий для всех, кто выбрал этот жанр. Поменять можно на экране «Сегодня».','The daily plan is the same for everyone in this genre. Change it on the Today screen.');
     if(!GENRES[ONB.genre].includes(ONB.inst))ONB.genre=GENRE_IDS.find(g=>GENRES[g].includes(ONB.inst));
     body=GENRE_IDS.filter(g=>GENRES[g].includes(ONB.inst)).map(g=>{const x=ONB_GENRE[g];return onbOpt('genre',g,x[0],x[1],GNAME(g),L(x[2],x[3])+' · '+GENRES[g].map(INAME).join(', ').toLowerCase(),g===ONB.genre);}).join('');}
   else{h=L('Сколько времени на занятие?','How long do you practice?');lead=L('Время можно менять каждый день на экране «Сегодня». Тренер делит его на разминку, базу, фокус и остальное.','You can change it every day on the Today screen. The coach splits it into warm-up, base, focus and the rest.');
@@ -177,5 +202,6 @@ $('onb').addEventListener('click',e=>{
 });
 
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;
+  if(!$('instSheet').hidden){closeInst();return;}
   if(!$('planDrawer').hidden){setPlanOpen(false);$('planBtn').focus();return;}
   if(VIEW==='profile'){setView(VIEW_BACK);$('setBtn').focus();}});

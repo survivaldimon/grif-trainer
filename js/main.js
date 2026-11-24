@@ -141,6 +141,6 @@ setBpm(Mt.bpm);
 rebuild();
 setView(VIEW);
 if(onbNeeded())openOnb();
-window.__grif={PR,prTick,prFlush,prQueue,PG,pgRows,pgDays,pgRadar,pgPlan,renderProgress,openSummary,openOnb,onbNeeded,ONB,setView,setPlanOpen,togglePlay,exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
+window.__grif={openInst,closeInst,renderInstChips,PR,prTick,prFlush,prQueue,PG,pgRows,pgDays,pgRadar,pgPlan,renderProgress,openSummary,openOnb,onbNeeded,ONB,setView,setPlanOpen,togglePlay,exKey,curTu,OPEN_TUNINGS,GENRES,riffMeters,subFrac,setSub,setGenre,setProf,LIBS,setTabz,NOTES,setDay,rhythmTab,setTheme,Mt,noteTxt,dropKey,TUN,TU,setTuning,tuneUp,tuneName,buildSession,coachPlan,dayInfo,resolveEx,ALLOC,TIMES,renderTab,parseTab,setLang,X,VX,getLvl,st,co,TUNINGS,tabHtml,Pl,setInst,setLib,LIB,setStrings,setHand,genEx,EX_GUITAR,EX_BASS,EXEN_GUITAR,EXEN_BASS,GROUPS_GUITAR,GROUPS_BASS,TESTS_GUITAR,TESTS_BASS};
 // активные наборы данных меняются вместе с инструментом
 ['EX','EXEN','GROUPS','TESTS','COACH','INST','STRINGS','HAND','GSTR','TUNE','GENRE'].forEach(k=>Object.defineProperty(window.__grif,k,{get:()=>({EX,EXEN,GROUPS,TESTS,COACH,INST,STRINGS,HAND,GSTR,TUNE,GENRE})[k]}));

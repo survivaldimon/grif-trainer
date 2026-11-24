@@ -111,6 +111,7 @@ body[data-view="session"] .tabbar{display:none}
 .hero .meta span{flex-direction:row;gap:5px;color:rgba(255,255,255,.72);font-size:13px}
 .hero .meta b{font-size:13px;color:#fff}
 .hero #startBtn{align-self:flex-start;width:auto;min-height:46px;padding:0 20px;border-radius:23px;background:#f5f6f8;color:#09090b;font-size:15px;margin-top:4px}
+#timeChips.tseg{flex-wrap:nowrap}
 .tseg{background:none;padding:0 0 2px;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tseg::-webkit-scrollbar{display:none}
 .tseg button{flex:none;min-width:62px}
 .tseg button{background:var(--card);border-radius:12px;padding:9px 6px;font-weight:500;color:var(--sec)}
@@ -488,12 +489,12 @@ body.onb-open{overflow:hidden}
 .onb-dots{display:flex;gap:6px}
 .onb-dots i{width:22px;height:4px;border-radius:2px;background:var(--fill)}
 .onb-dots i.on{background:var(--fg)}
-.onb h2{font-size:30px;line-height:1.12;font-weight:700;letter-spacing:-.03em;margin:22px 0 0;text-align:center;text-wrap:balance}
+.onb h2{font:800 30px/1.1 var(--fd);letter-spacing:-.035em;margin:22px 0 0;text-align:center;text-wrap:balance}
 .onb-lead{text-align:center;color:var(--sec);margin:0 8px 8px}
 .onb-list{display:flex;flex-direction:column;gap:8px}
-.opt{display:grid;grid-template-columns:52px minmax(0,1fr) 24px;gap:12px;align-items:center;background:var(--card);border-radius:14px;padding:12px 14px;text-align:left;box-shadow:inset 0 0 0 2px transparent}
+.opt{display:grid;grid-template-columns:56px minmax(0,1fr) 24px;gap:14px;align-items:center;background:var(--card);border-radius:16px;padding:12px 14px;text-align:left;box-shadow:inset 0 0 0 2px transparent}
 .opt.on{box-shadow:inset 0 0 0 2px var(--nav)}
-.opt .ot b{display:block;font-size:17px;font-weight:600}
+.opt .ot b{display:block;font:700 18px var(--fd);letter-spacing:-.01em}
 .opt .ot small{display:block;font-size:13px;color:var(--sec);margin-top:1px}
 .radio{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--ter)}
 .opt.on .radio{box-shadow:inset 0 0 0 7px var(--nav)}
@@ -542,6 +543,28 @@ body.onb-open{overflow:hidden}
   .sside{order:0;position:sticky;top:96px;align-self:start}
   #nowBody>.tabbox .tabsc{zoom:calc(var(--tabz,1) * 1.25)}
 }
+/* ---- «Мой инструмент»: чипы на обложке и шторка ---- */
+.ichips{display:flex;flex-wrap:nowrap;gap:5px;align-items:center;min-width:0}
+.ichip{display:inline-flex;align-items:center;gap:3px;height:32px;padding:0 8px;white-space:nowrap;flex:none;border-radius:12px;background:rgba(0,0,0,.42);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;font-size:12px;font-weight:600}
+.ichip .ic-svg{width:13px;height:13px;opacity:.8}
+.ichip.tf{margin-left:auto;width:34px;padding:0;justify-content:center;border-radius:17px}.ichip.tf .ic-svg{width:17px;height:17px;opacity:1}
+.ichip:hover{background:rgba(0,0,0,.6)}
+.cycline{display:flex;flex-wrap:wrap;gap:2px 0;font-size:12.5px;color:rgba(255,255,255,.78)}
+.cycline span+span::before{content:"·";margin:0 6px;opacity:.7}
+.isheet{position:fixed;inset:0;z-index:45;display:flex;align-items:flex-end;justify-content:center}
+.isheet[hidden]{display:none}
+.isheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.isheet-in{position:relative;width:min(560px,100%);max-height:88vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.isheet-grip{align-self:center;width:36px;height:4px;border-radius:2px;background:var(--ter)}
+.isheet-hd{display:flex;align-items:center;justify-content:space-between}
+.isheet-hd h3{margin:0;font:700 20px var(--fd)}
+.isheet-hd .btn{color:var(--nav);font-weight:600}
+.isheet .gl{background:var(--card)}
+body.isheet-open{overflow:hidden}
+.instrow{display:grid;grid-template-columns:42px minmax(0,1fr) 18px;gap:12px;align-items:center;padding:10px 14px;text-align:left;width:100%}
+.instrow .t{font-weight:600;min-width:0}.instrow .t small{display:block;font-weight:400;font-size:12.5px;color:var(--sec)}
+.instrow .chev{color:var(--ter)}.instrow .chev .ic-svg{width:16px;height:16px}
+@media (min-width:900px){.isheet{align-items:center}.isheet-in{border-radius:22px}.isheet-grip{display:none}}
 /* ---- «Сегодня» на компьютере (макет «D · Сегодня»): обложка дня и план слева, вход, цикл и рифф справа ---- */
 .cycside{display:none}
 .pbar i>span{display:none}

@@ -136,3 +136,31 @@ test('EN: ни на одном экране нет кириллицы (текс�
   expect(CYR.test(await page.title())).toBe(false);
   expect(errors).toEqual([]);
 });
+
+test('«Мой инструмент»: чипы на обложке дня открывают шторку, выбор меняет чипы, Esc и «Готово» закрывают; строка в профиле', async ({ page }) => {
+  const errors = await openApp(page, 'ru');
+  await expect(page.locator('#instChips [data-ichip="genre"]')).toHaveText('Дэт-метал');
+  await expect(page.locator('#instChips [data-ichip="inst"]')).toHaveText('Гитара · 6');
+  await expect(page.locator('#instChips [data-ichip="tune"]')).toHaveText('E стандарт');
+  await page.click('#instChips [data-ichip="inst"]');
+  await expect(page.locator('#instSheet')).toBeVisible();
+  await page.click('#instSw button[data-inst="bass"]');
+  await page.click('#instDone');
+  await expect(page.locator('#instSheet')).toBeHidden();
+  await expect(page.locator('#instChips [data-ichip="inst"]')).toHaveText('Бас · 4');
+  await page.click('#instChips [data-ichip="tune"]');
+  await page.selectOption('#tuneKey', '-2');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#instSheet')).toBeHidden();
+  await expect(page.locator('#instChips [data-ichip="tune"]')).toHaveText('D стандарт');
+  await page.click('#setBtn');
+  await expect(page.locator('#instRow')).toContainText('бас · 4 стр. · D стандарт');
+  await page.click('#instRow');
+  await expect(page.locator('#instSheet')).toBeVisible();
+  await page.click('.isheet-bg', { position: { x: 10, y: 10 } });
+  await expect(page.locator('#instSheet')).toBeHidden();
+  await page.click('#instRow');
+  await page.evaluate(() => window.__grif.setView('today'));
+  await expect(page.locator('#instSheet')).toBeHidden();
+  expect(errors).toEqual([]);
+});

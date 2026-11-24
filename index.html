@@ -74,10 +74,11 @@
       <div class="tcol">
         <a class="signb g-H" id="signBanner" href="#" hidden></a>
         <section class="hero wo" id="woCard">
-          <div class="badges" id="cycleCard"></div>
+          <div class="ichips" id="instChips"></div>
           <div class="hero-in">
             <div class="over" id="woOver"></div>
             <h2 class="wo-h" id="woTitle"></h2>
+            <div class="cycline" id="cycleCard"></div>
             <p class="meta" id="meta"></p>
             <button class="btn-pri" id="startBtn"></button>
           </div>
@@ -172,8 +173,31 @@
     <div class="setrow" id="accRow" hidden><span class="lbl" id="accLbl"></span>
       <div class="acc" id="accBox"></div>
     </div>
-    <h3 class="sh" id="shInst"></h3>
+    <h3 class="sh" id="shInstP"></h3>
+    <button class="gl instrow" id="instRow" type="button"></button>
+    <h3 class="sh" id="shApp"></h3>
     <div class="gl form">
+      <div class="setrow"><span class="lbl" data-i="langLabel"></span>
+        <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
+      </div>
+      <div class="setrow"><span class="lbl" data-i="themeLabel"></span>
+        <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
+      </div>
+    </div>
+    <section class="about">
+      <details class="gl"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
+      <details class="gl safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
+    </section>
+    <footer class="foot"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@riffgym.app">support@riffgym.app</a></footer>
+  </section>
+  </main>
+  <!-- «Мой инструмент»: шторка, открывается чипами на обложке дня и строкой в профиле -->
+  <div class="isheet" id="instSheet" hidden>
+    <div class="isheet-bg" data-isclose></div>
+    <div class="isheet-in" role="dialog" aria-modal="true" aria-labelledby="shInst">
+      <i class="isheet-grip"></i>
+      <div class="isheet-hd"><h3 id="shInst"></h3><button class="btn nb" id="instDone" type="button" data-isclose></button></div>
+      <div class="gl form">
       <div class="setrow"><span class="lbl" data-i="genreLabel"></span>
         <select id="genreSel" class="tsel"></select>
       </div>
@@ -192,22 +216,8 @@
         <span class="tchips" id="handChips"></span>
       </div>
     </div>
-    <h3 class="sh" id="shApp"></h3>
-    <div class="gl form">
-      <div class="setrow"><span class="lbl" data-i="langLabel"></span>
-        <div class="lang" role="group" aria-label="Language"><button data-lang="ru">RU</button><button data-lang="en">EN</button></div>
-      </div>
-      <div class="setrow"><span class="lbl" data-i="themeLabel"></span>
-        <div class="lang" id="themeSw" role="group"><button data-theme-set="auto"></button><button data-theme-set="light"></button><button data-theme-set="dark"></button></div>
-      </div>
     </div>
-    <section class="about">
-      <details class="gl"><summary><h3 data-i="aboutT"></h3></summary><ul id="aboutL"></ul></details>
-      <details class="gl safety"><summary><h3 data-i="safeT"></h3></summary><ul id="safeL"></ul></details>
-    </section>
-    <footer class="foot"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="mailto:support@riffgym.app">support@riffgym.app</a></footer>
-  </section>
-  </main>
+  </div>
 
   <!-- Онбординг при первом входе: инструмент → жанр → время -->
   <section class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-labelledby="onbH"></section>

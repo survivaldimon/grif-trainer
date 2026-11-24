@@ -19,6 +19,7 @@ const ICONS={
  'x':'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
  'list':'<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
  'chevron-left':'<path d="m15 18-6-6 6-6"/>',
+ 'chevron-down':'<path d="m6 9 6 6 6-6"/>',
  'chevron-right':'<path d="m9 18 6-6-6-6"/>',
  'play':'<polygon points="6 3 20 12 6 21 6 3"/>',
  'pause':'<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
